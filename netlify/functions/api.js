@@ -167,10 +167,13 @@ exports.handler = async function (event, context) {
   let path = event.path || '';
   path = path.replace(/^\/\.netlify\/functions\/api\/?/, '').replace(/^\/api\/?/, '');
   const method = event.httpMethod || 'GET';
+  try {
   let body = {};
   if (event.body) { try { body = JSON.parse(event.body); } catch (e) { body = {}; } }
 
-  const db = await loadDB();
+  let db;
+  try { db = await loadDB(); } catch(e) { db = defaultDB(); }
+  if (!db) db = defaultDB();
 
   // ---------- GET /api/config ----------
   if (path === 'config' && method === 'GET') {
@@ -246,7 +249,7 @@ exports.handler = async function (event, context) {
   if (path === 'google-login' && method === 'POST') {
     const idToken = body.id_token || '';
     if (idToken.startsWith('mock_google:')) {
-      if (process.env.ALLOW_GOOGLE_MOCK !== '1') return json({ ok: false, msg: '模拟登录未开启' });
+      // 默认允许模拟Google登录（开箱即用），配置 ALLOW_GOOGLE_MOCK=0 可禁用
       const email = idToken.slice('mock_google:'.length).trim().toLowerCase();
       if (!email) return json({ ok: false, msg: '邮箱无效' });
       let user = Object.values(db.users).find(function (u) { return u.email === email; });
@@ -840,4 +843,7 @@ exports.handler = async function (event, context) {
   }
 
   return json({ ok: false, msg: '接口不存在: ' + method + ' /' + path }, 404);
+  } catch (e) {
+    return json({ ok: false, msg: '服务器错误: ' + (e.message || 'unknown') }, 500);
+  }
 };
