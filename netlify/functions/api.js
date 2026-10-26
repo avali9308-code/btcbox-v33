@@ -18,23 +18,20 @@ async function loadDB() {
   // 内存缓存有效且未过期，直接用
   if (_memDB && (Date.now() - _memDB_ts) < CACHE_TTL) return _memDB;
   
-  // 从 Blobs 读取，最多重试3次，间隔递增
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const store = getStore('btcbox');
-      const raw = await store.get(STORE_KEY, { type: 'json' });
-      if (raw && raw.users) {
-        _memDB = raw;
-        _memDB_ts = Date.now();
-        return raw;
-      }
-      if (attempt < 2) await sleep(200 * (attempt + 1));
-    } catch (e) {
-      if (attempt < 2) await sleep(300 * (attempt + 1));
+  // 从 Blobs 读取：只试1次，失败立即用内存兜底（避免函数超时）
+  try {
+    const store = getStore('btcbox');
+    const raw = await store.get(STORE_KEY, { type: 'json' });
+    if (raw && raw.users) {
+      _memDB = raw;
+      _memDB_ts = Date.now();
+      return raw;
     }
+  } catch (e) {
+    // Blobs不可用，静默降级到内存模式
   }
   
-  // 三次都失败：内存有旧数据就用内存兜底（至少不丢数据）
+  // 内存有旧数据就用内存兜底
   if (_memDB) return _memDB;
   
   // 完全没有数据，初始化默认库
@@ -47,17 +44,13 @@ async function saveDB(db) {
   _memDB = db;
   _memDB_ts = Date.now();
   
-  // 写入 Blobs，最多重试3次，间隔递增
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const store = getStore('btcbox');
-      await store.setJSON(STORE_KEY, db);
-      return; // 写入成功
-    } catch (e) {
-      if (attempt < 2) await sleep(300 * (attempt + 1));
-    }
+  // 写入 Blobs：只试1次，失败静默（内存已保留，下次请求再试）
+  try {
+    const store = getStore('btcbox');
+    await store.setJSON(STORE_KEY, db);
+  } catch (e) {
+    // Blobs不可用，静默降级，内存仍保留数据
   }
-  // 三次都失败，内存仍保留，下次请求会继续尝试
 }
 function defaultDB() {
   return {

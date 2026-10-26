@@ -150,7 +150,10 @@
     if(btc && btc.price){ document.getElementById('qtPrice').textContent = BTCBOX.fmtPrice(btc.price); qtRecalc(); }
   }
   renderAll();
-  document.addEventListener('marketTick', renderAll);
+  // 行情tick时只做增量更新（不改图标img），避免闪烁；tab切换时才全量重建
+  document.addEventListener('marketTick', function(){
+    try{ BTCBOX.updateMarketListInPlace('marketList'); }catch(e){ renderAll(); }
+  });
   // 加载真实可用余额
   function loadRealAvail(){
     if(!BTCBOX.isLoggedIn()) return;
