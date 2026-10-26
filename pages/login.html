@@ -45,7 +45,7 @@
 <body>
 <div class="auth-wrap">
   <div class="auth-logo">
-    <div style="width:64px;height:64px;margin:0 auto 14px;"><img src="../assets/img/logo-transparent.png" alt="BTCBOX" style="width:100%;height:100%;object-fit:contain;display:block;"></div>
+    <div style="width:120px;height:60px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;"><img src="../assets/img/logo-transparent.png" alt="BTCBOX" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"></div>
     <div style="font-family:var(--font-serif);font-size:26px;font-weight:700;">BTC<span style="color:var(--gold);">BOX</span></div>
     <div style="font-size:11px;color:var(--text-3);letter-spacing:.15em;text-transform:uppercase;margin-top:6px;">Digital Asset Exchange</div>
   </div>
@@ -177,7 +177,7 @@
   document.getElementById('authForm').addEventListener('submit', function(){
     var email = document.getElementById('emailInput').value.trim().toLowerCase();
     var pwd = document.getElementById('pwdInput').value;
-    if(!email || !pwd){ BTCBOX.toast('请填写完整信息', 'warning'); return; }
+    if(!email || !pwd){ BTCBOX.toast((window.I18N?I18N.t('fillAll'):''), 'warning'); return; }
     var btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = '提交中...';
 
@@ -185,7 +185,7 @@
     var url = '/api/login';
     if(mode === 'register'){
       var pwd2 = document.getElementById('pwdConfirm').value;
-      if(pwd !== pwd2){ BTCBOX.toast('两次输入的密码不一致', 'warning'); btn.disabled=false; updateMode(); return; }
+      if(pwd !== pwd2){ BTCBOX.toast((window.I18N?I18N.t('pwdMismatch'):''), 'warning'); btn.disabled=false; updateMode(); return; }
       url = '/api/register';
     }
 
@@ -214,7 +214,7 @@
           confirmText:'确认登录', cancelText:'取消'}).then(function(ok){
           if(!ok){ btn.disabled=false; updateMode(); return; }
           var code = (document.getElementById('__2faLogin')||{}).value || '';
-          if(!/^\d{6}$/.test(code)){ BTCBOX.toast('请输入6位验证码','warning'); btn.disabled=false; updateMode(); return; }
+          if(!/^\d{6}$/.test(code)){ BTCBOX.toast((window.I18N?I18N.t('please6code'):''),'warning'); btn.disabled=false; updateMode(); return; }
           fetch('/api/login/2fa', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({temp_token:j.temp_token, code:code})})
             .then(function(r){ if(r.status===404) return {ok:false, _nf:true}; return r.json(); })
             .then(function(j2){
@@ -225,7 +225,7 @@
                   else { localStorage.removeItem('btcbox_remember_email'); }
                 }catch(e){}
                 BTCBOX.login(email);
-                BTCBOX.toast('登录成功','success');
+                BTCBOX.toast((window.I18N?I18N.t('loginSuccess'):''),'success');
                 var rd = params.get('redirect');
                 setTimeout(function(){ location.href = rd ? decodeURIComponent(rd) : '../index.html'; }, 800);
               } else {
@@ -252,7 +252,7 @@
     .catch(function(){
       // 后端不可用时降级为本地登录（保证前端可用）
       BTCBOX.login(email);
-      BTCBOX.toast('登录成功', 'success');
+      BTCBOX.toast((window.I18N?I18N.t('loginSuccess'):''), 'success');
       setTimeout(function(){ location.href = '../index.html'; }, 800);
     });
   });
@@ -268,13 +268,13 @@
 
   function googleLoginSuccess(email){
     BTCBOX.login(email || 'google_user');
-    BTCBOX.toast('Google 账号登录成功', 'success');
+    BTCBOX.toast((window.I18N?I18N.t('googleSuccess'):''), 'success');
     var rd = params.get('redirect');
     setTimeout(function(){ location.href = rd ? decodeURIComponent(rd) : '../index.html'; }, 800);
   }
   function googleMockLogin(email){
     email = (email||'').trim().toLowerCase();
-    if(!email || email.indexOf('@') < 0){ BTCBOX.toast('请输入有效的邮箱地址', 'warning'); return; }
+    if(!email || email.indexOf('@') < 0){ BTCBOX.toast((window.I18N?I18N.t('invalidEmail'):''), 'warning'); return; }
     hideGoogle();
     fetch('/api/google-login', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id_token: 'mock_google:' + email})})
     .then(function(r){ return r.json(); })
@@ -282,7 +282,7 @@
       if(j.ok){ googleLoginSuccess(email); }
       else { BTCBOX.toast(j.msg || 'Google 登录失败，请重试', 'error'); }
     })
-    .catch(function(){ BTCBOX.login(email); BTCBOX.toast('登录成功', 'success'); setTimeout(function(){ location.href='../index.html'; }, 800); });
+    .catch(function(){ BTCBOX.login(email); BTCBOX.toast((window.I18N?I18N.t('loginSuccess'):''), 'success'); setTimeout(function(){ location.href='../index.html'; }, 800); });
   }
   document.getElementById('gEmailConfirm').addEventListener('click', function(){ googleMockLogin(document.getElementById('gEmailInput').value); });
   document.getElementById('gEmailInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); googleMockLogin(this.value); } });

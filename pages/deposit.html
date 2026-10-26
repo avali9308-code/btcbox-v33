@@ -93,7 +93,7 @@
     document.getElementById('qrImg').src = '';
     if(!BTCBOX.isLoggedIn()){
       document.getElementById('addrText').textContent = '请先登录后获取充值地址';
-      BTCBOX.toast('请先登录后获取充值地址', 'warning');
+      BTCBOX.toast((window.I18N?I18N.t('pleaseLoginDeposit'):''), 'warning');
       setTimeout(function(){ location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname); }, 1000);
       return;
     }
@@ -148,8 +148,8 @@
     var t = document.getElementById('addrText').textContent;
     if(t && t.indexOf('...')<0 && t.indexOf('加载')<0 && t.indexOf('请')<0 && t.indexOf('网络')<0){
       navigator.clipboard && navigator.clipboard.writeText(t);
-      BTCBOX.toast('充值地址已复制到剪贴板', 'success');
-    } else { BTCBOX.toast('地址尚未就绪，请稍候', 'warning'); }
+      BTCBOX.toast((window.I18N?I18N.t('addrCopied'):''), 'success');
+    } else { BTCBOX.toast((window.I18N?I18N.t('addrNotReady'):''), 'warning'); }
   });
 
   function loadRecords(){

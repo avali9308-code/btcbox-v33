@@ -106,7 +106,11 @@ document.querySelectorAll('.earn-card .btn-gold').forEach(function(btn){
           // 有cookie但localStorage没同步，强制同步一次
           BTCBOX.syncAccount && BTCBOX.syncAccount();
         } else {
-          BTCBOX.requireLogin(); return;
+          if(!BTCBOX.isLoggedIn()){
+            BTCBOX.toast(I18N.t('pleaseLogin'), 'warning');
+            setTimeout(function(){ location.href='login.html'; }, 800);
+            return;
+          }
         }
       }
     var card = btn.closest('.earn-card');
@@ -117,11 +121,11 @@ document.querySelectorAll('.earn-card .btn-gold').forEach(function(btn){
       confirmText:'确认申购', cancelText:'取消'}).then(function(ok){
       if(!ok) return;
       var amt = parseFloat((document.getElementById('__earnAmt')||{}).value) || 0;
-      if(amt <= 0){ BTCBOX.toast('请输入申购金额','warning'); return; }
+      if(amt <= 0){ BTCBOX.toast((window.I18N?I18N.t('enterSubAmt'):''),'warning'); return; }
       btn.disabled = true; btn.textContent = '提交中...';
       postEarn({action:'subscribe', product_id:pid, amount:amt}).then(function(j){
         btn.disabled = false; btn.textContent = '立即申购';
-        if(j.ok){ BTCBOX.toast('申购成功，已加入持仓','success'); loadHoldings(); }
+        if(j.ok){ BTCBOX.toast((window.I18N?I18N.t('subOk'):''),'success'); loadHoldings(); }
         else { BTCBOX.toast(j.msg||'申购失败', j._notfound?'info':'error'); }
       });
     });

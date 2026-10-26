@@ -46,10 +46,16 @@
       b.addEventListener('click', function(){
         var lang = this.getAttribute('data-lang');
         try{ localStorage.setItem('btcbox_lang', lang); }catch(e){}
-        if(window.I18N){ I18N.setLang && I18N.setLang(lang); }
+        if(window.I18N){ I18N.setLang && I18N.setLang(lang); I18N.apply && I18N.apply(); }
+        // 刷新所有data-i18n元素
+        document.querySelectorAll('[data-i18n]').forEach(function(el){
+          var k = el.getAttribute('data-i18n');
+          if(window.I18N && I18N.t){ el.textContent = I18N.t(k); }
+        });
+        BTCBOX.toast(I18N.t('langSwitched')||'Language switched', 'success');
         document.querySelectorAll('.lang-btn').forEach(function(x){ x.style.background='var(--bg-2)'; x.style.color='var(--text-2)'; x.style.border='1px solid var(--border)'; });
         this.style.background='var(--gold-soft)'; this.style.color='var(--gold)'; this.style.border='1px solid var(--gold)';
-        BTCBOX.toast('语言已切换', 'success');
+        BTCBOX.toast((window.I18N?I18N.t('langSwitched'):''), 'success');
         setTimeout(function(){ location.reload(); }, 500);
       });
     });
@@ -106,7 +112,7 @@ function openPicker(title, options, key, itemEl){
 <script>
 // 未登录引导
 if(!BTCBOX.isLoggedIn()){
-  BTCBOX.toast('请先登录后查看设置', 'warning');
+  BTCBOX.toast((window.I18N?I18N.t('pleaseLoginSettings'):''), 'warning');
   setTimeout(function(){ location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname); }, 1200);
 }
 // 同步后端初始状态（2FA开关、资金密码已设标记）
@@ -134,7 +140,7 @@ function postSetting(url, payload, successMsg){
       if(j.ok){ BTCBOX.toast(successMsg, 'success'); return true; }
       BTCBOX.toast(j.msg || '操作失败', j._notfound ? 'info' : 'error');
       return false;
-    }).catch(function(){ BTCBOX.toast('网络异常，请稍后重试','error'); return false; });
+    }).catch(function(){ BTCBOX.toast((window.I18N?I18N.t('networkErr'):''),'error'); return false; });
 }
 function openPwdModal(){
   BTCBOX.modal({iconType:'info', title:'修改登录密码',
@@ -145,9 +151,9 @@ function openPwdModal(){
     confirmText:'确认修改', cancelText:'取消'}).then(function(ok){
     if(!ok) return;
     var o=document.getElementById('__oldPwd').value, n=document.getElementById('__newPwd').value, c=document.getElementById('__cfmPwd').value;
-    if(!o||!n){ BTCBOX.toast('请填写完整','warning'); return; }
-    if(n.length<6){ BTCBOX.toast('新密码至少6位','warning'); return; }
-    if(n!==c){ BTCBOX.toast('两次输入的新密码不一致','error'); return; }
+    if(!o||!n){ BTCBOX.toast((window.I18N?I18N.t('fillComplete'):''),'warning'); return; }
+    if(n.length<6){ BTCBOX.toast((window.I18N?I18N.t('newPwdMin6'):''),'warning'); return; }
+    if(n!==c){ BTCBOX.toast((window.I18N?I18N.t('newPwdMismatch'):''),'error'); return; }
     postSetting('../api/settings/password', {old_password:o, new_password:n}, '密码修改成功，请重新登录').then(function(s){
       if(s){ BTCBOX.logout(); setTimeout(function(){ location.href='login.html'; }, 1000); }
     });
@@ -161,8 +167,8 @@ function openFundPwdModal(){
     confirmText:'确认设置', cancelText:'取消'}).then(function(ok){
     if(!ok) return;
     var p=document.getElementById('__fundPwd').value, p2=document.getElementById('__fundPwd2').value;
-    if(!/^\d{6}$/.test(p)){ BTCBOX.toast('资金密码须为6位数字','warning'); return; }
-    if(p!==p2){ BTCBOX.toast('两次输入不一致','error'); return; }
+    if(!/^\d{6}$/.test(p)){ BTCBOX.toast((window.I18N?I18N.t('fundPwdRule'):''),'warning'); return; }
+    if(p!==p2){ BTCBOX.toast((window.I18N?I18N.t('pwdMismatch2'):''),'error'); return; }
     postSetting('../api/settings/fundpwd', {fund_password:p}, '资金密码设置成功');
   });
 }
@@ -181,7 +187,7 @@ function open2faEnableModal(){
         confirmText:'确认启用', cancelText:'取消'}).then(function(ok){
         if(!ok) return;
         var code=(document.getElementById('__2faCode')||{}).value||'';
-        if(!/^\d{6}$/.test(code)){ BTCBOX.toast('请输入6位验证码','warning'); return; }
+        if(!/^\d{6}$/.test(code)){ BTCBOX.toast((window.I18N?I18N.t('please6code'):''),'warning'); return; }
         postSetting('../api/2fa/confirm', {code:code}, '双重验证已启用').then(function(s){
           if(s){ twofaEnabled=true; document.getElementById('sw2fa').classList.add('on'); }
         });
@@ -195,7 +201,7 @@ function open2faDisableModal(){
     confirmText:'确认关闭', cancelText:'取消'}).then(function(ok){
     if(!ok){ document.getElementById('sw2fa').classList.add('on'); return; }
     var code=document.getElementById('__2faOffCode').value;
-    if(!/^\d{6}$/.test(code)){ BTCBOX.toast('请输入6位验证码','warning'); document.getElementById('sw2fa').classList.add('on'); return; }
+    if(!/^\d{6}$/.test(code)){ BTCBOX.toast((window.I18N?I18N.t('please6code'):''),'warning'); document.getElementById('sw2fa').classList.add('on'); return; }
     postSetting('../api/2fa/disable', {code:code}, '双重验证已关闭').then(function(s){
       if(!s){ document.getElementById('sw2fa').classList.add('on'); } else { twofaEnabled=false; }
     });

@@ -242,7 +242,7 @@
   }
   function requireLogin(callback){
     if(isLoggedIn()){ callback && callback(); return true; }
-    toast('请先登录后操作', 'warning');
+    toast((window.I18N?I18N.t('pleaseLogin'):''), 'warning');
     var inPages = location.pathname.indexOf('/pages/') > -1;
     var loginPath = inPages ? 'login.html' : 'pages/login.html';
     var backUrl = location.pathname + (location.search || '');
@@ -678,7 +678,7 @@
       box.innerHTML = '<div class="dn-user"><div class="dn-avatar">'+initial+'</div><span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+email+'</span></div>' +
         '<button class="dn-logout" id="dnLogout">退出</button>';
       var btn = document.getElementById('dnLogout');
-      if(btn) btn.addEventListener('click', function(){ logout(); toast('已退出登录', 'info'); setTimeout(function(){ location.href = base + 'index.html'; }, 600); });
+      if(btn) btn.addEventListener('click', function(){ logout(); toast((window.I18N?I18N.t('logoutOk2'):''), 'info'); setTimeout(function(){ location.href = base + 'index.html'; }, 600); });
     } else {
       box.innerHTML = '<a class="dn-btn dn-btn-outline" href="'+base+'pages/login.html">'+(global.I18N?I18N.t('login'):'登录')+'</a>' +
         '<a class="dn-btn dn-btn-gold" href="'+base+'pages/login.html?mode=register">'+(global.I18N?I18N.t('register'):'注册')+'</a>';

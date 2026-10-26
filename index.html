@@ -16,9 +16,7 @@
   <!-- ===== 顶部品牌栏 ===== -->
   <header class="header">
     <a class="brand" href="index.html">
-      <div class="brand-mark" style="background:transparent;border-radius:0;box-shadow:none;padding:0;">
-        <span style="font-size:24px;font-weight:800;background:linear-gradient(135deg,#2eae70,#1e7a4c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">B</span>
-      </div>
+      <div class="brand-mark" style="background:transparent;border-radius:0;box-shadow:none;padding:0;"><img src="assets/img/logo-transparent.png" alt="BTCBOX" style="width:100%;height:100%;object-fit:contain;display:block;"></div>
       <div>
         <div class="brand-name">BTC<b>BOX</b></div>
         <div class="brand-sub" data-i18n="brandSub">Digital Asset Exchange</div>
@@ -217,7 +215,7 @@
       else { BTCBOX.toast(res.msg || '下单失败', 'error'); }
     }).catch(function(){
       btn.classList.remove('is-loading');
-      BTCBOX.toast('网络错误，请重试', 'error');
+      BTCBOX.toast((window.I18N?I18N.t('networkError'):''), 'error');
     });
   });
 })();

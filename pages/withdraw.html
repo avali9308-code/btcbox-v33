@@ -100,6 +100,30 @@
           document.getElementById('wdCoinUnit').textContent = curCoin;
           document.getElementById('wdFeeText').textContent = FEE.toFixed(curCoin==='USDT'?2:4);
           document.getElementById('wdFeeCoin').textContent = curCoin;
+          // 切换币种时联动更新网络选项
+          var NETS = {
+            USDT:['TRC20','ERC20','BEP20'],
+            BTC:['Bitcoin'],
+            ETH:['ERC20'],
+            SOL:['Solana'],
+            BNB:['BEP20'],
+            USDC:['TRC20','ERC20','BEP20']
+          };
+          var nets = NETS[curCoin] || ['TRC20'];
+          curNet = nets[0];
+          var netHtml = nets.map(function(n){
+            return '<button class="net-btn '+(n===curNet?'active':'')+'" data-net="'+n+'" style="flex:1;padding:10px;border-radius:10px;background:'+(n===curNet?'var(--gold-soft)':'var(--bg-2)')+';border:1px solid '+(n===curNet?'var(--gold)':'var(--border)')+';color:'+(n===curNet?'var(--gold)':'var(--text-2)')+';font-size:12px;font-weight:700;">'+n+'</button>';
+          }).join('');
+          var netWrap = document.querySelector('.net-wrap');
+          if(netWrap) netWrap.innerHTML = netHtml;
+          // 重新绑定网络按钮事件
+          document.querySelectorAll('.net-btn').forEach(function(b){
+            b.addEventListener('click', function(){
+              document.querySelectorAll('.net-btn').forEach(function(x){x.style.background='var(--bg-2)';x.style.border='1px solid var(--border)';x.style.color='var(--text-2)';x.classList.remove('active');});
+              this.style.background='var(--gold-soft)';this.style.border='1px solid var(--gold)';this.style.color='var(--gold)';this.classList.add('active');
+              curNet = this.getAttribute('data-net');
+            });
+          });
           // 重新加载对应币种余额
           fetch('/api/account', {credentials:'include'}).then(function(r){return r.json();}).then(function(j){
             if(j.ok && j.balances && j.balances[curCoin]){
@@ -126,7 +150,7 @@
             curNet = nets[0];
             bindNetBtns();
           }
-          BTCBOX.toast('已切换到 '+curCoin, 'info');
+          BTCBOX.toast((I18N.t('switchedTo')||'Switched to')+' '+curCoin, 'info');
           var overlay = document.querySelector('.modal-overlay');
           if(overlay){ overlay.classList.remove('show'); setTimeout(function(){ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300); }
         });
@@ -150,7 +174,7 @@
         this.style.color = 'var(--gold)';
         this.style.fontWeight = '700';
         curNet = this.getAttribute('data-net');
-        BTCBOX.toast('已切换到 '+curNet+' 网络', 'info');
+        BTCBOX.toast((I18N.t('switchedTo')||'Switched to')+' '+curNet+' 网络', 'info');
       });
     });
   }
@@ -195,7 +219,7 @@
     .then(function(r){return r.json();})
     .then(function(j){
       if(j.ok){
-        BTCBOX.toast('提现申请已提交，等待审核', 'success');
+        BTCBOX.toast((window.I18N?I18N.t('wdSubmitted'):''), 'success');
         setTimeout(function(){ location.reload(); }, 1500);
       } else {
         BTCBOX.toast(j.msg || '提交失败', 'error');
@@ -203,7 +227,7 @@
       }
     })
     .catch(function(){
-      BTCBOX.toast('网络异常，请稍后重试', 'error');
+      BTCBOX.toast((window.I18N?I18N.t('networkErr'):''), 'error');
       btn.disabled = false; btn.textContent = '确认提现';
     });
   }
@@ -211,9 +235,9 @@
     if(!BTCBOX.isLoggedIn()){ BTCBOX.requireLogin(); return; }
     var addr = document.getElementById('wdAddr').value.trim();
     var amt = parseFloat(document.getElementById('wdAmount').value) || 0;
-    if(!addr){ BTCBOX.toast('请输入提币地址', 'warning'); return; }
-    if(amt <= 0){ BTCBOX.toast('请输入提现数量', 'warning'); return; }
-    if(amt > avail){ BTCBOX.toast('余额不足，无法提现', 'error'); return; }
+    if(!addr){ BTCBOX.toast((window.I18N?I18N.t('enterWdAddr'):''), 'warning'); return; }
+    if(amt <= 0){ BTCBOX.toast((window.I18N?I18N.t('enterWdAmt'):''), 'warning'); return; }
+    if(amt > avail){ BTCBOX.toast((window.I18N?I18N.t('insufficientBal'):''), 'error'); return; }
     var receive = Math.max(0, amt - FEE);
     // 专业确认弹窗
     var bodyHtml = '请核对以下提币信息，确认无误后提交。<div class="modal-detail">' +
@@ -236,8 +260,8 @@
       if(!ok) return;
       var fp = (document.getElementById('__fundPwd')||{}).value || '';
       var tf = (document.getElementById('__twofa')||{}).value || '';
-      if(fundPwdSet && !/^\d{6}$/.test(fp)){ BTCBOX.toast('请输入6位数字资金密码','warning'); return; }
-      if(twofaEnabled && !/^\d{6}$/.test(tf)){ BTCBOX.toast('请输入6位2FA验证码','warning'); return; }
+      if(fundPwdSet && !/^\d{6}$/.test(fp)){ BTCBOX.toast((window.I18N?I18N.t('fundPwd6'):''),'warning'); return; }
+      if(twofaEnabled && !/^\d{6}$/.test(tf)){ BTCBOX.toast((window.I18N?I18N.t('twofa6'):''),'warning'); return; }
       submitWithdraw(addr, amt, fp, tf);
     });
   });

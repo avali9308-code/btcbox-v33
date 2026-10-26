@@ -802,6 +802,40 @@ exports.handler = async function (event, context) {
       return json({ ok: true, msg: '配置已更新', deposit_addresses: db.deposit_addresses, announcement: db.announcement });
     }
 
+
+    // GET /api/admin/withdrawals 待审核提现列表
+    if (sub === 'withdrawals' && method === 'GET') {
+      const list = [];
+      Object.values(db.users).forEach(function (u) {
+        (u.withdrawals || []).forEach(function (w) {
+          if (w.status === 'pending') list.push({ id: w.id, uid: u.uid, email: u.email, coin: w.coin, amount: w.amount, network: w.network, address: w.address, time: w.time });
+        });
+      });
+      list.sort(function (a, b) { return (a.time < b.time) ? 1 : -1; });
+      return json({ ok: true, withdrawals: list });
+    }
+    // GET /api/admin/orders 全部订单
+    if (sub === 'orders' && method === 'GET') {
+      const list = [];
+      Object.values(db.users).forEach(function (u) {
+        (u.orders || []).forEach(function (o) {
+          list.push({ id: o.id, uid: u.uid, email: u.email, symbol: o.symbol, side: o.side, type: o.type, price: o.price, amount: o.amount, status: o.status, time: o.time });
+        });
+      });
+      list.sort(function (a, b) { return (a.time < b.time) ? 1 : -1; });
+      return json({ ok: true, orders: list.slice(0, 200) });
+    }
+    // GET /api/admin/support/messages 客服消息
+    if (sub === 'support/messages' && method === 'GET') {
+      const list = [];
+      Object.values(db.users).forEach(function (u) {
+        (u.support_messages || []).filter(function(m){return m.from==='user';}).forEach(function (m) {
+          list.push({ id: m.id, uid: u.uid, email: u.email, content: m.content, time: m.time });
+        });
+      });
+      list.sort(function (a, b) { return (a.time < b.time) ? 1 : -1; });
+      return json({ ok: true, messages: list.slice(0, 100) });
+    }
     return json({ ok: false, msg: '未知管理接口: ' + sub }, 404);
   }
 

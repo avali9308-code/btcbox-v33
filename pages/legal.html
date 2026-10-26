@@ -104,5 +104,21 @@
 </script>
 
 <div id="bottomNavSlot" data-active="me"></div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+  // 三级页面底部导航
+  document.addEventListener('DOMContentLoaded', function(){
+    if(window.BTCBOX && BTCBOX.renderBottomNav){
+      var path = location.pathname;
+      var active = 'me';
+      if(path.indexOf('kyc')>-1) active='me';
+      if(path.indexOf('support')>-1) active='me';
+      if(path.indexOf('legal')>-1) active='me';
+      BTCBOX.renderBottomNav(active);
+    }
+  });
+</script>
+
 </body>
 </html>

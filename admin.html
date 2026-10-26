@@ -77,7 +77,7 @@ textarea{resize:vertical;min-height:60px}
   <div class="tabs">
     <div class="tab active" data-tab="dashboard">仪表盘</div>
     <div class="tab" data-tab="users">用户管理</div>
-    <div class="tab" data-tab="config">系统配置</div>
+    <div class="tab" data-tab="orders">订单管理</div><div class="tab" data-tab="support">客服消息</div><div class="tab" data-tab="config">系统配置</div>
   </div>
 
   <!-- 仪表盘 -->
@@ -112,6 +112,10 @@ textarea{resize:vertical;min-height:60px}
     <div id="userDetail" class="hidden"></div>
   </div>
 
+  <!-- 订单管理 -->
+  <div id="tab-orders" class="hidden"><div class="card" style="padding:0"><table><thead><tr><th>订单ID</th><th>用户</th><th>交易对</th><th>方向</th><th>价格</th><th>数量</th><th>状态</th><th>时间</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
+  <!-- 客服消息 -->
+  <div id="tab-support" class="hidden"><div class="card" style="padding:0"><table><thead><tr><th>时间</th><th>用户</th><th>消息</th><th>操作</th></tr></thead><tbody id="supportTable"></tbody></table></div></div>
   <!-- 系统配置 -->
   <div id="tab-config" class="hidden">
     <div class="card">
@@ -159,9 +163,9 @@ document.querySelectorAll('.tab').forEach(function(t){
   t.addEventListener('click',function(){
     document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
     t.classList.add('active');
-    ['dashboard','users','config'].forEach(function(k){$('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab)});
+    ['dashboard','users','orders','support','config'].forEach(function(k){$('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab)});
     if(t.dataset.tab==='users') searchUsers();
-    if(t.dataset.tab==='config') loadConfig();
+    if(t.dataset.tab==='orders') loadOrders(); if(t.dataset.tab==='support') loadSupportMsgs(); if(t.dataset.tab==='config') loadConfig();
   });
 });
 
@@ -248,6 +252,9 @@ function saveAddrs(){
   document.querySelectorAll('[data-addr]').forEach(function(i){obj[i.dataset.addr]=i.value.trim();});
   api('admin/config',{method:'POST',body:JSON.stringify({deposit_addresses:obj})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);});
 }
+function loadOrders(){api('admin/orders').then(function(j){if(!j.ok)return;$('orderTable').innerHTML=j.orders.map(function(o){var st={'open':'<span class="tag warn">未成交</span>','filled':'<span class="tag ok">已成交</span>','canceled':'<span class="tag gray">已取消</span>'}[o.status]||o.status;var sd=o.side==='buy'?'<span style="color:#0ecb81">买入</span>':'<span style="color:#f6465d">卖出</span>';return '<tr><td class="muted">'+o.id+'</td><td>'+o.email+'</td><td>'+o.symbol+'</td><td>'+sd+'</td><td>'+(o.price||'市价')+'</td><td>'+o.amount+'</td><td>'+st+'</td><td class="muted">'+o.time+'</td></tr>';}).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:#8b9ab8">暂无订单</td></tr>';});}
+function loadSupportMsgs(){api('admin/support/messages').then(function(j){if(!j.ok)return;$('supportTable').innerHTML=j.messages.map(function(m){return '<tr><td class="muted">'+m.time+'</td><td>'+m.email+'</td><td style="max-width:300px;word-break:break-all">'+m.content+'</td><td><button class="small" onclick="replySup(\''+m.uid+'\')">回复</button></td></tr>';}).join('')||'<tr><td colspan="4" style="text-align:center;padding:20px;color:#8b9ab8">暂无消息</td></tr>';});}
+function replySup(uid){var ct=prompt('回复内容：');if(!ct)return;api('admin/support/reply',{method:'POST',body:JSON.stringify({uid:uid,content:ct})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);loadSupportMsgs();});}
 function saveAnn(){
   api('admin/config',{method:'POST',body:JSON.stringify({announcement:$('announcement').value})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);});
 }

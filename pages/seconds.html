@@ -185,9 +185,9 @@
   function placeOrder(dir){
     if(!BTCBOX.isLoggedIn()){ BTCBOX.requireLogin(); return; }
     var p = getPrice();
-    if(!p){ BTCBOX.toast('行情未就绪，请稍候', 'warning'); return; }
-    if(curAmt <= 0){ BTCBOX.toast('请输入开仓金额', 'warning'); return; }
-    if(curAmt > bal){ BTCBOX.toast('余额不足，无法开仓', 'error'); return; }
+    if(!p){ BTCBOX.toast((window.I18N?I18N.t('marketNotReady'):''), 'warning'); return; }
+    if(curAmt <= 0){ BTCBOX.toast((window.I18N?I18N.t('enterOpenAmt'):''), 'warning'); return; }
+    if(curAmt > bal){ BTCBOX.toast((window.I18N?I18N.t('insufficientBal2'):''), 'error'); return; }
     bal -= curAmt;
     if(BTCBOX.account.balances && BTCBOX.account.balances.USDT){
       BTCBOX.account.balances.USDT.free = bal;

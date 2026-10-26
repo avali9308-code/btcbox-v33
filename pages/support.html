@@ -155,7 +155,7 @@
   }
   function sendMsg(text){
     if(!BTCBOX.isLoggedIn()){
-      BTCBOX.toast('请先登录后联系客服', 'warning');
+      BTCBOX.toast((window.I18N?I18N.t('pleaseLoginSupport'):''), 'warning');
       setTimeout(function(){ location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname); }, 1000);
       return;
     }
@@ -180,7 +180,7 @@
     })
     .catch(function(){
       sendBtn.disabled = false;
-      BTCBOX.toast('网络异常，请稍后重试', 'error');
+      BTCBOX.toast((window.I18N?I18N.t('networkErr'):''), 'error');
     });
   }
   sendBtn.addEventListener('click', function(){ sendMsg(input.value); });
@@ -206,5 +206,21 @@
 </script>
 
 <div id="bottomNavSlot" data-active="me"></div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+  // 三级页面底部导航
+  document.addEventListener('DOMContentLoaded', function(){
+    if(window.BTCBOX && BTCBOX.renderBottomNav){
+      var path = location.pathname;
+      var active = 'me';
+      if(path.indexOf('kyc')>-1) active='me';
+      if(path.indexOf('support')>-1) active='me';
+      if(path.indexOf('legal')>-1) active='me';
+      BTCBOX.renderBottomNav(active);
+    }
+  });
+</script>
+
 </body>
 </html>

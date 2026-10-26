@@ -412,7 +412,7 @@
       }
     }).catch(function(){
       btn.disabled = false; btn.style.opacity = '1';
-      BTCBOX.toast('网络错误，请重试', 'error');
+      BTCBOX.toast((window.I18N?I18N.t('networkError'):''), 'error');
     });
   });
 

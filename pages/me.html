@@ -171,7 +171,7 @@
       }).then(function(ok){
         if(!ok) return;
         BTCBOX.logout();
-        BTCBOX.toast('已安全退出登录', 'success');
+        BTCBOX.toast((window.I18N?I18N.t('logoutOk'):''), 'success');
         setTimeout(function(){ location.href = '../index.html'; }, 1000);
       });
     });
