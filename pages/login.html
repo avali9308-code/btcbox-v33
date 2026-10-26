@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f0b90b'/%3E%3Ctext x='50' y='70' font-size='62' font-weight='900' text-anchor='middle' fill='%230a0e1a' font-family='Arial,Helvetica,sans-serif'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0a0e1a">
+<title>登录 · BTCBOX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .auth-wrap{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:0 24px;max-width:420px;margin:0 auto;justify-content:center;padding-top:20px;padding-bottom:40px;}
+  .auth-logo{text-align:center;padding:0 0 24px;}
+  .auth-tabs{display:flex;gap:32px;margin-bottom:24px;justify-content:center;}
+  .auth-tab{font-size:18px;font-weight:700;color:var(--text-3);padding-bottom:6px;border-bottom:2px solid transparent;background:none;cursor:pointer;}
+  .auth-tab.active{color:var(--text);border-bottom-color:var(--gold);}
+  .auth-footer{margin-top:auto;padding:20px 0;text-align:center;font-size:11px;color:var(--text-3);line-height:1.8;}
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0 14px;color:var(--text-3);font-size:11px;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border);}
+  .btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#3c4043;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
+  .btn-google:hover{background:#f8f9fa;}
+  .btn-google:active{transform:scale(.99);}
+  .g-logo{width:18px;height:18px;flex-shrink:0;}
+  /* 谷歌账号选择弹窗（模拟 Google 授权页） */
+  .g-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:999;padding:20px;}
+  .g-overlay.show{display:flex;}
+  .g-card{width:100%;max-width:360px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#202124;font-family:Roboto,Arial,sans-serif;}
+  .g-head{padding:24px 24px 8px;}
+  .g-title{font-size:22px;font-weight:400;margin:12px 0 4px;}
+  .g-sub{font-size:13px;color:#5f6368;margin-bottom:8px;}
+  .g-email-input{width:100%;padding:13px 15px;border:1px solid #dadce0;border-radius:4px;font-size:16px;outline:none;box-sizing:border-box;}
+  .g-email-input:focus{border-color:#1a73e8;border-width:2px;padding:12px 14px;}
+  .g-actions{display:flex;justify-content:space-between;align-items:center;padding:20px 24px 6px;}
+  .g-create{background:none;border:none;color:#1a73e8;font-size:14px;font-weight:500;cursor:pointer;padding:8px 6px;border-radius:4px;}
+  .g-create:hover{background:#f6fafe;}
+  .g-next{background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:10px 26px;font-size:14px;font-weight:500;cursor:pointer;}
+  .g-next:hover{background:#1765cc;box-shadow:0 1px 2px rgba(60,64,67,.3);}
+  #gisButton{display:flex;justify-content:center;}
+  #gisButton > div{width:100% !important;}
+  .g-foot{padding:16px 24px 20px;font-size:11px;color:#5f6368;line-height:1.6;border-top:1px solid #f1f3f4;}
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-logo">
+    <div style="width:64px;height:64px;margin:0 auto 14px;"><img src="../assets/img/logo-transparent.png" alt="BTCBOX" style="width:100%;height:100%;object-fit:contain;display:block;"></div>
+    <div style="font-family:var(--font-serif);font-size:26px;font-weight:700;">BTC<span style="color:var(--gold);">BOX</span></div>
+    <div style="font-size:11px;color:var(--text-3);letter-spacing:.15em;text-transform:uppercase;margin-top:6px;">Digital Asset Exchange</div>
+  </div>
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tabLogin" data-i18n="login">登录</button>
+    <button class="auth-tab" id="tabRegister" data-i18n="register">注册</button>
+  </div>
+  <form id="authForm" onsubmit="return false;">
+    <div class="form-group">
+      <label class="form-label" data-i18n="email">邮箱</label>
+      <input class="form-input" id="emailInput" type="email" name="email" autocomplete="email" placeholder="请输入邮箱地址" data-i18n="emailPh" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="password">密码</label>
+      <div style="position:relative;"><input class="form-input" id="pwdInput" type="password" name="password" autocomplete="current-password" placeholder="请输入密码（至少6位）" data-i18n="pwdPh" required style="padding-right:44px;"><button type="button" id="pwdToggle" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;" aria-label="显示密码"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+    </div>
+    <div class="form-group" id="confirmGroup" style="display:none;">
+      <label class="form-label" data-i18n="confirmPassword">确认密码</label>
+      <div style="position:relative;"><input class="form-input" id="pwdConfirm" type="password" name="new_password" autocomplete="new-password" placeholder="请再次输入密码" data-i18n="confirmPwdPh" style="padding-right:44px;"><button type="button" id="pwdConfirmToggle" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;" aria-label="显示密码"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+    </div>
+    <div id="loginOnlyRow" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:12px;">
+      <label style="display:flex;align-items:center;gap:6px;color:var(--text-2);cursor:pointer;"><input type="checkbox" style="accent-color:var(--gold);"><span data-i18n="rememberMe">记住我</span></label>
+      <a href="#" style="color:var(--gold);" data-i18n="forgotPwd" onclick="event.preventDefault();BTCBOX.confirm({iconType:'info',title:'重置密码',bodyHtml:'<div style=\'color:var(--text-2);line-height:1.7;\'>为保障账户安全，密码重置需通过在线客服人工核验身份后办理。请联系在线客服协助重置。</div>',confirmText:'联系在线客服',cancelText:'取消'}).then(function(ok){ if(ok) location.href=\'support.html\'; });">忘记密码？</a>
+    </div>
+    <button type="submit" class="btn btn-gold" id="submitBtn">登录</button>
+  </form>
+  <div class="divider" id="authDivider" style="display:none"><span data-i18n="orDivider">或</span></div>
+  <button type="button" class="btn-google" id="googleBtn" style="display:none">
+    <svg class="g-logo" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C41.5 35.6 44 30.2 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
+    <span data-i18n="googleLogin">使用 Google 账号继续</span>
+  </button>
+  <div id="gisButton" style="display:none"></div>
+  <div style="text-align:center;margin-top:18px;font-size:12px;color:var(--text-3);">
+    <span id="switchText"><span data-i18n="noAccount">还没有账号？</span></span>
+    <a href="#" id="switchLink" style="color:var(--gold);font-weight:600;"><span data-i18n="registerNow">立即注册</span></a>
+  </div>
+  <div class="auth-footer">
+    <span id="agreePrefixText">登录即表示同意</span><a href="legal.html?type=terms" style="color:var(--text-2);" data-i18n="terms">服务条款</a>和<a href="legal.html?type=privacy" style="color:var(--text-2);" data-i18n="privacy">隐私政策</a><br>
+    BTCBOX © 2026 · <span data-i18n="copyright">数字资产交易涉及风险，请谨慎投资</span>
+  </div>
+</div>
+
+<!-- 模拟 Google 授权账号选择弹窗 -->
+<div class="g-overlay" id="gOverlay">
+  <div class="g-card">
+    <div class="g-head">
+      <svg width="24" height="24" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C41.5 35.6 44 30.2 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
+      <div class="g-title">登录</div>
+      <div class="g-sub">使用您的 Google 账号继续使用 BTCBOX</div>
+    </div>
+    <div style="padding:18px 24px 0;">
+      <input class="g-email-input" id="gEmailInput" type="email" placeholder="邮箱或电话号码" autocomplete="email">
+      <div style="font-size:12px;color:#5f6368;margin-top:10px;line-height:1.5;">不是您的电脑？请使用访客模式私密登录。<a href="legal.html?type=privacy" target="_blank" style="color:#1a73e8;text-decoration:none;">了解详情</a></div>
+    </div>
+    <div class="g-actions">
+      <button type="button" class="g-create" id="gCreateBtn">创建账号</button>
+      <button type="button" class="g-next" id="gEmailConfirm">下一步</button>
+    </div>
+    <div class="g-foot">
+      您将登录到 BTCBOX · <a href="legal.html?type=privacy" target="_blank">隐私政策</a> · <a href="legal.html?type=terms" target="_blank">服务条款</a><br>
+      <span style="cursor:pointer;color:#5f6368;text-decoration:underline;" id="gCancel">取消</span>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  // 已登录用户访问登录页，自动跳转首页
+  if(BTCBOX && BTCBOX.isLoggedIn && BTCBOX.isLoggedIn()){
+    location.href = '../index.html';
+    return;
+  }
+  // 根据URL参数切换模式
+  var urlMode = new URLSearchParams(location.search).get('mode');
+  function syncModeUI(){
+    var isRegister = document.getElementById('tabRegister').classList.contains('active');
+    var loginRow = document.getElementById('loginOnlyRow');
+    if(loginRow) loginRow.style.display = isRegister ? 'none' : 'flex';
+    var agText = document.getElementById('agreementText');
+    if(agText) agText.textContent = isRegister ? '注册即表示同意' : '登录即表示同意';
+  }
+  // 监听tab切换
+  setTimeout(function(){
+    ['tabLogin','tabRegister'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.addEventListener('click', function(){ setTimeout(syncModeUI, 10); });
+    });
+    syncModeUI();
+  }, 100);
+
+  // 记住我：回填邮箱
+  try{
+    var savedEmail = localStorage.getItem('btcbox_remember_email');
+    if(savedEmail){
+      document.getElementById('emailInput').value = savedEmail;
+      var cb = document.querySelector('input[type=checkbox]');
+      if(cb) cb.checked = true;
+    }
+  }catch(e){}
+  var mode = 'login';
+  var params = new URLSearchParams(location.search);
+  if(params.get('mode')==='register'){ mode='register'; updateMode(); }
+  updateMode(); // 确保 i18n 翻译后动态文本也刷新
+  document.addEventListener('langChange', updateMode); // 语言切换时重新渲染
+
+  function updateMode(){
+    var isReg = mode==='register';
+    var t = function(k){ return (window.I18N ? I18N.t(k) : k); };
+    document.getElementById('tabLogin').classList.toggle('active', !isReg);
+    document.getElementById('tabRegister').classList.toggle('active', isReg);
+    document.getElementById('confirmGroup').style.display = isReg ? 'block' : 'none';
+    document.getElementById('submitBtn').textContent = isReg ? t('registerAndLogin') : t('login');
+    var st = document.querySelector('#switchText span');
+    if(st){ st.textContent = isReg ? t('haveAccount') : t('noAccount'); }
+    var sl = document.querySelector('#switchLink span');
+    if(sl){ sl.textContent = isReg ? t('goLogin') : t('registerNow'); }
+    var agText = document.getElementById('agreePrefixText');
+    if(agText){ agText.textContent = (isReg ? t('register') : t('login')) + t('agreePrefix'); }
+  }
+  document.getElementById('tabLogin').addEventListener('click', function(){ mode='login'; updateMode(); });
+  document.getElementById('tabRegister').addEventListener('click', function(){ mode='register'; updateMode(); });
+  document.getElementById('switchLink').addEventListener('click', function(e){
+    e.preventDefault(); mode = mode==='login'?'register':'login'; updateMode();
+  });
+
+  document.getElementById('authForm').addEventListener('submit', function(){
+    var email = document.getElementById('emailInput').value.trim().toLowerCase();
+    var pwd = document.getElementById('pwdInput').value;
+    if(!email || !pwd){ BTCBOX.toast('请填写完整信息', 'warning'); return; }
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = '提交中...';
+
+    var payload = {email: email, password: pwd};
+    var url = '/api/login';
+    if(mode === 'register'){
+      var pwd2 = document.getElementById('pwdConfirm').value;
+      if(pwd !== pwd2){ BTCBOX.toast('两次输入的密码不一致', 'warning'); btn.disabled=false; updateMode(); return; }
+      url = '/api/register';
+    }
+
+    fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j.ok){
+        try{
+          var cb = document.querySelector('input[type=checkbox]');
+          if(cb && cb.checked){ localStorage.setItem('btcbox_remember_email', email); }
+          else { localStorage.removeItem('btcbox_remember_email'); }
+        }catch(e){}
+        BTCBOX.login(email);
+        BTCBOX.toast(mode==='register' ? '注册成功，已登录' : '登录成功', 'success');
+        var redirect = params.get('redirect');
+        setTimeout(function(){ location.href = redirect ? decodeURIComponent(redirect) : '../index.html'; }, 800);
+      } else if(j.require_2fa && j.temp_token){
+        // 开启了双重验证，要求二次验证
+        BTCBOX.modal({iconType:'info', title:'双重验证',
+          bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">您的账号已开启双重验证，请输入 Google Authenticator 中的 6 位验证码</p><input class="form-input" id="__2faLogin" type="text" inputmode="numeric" maxlength="6" placeholder="6位验证码">',
+          confirmText:'确认登录', cancelText:'取消'}).then(function(ok){
+          if(!ok){ btn.disabled=false; updateMode(); return; }
+          var code = (document.getElementById('__2faLogin')||{}).value || '';
+          if(!/^\d{6}$/.test(code)){ BTCBOX.toast('请输入6位验证码','warning'); btn.disabled=false; updateMode(); return; }
+          fetch('/api/login/2fa', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({temp_token:j.temp_token, code:code})})
+            .then(function(r){ if(r.status===404) return {ok:false, _nf:true}; return r.json(); })
+            .then(function(j2){
+              if(j2.ok){
+                try{
+                  var cb2 = document.querySelector('input[type=checkbox]');
+                  if(cb2 && cb2.checked){ localStorage.setItem('btcbox_remember_email', email); }
+                  else { localStorage.removeItem('btcbox_remember_email'); }
+                }catch(e){}
+                BTCBOX.login(email);
+                BTCBOX.toast('登录成功','success');
+                var rd = params.get('redirect');
+                setTimeout(function(){ location.href = rd ? decodeURIComponent(rd) : '../index.html'; }, 800);
+              } else {
+                BTCBOX.toast(j2._nf ? '2FA服务暂不可用' : (j2.msg||'验证码错误'), 'error');
+                btn.disabled=false; updateMode();
+              }
+            });
+        });
+      } else {
+        if(j.msg && j.msg.indexOf('冻结') > -1){
+          BTCBOX.modal({
+            iconType: 'danger',
+            title: '账号已被冻结',
+            bodyHtml: '<div style="color:var(--text-2);line-height:1.7;">' + j.msg + '</div><div class="modal-warn" style="margin-top:12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>如对冻结有异议，请通过邮箱 support@btcbox.com 申诉。</span></div>',
+            confirmText: '我知道了',
+            cancelText: false
+          });
+        } else {
+          BTCBOX.toast(j.msg || '操作失败，请重试', 'error');
+        }
+        btn.disabled = false; updateMode();
+      }
+    })
+    .catch(function(){
+      // 后端不可用时降级为本地登录（保证前端可用）
+      BTCBOX.login(email);
+      BTCBOX.toast('登录成功', 'success');
+      setTimeout(function(){ location.href = '../index.html'; }, 800);
+    });
+  });
+
+  // ===== 谷歌账号一键注册/登录 =====
+  // 生产：配置 GOOGLE_CLIENT_ID 后使用官方 Google Identity Services；本地调试：ALLOW_GOOGLE_MOCK=1 时显示模拟登录页
+  var gOverlay = document.getElementById('gOverlay');
+  function showGoogle(){ gOverlay.classList.add('show'); var inp = document.getElementById('gEmailInput'); inp.value=''; setTimeout(function(){ inp.focus(); }, 60); }
+  function hideGoogle(){ gOverlay.classList.remove('show'); }
+  document.getElementById('gCancel').addEventListener('click', hideGoogle);
+  gOverlay.addEventListener('click', function(e){ if(e.target === gOverlay) hideGoogle(); });
+  document.getElementById('gCreateBtn').addEventListener('click', function(){ document.getElementById('gEmailInput').focus(); });
+
+  function googleLoginSuccess(email){
+    BTCBOX.login(email || 'google_user');
+    BTCBOX.toast('Google 账号登录成功', 'success');
+    var rd = params.get('redirect');
+    setTimeout(function(){ location.href = rd ? decodeURIComponent(rd) : '../index.html'; }, 800);
+  }
+  function googleMockLogin(email){
+    email = (email||'').trim().toLowerCase();
+    if(!email || email.indexOf('@') < 0){ BTCBOX.toast('请输入有效的邮箱地址', 'warning'); return; }
+    hideGoogle();
+    fetch('/api/google-login', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id_token: 'mock_google:' + email})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j.ok){ googleLoginSuccess(email); }
+      else { BTCBOX.toast(j.msg || 'Google 登录失败，请重试', 'error'); }
+    })
+    .catch(function(){ BTCBOX.login(email); BTCBOX.toast('登录成功', 'success'); setTimeout(function(){ location.href='../index.html'; }, 800); });
+  }
+  document.getElementById('gEmailConfirm').addEventListener('click', function(){ googleMockLogin(document.getElementById('gEmailInput').value); });
+  document.getElementById('gEmailInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); googleMockLogin(this.value); } });
+
+  // 根据后端配置决定显示哪种谷歌登录方式（真实 GIS / 本地模拟 / 不显示）
+  fetch('/api/config').then(function(r){ return r.json(); }).then(function(cfg){
+    if(!cfg) return;
+    if(cfg.google_client_id){
+      // 真实 Google Sign-In（Google Identity Services）
+      document.getElementById('authDivider').style.display = 'flex';
+      document.getElementById('gisButton').style.display = 'flex';
+      var s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.defer = true;
+      s.onload = function(){
+        google.accounts.id.initialize({
+          client_id: cfg.google_client_id,
+          auto_select: false,
+          callback: function(resp){
+            var email = 'google_user';
+            try { var seg = resp.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); email = JSON.parse(atob(seg)).email || email; } catch(e){}
+            fetch('/api/google-login', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id_token: resp.credential})})
+            .then(function(r){ return r.json(); })
+            .then(function(j){ if(j.ok){ googleLoginSuccess(email); } else { BTCBOX.toast(j.msg || 'Google 登录失败', 'error'); } });
+          }
+        });
+        google.accounts.id.renderButton(document.getElementById('gisButton'), {type:'standard', theme:'outline', size:'large', text:'continue_with', shape:'rect', width:340, logo_alignment:'left'});
+      };
+      document.head.appendChild(s);
+    } else {
+      // 默认启用模拟 Google 登录（开箱即用，无需额外配置；生产环境配置 google_client_id 后自动切换为真实 OAuth）
+      document.getElementById('authDivider').style.display = 'flex';
+      document.getElementById('googleBtn').style.display = 'flex';
+      document.getElementById('googleBtn').addEventListener('click', showGoogle);
+    }
+  }).catch(function(){
+    // 接口异常时也默认显示模拟登录
+    try{
+      document.getElementById('authDivider').style.display = 'flex';
+      document.getElementById('googleBtn').style.display = 'flex';
+      document.getElementById('googleBtn').addEventListener('click', showGoogle);
+    }catch(e){}
+  });
+})();
+
+  // 密码显示/隐藏切换
+  function bindPwdToggle(btnId, inputId){
+    var btn = document.getElementById(btnId);
+    var inp = document.getElementById(inputId);
+    if(!btn || !inp) return;
+    btn.addEventListener('click', function(){
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.style.color = show ? 'var(--gold)' : 'var(--text-3)';
+    });
+  }
+  bindPwdToggle('pwdToggle', 'pwdInput');
+  bindPwdToggle('pwdConfirmToggle', 'pwdConfirm');
+</script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f0b90b'/%3E%3Ctext x='50' y='70' font-size='62' font-weight='900' text-anchor='middle' fill='%230a0e1a' font-family='Arial,Helvetica,sans-serif'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0a0e1a">
+<title>秒合约 · BTCBOX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .sc-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+  .sc-price{text-align:center;padding:14px 16px 8px;}
+  .sc-price .p{font-size:30px;font-weight:800;letter-spacing:-.02em;}
+  .sc-price .chg{font-size:13px;font-weight:700;margin-top:2px;}
+  .dur-row{display:flex;gap:8px;padding:8px 16px;overflow-x:auto;scrollbar-width:none;}
+  .dur-row::-webkit-scrollbar{display:none;}
+  .dur-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;background:var(--bg-2);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-2);cursor:pointer;}
+  .dur-chip.active{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+  .amt-row{display:flex;gap:8px;padding:8px 16px;}
+  .amt-chip{flex:1;padding:8px 0;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;text-align:center;}
+  .amt-chip.active{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+  .amt-input-wrap{padding:4px 16px 12px;}
+  .dir-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;}
+  .dir-btn{height:64px;border-radius:14px;font-size:16px;font-weight:800;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .dir-btn .rate{font-size:10px;font-weight:600;opacity:.85;}
+  .dir-btn.up{background:linear-gradient(135deg,var(--up),#0bb570);color:#0a0e1a;}
+  .dir-btn.down{background:linear-gradient(135deg,var(--down),#d63a50);color:#fff;}
+  .dir-btn:active{transform:scale(.97);}
+  .pos-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .pos-card .pos-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .pos-card .pos-dir{font-size:13px;font-weight:800;padding:2px 8px;border-radius:6px;}
+  .pos-card .pos-dir.up{background:var(--up-soft);color:var(--up);}
+  .pos-card .pos-dir.down{background:var(--down-soft);color:var(--down);}
+  .pos-card .countdown{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .pos-card .pos-mid{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);}
+  .pos-card .pos-mid b{color:var(--text);font-weight:600;}
+  .progress-bar{height:3px;background:var(--bg-2);border-radius:2px;margin-top:8px;overflow:hidden;}
+  .progress-bar .fill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s linear;}
+  .hist-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;}
+  .hist-row:last-child{border-bottom:none;}
+  .hist-win{color:var(--up);font-weight:700;}
+  .hist-lose{color:var(--down);font-weight:700;}
+  .sc-balance{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--text-3);}
+  .sc-balance b{color:var(--text);font-weight:700;}
+</style>
+</head>
+<body>
+<div class="app seconds-app">
+  <div class="sc-top">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a class="header-back" href="javascript:history.back()" onclick="if(history.length<=1){location.href='../index.html';return false;}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+      <span class="page-title" style="font-size:16px;">秒合约</span>
+    </div>
+    <select id="pairSelect" style="background:var(--bg-2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;outline:none;">
+      <option value="BTC">BTC/USDT</option>
+      <option value="ETH">ETH/USDT</option>
+      <option value="SOL">SOL/USDT</option>
+      <option value="BNB">BNB/USDT</option>
+    </select>
+  </div>
+
+  <div class="sc-price">
+    <div class="p num text-up" id="scPrice">--</div>
+    <div class="chg num" id="scChg">--</div>
+  </div>
+
+  <div class="sc-trade-col">
+  <div class="sc-balance">
+    <span>可用余额 <b class="num" id="scBal">--</b> USDT</span>
+    <span>收益率 <b style="color:var(--gold);">85%</b></span>
+  </div>
+
+  <div class="dur-row" id="durRow">
+    <button class="dur-chip active" data-sec="30">30秒</button>
+    <button class="dur-chip" data-sec="60">60秒</button>
+    <button class="dur-chip" data-sec="300">5分钟</button>
+    <button class="dur-chip" data-sec="900">15分钟</button>
+  </div>
+
+  <div class="amt-row" id="amtRow">
+    <button class="amt-chip" data-amt="10">10</button>
+    <button class="amt-chip active" data-amt="50">50</button>
+    <button class="amt-chip" data-amt="100">100</button>
+    <button class="amt-chip" data-amt="500">500</button>
+  </div>
+  <div class="amt-input-wrap">
+    <div class="mini-input" style="padding:10px 14px;">
+      <label style="font-size:11px;color:var(--text-3);">投入金额</label>
+      <div style="display:flex;align-items:center;">
+        <input id="amtInput" type="number" step="any" inputmode="decimal" class="num" value="50" style="background:none;border:none;color:var(--text);font-size:16px;font-weight:700;text-align:right;max-width:100px;flex:1;min-width:0;outline:none;">
+        <span style="font-size:11px;color:var(--text-3);margin-left:4px;">USDT</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dir-row">
+    <button class="dir-btn up" id="btnUp">
+      <span>▲ 看涨</span>
+      <span class="rate">盈利 +85%</span>
+    </button>
+    <button class="dir-btn down" id="btnDown">
+      <span>▼ 看跌</span>
+      <span class="rate">盈利 +85%</span>
+    </button>
+  </div>
+
+  </div><!-- /.sc-trade-col -->
+  <div class="sc-history-col">
+  <div class="section-head" style="padding:0 16px;"><span class="section-title">进行中</span><span id="posCount" style="font-size:11px;color:var(--text-3);"></span></div>
+  <div class="content" id="posList" style="padding-top:8px;">
+    <div class="empty-state" id="posEmpty">暂无持仓，下单后在此显示</div>
+  </div>
+
+  <div class="section-head" style="padding:12px 16px 0;"><span class="section-title">最近结算</span></div>
+  <div class="content" id="histList" style="padding-top:4px;">
+    <div class="empty-state" style="padding:16px 0;font-size:11px;">暂无记录</div>
+  </div>
+
+  </div><!-- /.sc-history-col -->
+  <div style="height:20px;"></div>
+  <div id="bottomNavSlot" data-active="trade"></div>
+</div>
+
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var RATE = 0.85;
+  var curSym = 'BTC';
+  var curSec = 30;
+  var curAmt = 50;
+  var positions = []; // {id, sym, dir, openPrice, amount, endTime, duration}
+  var history = [];
+  var bal = 0;
+
+  function getPrice(){
+    var m = BTCBOX.markets.find(function(x){return x.sym===curSym;});
+    return m ? m.price : 0;
+  }
+  function updatePrice(){
+    var p = getPrice();
+    var m = BTCBOX.markets.find(function(x){return x.sym===curSym;});
+    var el = document.getElementById('scPrice');
+    el.textContent = p ? BTCBOX.fmtPrice(p) : '--';
+    if(m){
+      var u = m.chg >= 0;
+      el.className = 'p num ' + (u?'text-up':'text-down');
+      document.getElementById('scChg').textContent = (u?'+':'') + m.chg.toFixed(2) + '%';
+      document.getElementById('scChg').style.color = u ? 'var(--up)' : 'var(--down)';
+    }
+  }
+  function updateBal(){
+    if(BTCBOX.isLoggedIn() && BTCBOX.account.balances && BTCBOX.account.balances.USDT){
+      bal = parseFloat(BTCBOX.account.balances.USDT.free) || 0;
+    }
+    document.getElementById('scBal').textContent = BTCBOX.fmtNum(bal);
+  }
+  updateBal();
+  document.addEventListener('accountChange', updateBal);
+  document.addEventListener('marketTick', updatePrice);
+  document.getElementById('pairSelect').addEventListener('change', function(){ curSym = this.value; updatePrice(); });
+
+  document.querySelectorAll('#durRow .dur-chip').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('#durRow .dur-chip').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active'); curSec = parseInt(b.dataset.sec);
+    });
+  });
+  document.querySelectorAll('#amtRow .amt-chip').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('#amtRow .amt-chip').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active'); curAmt = parseInt(b.dataset.amt);
+      document.getElementById('amtInput').value = curAmt;
+    });
+  });
+  document.getElementById('amtInput').addEventListener('input', function(){
+    curAmt = parseFloat(this.value) || 0;
+    document.querySelectorAll('#amtRow .amt-chip').forEach(function(x){x.classList.remove('active');});
+  });
+
+  function placeOrder(dir){
+    if(!BTCBOX.isLoggedIn()){ BTCBOX.requireLogin(); return; }
+    var p = getPrice();
+    if(!p){ BTCBOX.toast('行情未就绪，请稍候', 'warning'); return; }
+    if(curAmt <= 0){ BTCBOX.toast('请输入开仓金额', 'warning'); return; }
+    if(curAmt > bal){ BTCBOX.toast('余额不足，无法开仓', 'error'); return; }
+    bal -= curAmt;
+    if(BTCBOX.account.balances && BTCBOX.account.balances.USDT){
+      BTCBOX.account.balances.USDT.free = bal;
+      BTCBOX.saveAccount && BTCBOX.saveAccount(BTCBOX.account);
+    }
+    updateBal();
+    var pos = {
+      id: Date.now(), sym: curSym, dir: dir,
+      openPrice: p, amount: curAmt, duration: curSec,
+      endTime: Date.now() + curSec*1000
+    };
+    positions.push(pos);
+    renderPositions();
+    BTCBOX.toast((dir==='up'?'看涨':'看跌')+' '+curAmt+' USDT 已开仓', 'success');
+  }
+  document.getElementById('btnUp').addEventListener('click', function(){ placeOrder('up'); });
+  document.getElementById('btnDown').addEventListener('click', function(){ placeOrder('down'); });
+
+  function settle(pos){
+    var p = getPrice();
+    var win = (pos.dir==='up' && p > pos.openPrice) || (pos.dir==='down' && p < pos.openPrice);
+    var tie = p === pos.openPrice;
+    var pnl = tie ? 0 : (win ? pos.amount*RATE : -pos.amount);
+    if(win || tie){ bal += pos.amount + pnl; }
+    if(BTCBOX.account.balances && BTCBOX.account.balances.USDT){
+      BTCBOX.account.balances.USDT.free = bal;
+    }
+    updateBal();
+    history.unshift({sym:pos.sym, dir:pos.dir, open:pos.openPrice, close:p, amount:pos.amount, pnl:pnl, time:new Date().toLocaleTimeString()});
+    if(history.length > 20) history.pop();
+    renderHistory();
+  }
+
+  function renderPositions(){
+    var list = document.getElementById('posList');
+    document.getElementById('posCount').textContent = positions.length ? '('+positions.length+')' : '';
+    if(!positions.length){
+      list.innerHTML = '<div class="empty-state" id="posEmpty">暂无持仓，下单后在此显示</div>';
+      return;
+    }
+    list.innerHTML = positions.map(function(pos, i){
+      var left = Math.max(0, pos.endTime - Date.now());
+      var mm = Math.floor(left/60000), ss = Math.floor((left%60000)/1000);
+      var timeStr = mm>0 ? mm+':'+(ss<10?'0':'')+ss : ss+'s';
+      var pct = (1 - left/(pos.duration*1000))*100;
+      return '<div class="pos-card" data-idx="'+i+'">'+
+        '<div class="pos-top"><span class="pos-dir '+(pos.dir==='up'?'up':'down')+'">'+(pos.dir==='up'?'▲ 看涨':'▼ 看跌')+' '+pos.sym+'</span>'+
+        '<span class="countdown num" style="color:var(--gold);">'+timeStr+'</span></div>'+
+        '<div class="pos-mid"><span>开仓价 <b class="num">'+BTCBOX.fmtPrice(pos.openPrice)+'</b></span>'+
+        '<span>投入 <b class="num">'+pos.amount+'</b> USDT</span>'+
+        '<span>时长 <b>'+(pos.duration>=60?pos.duration/60+'分':pos.duration+'秒')+'</b></span></div>'+
+        '<div class="progress-bar"><div class="fill" style="width:'+pct+'%;"></div></div></div>';
+    }).join('');
+  }
+
+  function renderHistory(){
+    var list = document.getElementById('histList');
+    if(!history.length){ list.innerHTML = '<div class="empty-state" style="padding:16px 0;font-size:11px;">暂无记录</div>'; return; }
+    list.innerHTML = history.map(function(h){
+      var cls = h.pnl > 0 ? 'hist-win' : (h.pnl < 0 ? 'hist-lose' : '');
+      var sign = h.pnl > 0 ? '+' : '';
+      return '<div class="hist-row"><span style="font-weight:700;">'+h.sym+' · '+(h.dir==='up'?'看涨':'看跌')+'</span>'+
+        '<span style="color:var(--text-3);font-size:11px;">'+h.open+' → '+BTCBOX.fmtPrice(h.close)+'</span>'+
+        '<span class="'+cls+' num">'+sign+h.pnl.toFixed(2)+'</span></div>';
+    }).join('');
+  }
+
+  setInterval(function(){
+    var now = Date.now();
+    var settled = positions.filter(function(p){ return p.endTime <= now; });
+    settled.forEach(settle);
+    positions = positions.filter(function(p){ return p.endTime > now; });
+    if(settled.length) renderPositions();
+    else if(positions.length){
+      // 只更新倒计时数字
+      document.querySelectorAll('.pos-card').forEach(function(card, i){
+        var pos = positions[i]; if(!pos) return;
+        var left = Math.max(0, pos.endTime - now);
+        var mm = Math.floor(left/60000), ss = Math.floor((left%60000)/1000);
+        var cd = card.querySelector('.countdown'); if(cd) cd.textContent = mm>0 ? mm+':'+(ss<10?'0':'')+ss : ss+'s';
+        var fill = card.querySelector('.fill'); if(fill) fill.style.width = ((1-left/(pos.duration*1000))*100)+'%';
+      });
+    }
+  }, 500);
+
+  updatePrice();
+  renderPositions();
+  renderHistory();
+})();
+</script>
+</body>
+</html>

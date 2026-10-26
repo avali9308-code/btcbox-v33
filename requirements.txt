@@ -1,0 +1,1 @@
+# BTCBOX 零依赖，仅使用 Python 3 标准库

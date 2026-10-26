@@ -1,0 +1,37 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+  command = "rm -f data.json actions.log && rm -rf uploads node_modules"
+
+# 后台入口
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+# 所有 /api/* 请求转发到统一的 Serverless Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# 禁止直接访问敏感数据文件（兜底）
+[[redirects]]
+  from = "/data.json"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/actions.log"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f0b90b'/%3E%3Ctext x='50' y='70' font-size='62' font-weight='900' text-anchor='middle' fill='%230a0e1a' font-family='Arial,Helvetica,sans-serif'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0a0e1a">
+<title>身份认证 · BTCBOX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a class="header-back" href="javascript:history.back()" onclick="if(history.length<=1){location.href='../index.html';return false;}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+      <span class="page-title">身份认证</span>
+    </div>
+  </header>
+  <div class="content">
+    <div class="card-glow" style="margin-top:14px;text-align:center;" id="kycTopCard">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--text-3);margin:0 auto 12px;" id="kycTopIcon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div style="font-size:17px;font-weight:800;" id="kycTopTitle">身份认证</div>
+      <div style="font-size:12px;color:var(--text-2);margin-top:6px;" id="kycTopSub">提交身份信息，审核通过后提升提币额度</div>
+      <button class="btn btn-sm btn-gold" id="kycSubmitBtn" style="margin-top:14px;">填写认证资料</button>
+    </div>
+    <div class="card" id="kycForm" style="margin-top:14px;padding:16px;display:none;">
+      <div class="section-head" style="margin-top:0;"><span class="section-title">提交高级认证</span></div>
+      <div class="form-group">
+        <label class="form-label">真实姓名</label>
+        <input class="form-input" id="kycName" type="text" placeholder="请输入与证件一致的姓名">
+      </div>
+      <div class="form-group">
+        <label class="form-label">证件类型</label>
+        <select class="form-input" id="kycIdType" style="appearance:none;">
+          <option value="id_card">身份证</option>
+          <option value="passport">护照</option>
+          <option value="driver">驾驶证</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">证件号码</label>
+        <input class="form-input" id="kycIdNumber" type="text" placeholder="请输入证件号码">
+      </div>
+      <div class="form-group">
+        <label class="form-label">证件正面照</label>
+        <input class="form-input" id="kycDocFront" type="file" accept="image/*" style="padding:8px;">
+        <div id="kycFrontPreview" style="margin-top:8px;display:none;"><img style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border);"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">证件反面照</label>
+        <input class="form-input" id="kycDocBack" type="file" accept="image/*" style="padding:8px;">
+        <div id="kycBackPreview" style="margin-top:8px;display:none;"><img style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border);"></div>
+      </div>
+      <button class="btn btn-gold" id="kycFormSubmit" style="width:100%;margin-top:8px;">提交审核</button>
+      <p style="font-size:11px;color:var(--text-3);margin-top:10px;line-height:1.6;">提交后审核预计 1-3 个工作日完成，审核期间可正常交易，提币额度将在认证通过后提升。</p>
+    </div>
+
+    <div class="section-head"><span class="section-title">认证等级</span></div>
+    <div class="card" style="padding:0 16px;">
+      <div class="list-item">
+        <div class="list-item-left">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;font-weight:800;font-size:14px;" id="lv1Icon">1</div>
+          <div><div class="list-item-title">基础认证</div><div class="list-item-sub" id="lv1Sub">邮箱验证</div></div>
+        </div>
+        <span class="status-pill status-cancel" id="lv1Status">未完成</span>
+      </div>
+      <div class="list-item">
+        <div class="list-item-left">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;font-weight:800;font-size:14px;" id="lv2Icon">2</div>
+          <div><div class="list-item-title">高级认证</div><div class="list-item-sub" id="lv2Sub">身份证信息提交审核</div></div>
+        </div>
+        <span class="status-pill status-cancel" id="lv2Status">未完成</span>
+      </div>
+      <div class="list-item" style="border-bottom:none;">
+        <div class="list-item-left">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(139,154,184,.1);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;font-weight:800;font-size:14px;">3</div>
+          <div><div class="list-item-title">机构认证</div><div class="list-item-sub">企业用户专属 · 可选</div></div>
+        </div>
+        <span class="status-pill status-cancel">未开通</span>
+      </div>
+    </div>
+
+    <div class="section-head"><span class="section-title">额度说明</span></div>
+    <div class="card" style="font-size:12px;color:var(--text-2);line-height:2;">
+      <div style="display:flex;justify-content:space-between;"><span>24h 充值额度</span><span class="num" style="color:var(--text);font-weight:600;" id="quotaDeposit">以认证等级为准</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>24h 提币额度</span><span class="num" style="color:var(--text);font-weight:600;" id="quotaWithdraw">以认证等级为准</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>法币交易</span><span style="color:var(--text);font-weight:600;" id="quotaFiat">完成高级认证后开通</span></div>
+    </div>
+  </div>
+  <div style="height:20px;"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  if(!BTCBOX.isLoggedIn()){
+    document.querySelector('.content').innerHTML =
+      '<div class="guest-card" style="margin-top:40px;"><div style="width:56px;height:56px;border-radius:50%;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);margin:0 auto 14px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>'+
+      '<div class="guest-title">登录后查看认证状态</div><p class="guest-sub">完成身份认证可提升充值与提币额度，保障账户安全</p>'+
+      '<div class="guest-actions"><a class="btn btn-sm btn-gold" href="login.html?redirect='+encodeURIComponent(location.pathname)+'">去登录</a></div></div>';
+    return;
+  }
+  fetch('../api/account', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j.ok) return;
+      var st = (j.kyc && j.kyc.status) || 'unsubmitted';
+      var title = document.getElementById('kycTopTitle');
+      var sub = document.getElementById('kycTopSub');
+      var icon = document.getElementById('kycTopIcon');
+      var btn = document.getElementById('kycSubmitBtn');
+      if(st === 'approved'){
+        title.textContent = '高级认证已通过';
+        sub.textContent = '您已解锁全部交易与提币额度';
+      } else if(st === 'pending'){
+        title.textContent = '认证审核中';
+        sub.textContent = '您的认证资料正在审核，预计 1-3 个工作日完成';
+        icon.style.background = 'rgba(240,185,11,.15)'; icon.style.color = '#f0b90b';
+        icon.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+      } else {
+        title.textContent = '尚未完成身份认证';
+        sub.textContent = '提交身份信息，审核通过后提升提币额度';
+        icon.style.background = 'var(--bg-2)'; icon.style.color = 'var(--text-3)';
+        icon.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>';
+        document.getElementById('kycForm').style.display = 'block';
+      }
+      // 同步更新认证等级列表与额度说明
+      function setLv(id, done, subText){
+        var icon = document.getElementById(id+'Icon');
+        var sub = document.getElementById(id+'Sub');
+        var status = document.getElementById(id+'Status');
+        if(!icon || !sub || !status) return;
+        if(done){
+          icon.style.background = 'var(--up-soft)'; icon.style.color = 'var(--up)';
+          status.textContent = '已通过'; status.className = 'status-pill status-done';
+        } else {
+          icon.style.background = 'var(--bg-2)'; icon.style.color = 'var(--text-3)';
+          status.textContent = '未完成'; status.className = 'status-pill status-cancel';
+        }
+        if(subText) sub.textContent = subText;
+      }
+      setLv('lv1', true, '邮箱验证 · 已完成');
+      if(st === 'approved'){
+        setLv('lv2', true, '身份证信息提交审核 · 已完成');
+        document.getElementById('quotaDeposit').textContent = '无限制';
+        document.getElementById('quotaWithdraw').textContent = '以风控评估为准';
+        document.getElementById('quotaFiat').textContent = '已开通';
+        if(btn) btn.style.display = 'none';
+      } else if(st === 'pending'){
+        setLv('lv2', false, '审核中，请耐心等待');
+        var lv2s = document.getElementById('lv2Status');
+        if(lv2s){ lv2s.textContent = '审核中'; lv2s.style.background = 'rgba(240,185,11,.15)'; lv2s.style.color = '#f0b90b'; }
+        document.getElementById('quotaDeposit').textContent = '基础额度';
+        document.getElementById('quotaWithdraw').textContent = '基础额度';
+        document.getElementById('quotaFiat').textContent = '审核通过后开通';
+        if(btn) btn.style.display = 'none';
+      } else {
+        setLv('lv2', false, '身份证信息提交审核 · 未提交');
+        document.getElementById('quotaDeposit').textContent = '基础额度';
+        document.getElementById('quotaWithdraw').textContent = '完成认证后提升';
+        document.getElementById('quotaFiat').textContent = '完成高级认证后开通';
+        if(btn) btn.style.display = 'inline-block';
+      }
+    }).catch(function(){});
+  // 证件照本地预览
+  function bindPreview(inputId, previewId){
+    var inp = document.getElementById(inputId);
+    if(!inp) return;
+    inp.addEventListener('change', function(){
+      var f = inp.files && inp.files[0];
+      if(!f) return;
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var box = document.getElementById(previewId);
+        box.style.display = 'block';
+        box.querySelector('img').src = e.target.result;
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+  bindPreview('kycDocFront','kycFrontPreview');
+  bindPreview('kycDocBack','kycBackPreview');
+  document.getElementById('kycSubmitBtn').addEventListener('click', function(){
+    var form = document.getElementById('kycForm');
+    form.style.display = 'block';
+    setTimeout(function(){ form.scrollIntoView({behavior:'smooth', block:'center'}); }, 50);
+  });
+  document.getElementById('kycFormSubmit').addEventListener('click', function(){
+    var name = document.getElementById('kycName').value.trim();
+    var idType = document.getElementById('kycIdType').value;
+    var idNum = document.getElementById('kycIdNumber').value.trim();
+    var front = document.getElementById('kycDocFront').files[0];
+    var back = document.getElementById('kycDocBack').files[0];
+    if(!name){ BTCBOX.toast('请输入真实姓名','warning'); return; }
+    if(!idNum){ BTCBOX.toast('请输入证件号码','warning'); return; }
+    if(!front || !back){ BTCBOX.toast('请上传证件正反面照片','warning'); return; }
+    var btn = this; btn.disabled = true; btn.textContent = '提交中...';
+    function readFile(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(e){res(e.target.result);}; r.readAsDataURL(f); }); }
+    Promise.all([readFile(front), readFile(back)]).then(function(docs){
+      return fetch('../api/kyc', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:name, id_type:idType, id_number:idNum, docs:docs})});
+    }).then(function(r){ return r.json(); }).then(function(j){
+      btn.disabled = false; btn.textContent = '提交审核';
+      if(j.ok){
+        BTCBOX.toast('认证资料已提交，等待审核','success');
+        setTimeout(function(){ location.reload(); }, 1200);
+      } else {
+        BTCBOX.toast(j.msg || '提交失败','error');
+      }
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = '提交审核';
+      BTCBOX.toast('网络异常，请稍后重试','error');
+    });
+  });
+})();
+</script>
+
+<div id="bottomNavSlot" data-active="me"></div>
+</body>
+</html>

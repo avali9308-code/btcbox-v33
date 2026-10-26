@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f0b90b'/%3E%3Ctext x='50' y='70' font-size='62' font-weight='900' text-anchor='middle' fill='%230a0e1a' font-family='Arial,Helvetica,sans-serif'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0a0e1a">
+<title>设置 · BTCBOX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a class="header-back" href="me.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+      <span class="page-title">设置</span>
+    </div>
+  </header>
+  <div class="content">
+    <div class="section-head"><span class="section-title">安全设置</span></div>
+    <div class="card" style="padding:0 16px;">
+      <div class="list-item"><div class="list-item-left"><div class="list-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><div class="list-item-title">登录密码</div><div class="list-item-sub">定期修改更安全</div></div></div><svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+      <div class="list-item"><div class="list-item-left"><div class="list-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="list-item-title">资金密码</div><div class="list-item-sub">提币与资金操作验证</div></div></div><svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+      <div class="list-item" style="border-bottom:none;"><div class="list-item-left"><div class="list-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg></div><div><div class="list-item-title">双重验证 (2FA)</div><div class="list-item-sub">Google Authenticator</div></div></div><div class="switch" id="sw2fa"></div></div>
+    </div>
+
+    <div class="section-head"><span class="section-title">偏好设置</span></div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="row" style="padding:14px 16px;">
+        <span class="label" style="font-size:13px;">界面语言</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="lang-btn" data-lang="zh-CN" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:12px;cursor:pointer;">简体中文</button>
+          <button class="lang-btn" data-lang="zh-TW" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:12px;cursor:pointer;">繁體中文</button>
+          <button class="lang-btn" data-lang="en" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:12px;cursor:pointer;">English</button>
+          <button class="lang-btn" data-lang="ja" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:12px;cursor:pointer;">日本語</button>
+          <button class="lang-btn" data-lang="ko" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:12px;cursor:pointer;">한국어</button>
+          <button class="lang-btn" data-lang="vi" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:12px;cursor:pointer;">Tiếng Việt</button>
+        </div>
+      </div>
+    </div>
+    <script>
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        var lang = this.getAttribute('data-lang');
+        try{ localStorage.setItem('btcbox_lang', lang); }catch(e){}
+        if(window.I18N){ I18N.setLang && I18N.setLang(lang); }
+        document.querySelectorAll('.lang-btn').forEach(function(x){ x.style.background='var(--bg-2)'; x.style.color='var(--text-2)'; x.style.border='1px solid var(--border)'; });
+        this.style.background='var(--gold-soft)'; this.style.color='var(--gold)'; this.style.border='1px solid var(--gold)';
+        BTCBOX.toast('语言已切换', 'success');
+        setTimeout(function(){ location.reload(); }, 500);
+      });
+    });
+    </script>
+    <div class="card" style="padding:0 16px;">
+      <div class="list-item"><div class="list-item-left"><div class="list-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><div class="list-item-title">语言</div><div class="list-item-sub">简体中文</div></div></div><svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+      <div class="list-item"><div class="list-item-left"><div class="list-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="list-item-title">计价货币</div><div class="list-item-sub">USD (USDT)</div></div></div><svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+    </div>
+
+    <div class="section-head"><span class="section-title">关于</span></div>
+    <div class="card" style="padding:0 16px;">
+      <a class="list-item" href="legal.html?type=terms"><div class="list-item-left"><div class="list-item-title" style="font-size:14px;">服务条款</div></div><svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+      <a class="list-item" href="legal.html?type=privacy"><div class="list-item-left"><div class="list-item-title" style="font-size:14px;">隐私政策</div></div><svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+      <div class="list-item" style="border-bottom:none;"><div class="list-item-left"><div class="list-item-title" style="font-size:14px;">版本</div></div><span style="font-size:12px;color:var(--text-3);">v3.0.0</span></div>
+    </div>
+  </div>
+  <div style="height:20px;"></div>
+<div id="bottomNavSlot" data-active="me"></div>
+</div>
+<script src="../assets/js/market-api.js">
+// 通用选择器：语言 / 计价货币
+function openPicker(title, options, key, itemEl){
+  var saved = localStorage.getItem('btcbox_'+key) || options[0];
+  var body = '<div style="display:flex;flex-direction:column;gap:6px;">' + options.map(function(o){
+    var checked = o===saved ? '✓ ' : '';
+    return '<button class="btn btn-sm '+(o===saved?'btn-gold':'btn-outline')+'" data-val="'+o+'" style="width:100%;text-align:left;padding:10px 14px;">'+checked+o+'</button>';
+  }).join('') + '</div>';
+  BTCBOX.modal({iconType:'info', title:'选择'+title, bodyHtml:body, confirmText:'取消', cancelText:false});
+  setTimeout(function(){
+    document.querySelectorAll('.modal-body button[data-val]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var val = this.getAttribute('data-val');
+        localStorage.setItem('btcbox_'+key, val);
+        var sub = itemEl.querySelector('.list-item-sub');
+        if(sub) sub.textContent = val;
+        BTCBOX.toast(title+'已切换为 '+val, 'success');
+        // 语言切换：映射到I18N代码并应用翻译
+        if(key==='lang' && window.I18N){
+          var langMap={'简体中文':'zh-CN','繁體中文':'zh-TW','English':'en','日本語':'ja','한국어':'ko','Tiếng Việt':'vi'};
+          var code=langMap[val]||'en';
+          I18N.setLang(code);
+          setTimeout(function(){ location.reload(); }, 600);
+        }
+        // 关闭弹窗
+        var overlay = document.querySelector('.modal-overlay');
+        if(overlay){ overlay.classList.remove('show'); setTimeout(function(){ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300); }
+      });
+    });
+  }, 50);
+}
+</script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+// 未登录引导
+if(!BTCBOX.isLoggedIn()){
+  BTCBOX.toast('请先登录后查看设置', 'warning');
+  setTimeout(function(){ location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname); }, 1200);
+}
+// 同步后端初始状态（2FA开关、资金密码已设标记）
+var twofaEnabled = false, fundPwdSet = false;
+fetch('../api/account', {credentials:'include'}).then(function(r){return r.json();}).then(function(j){
+  if(!j.ok) return;
+  twofaEnabled = !!j.twofa_enabled;
+  fundPwdSet = !!j.fund_pwd_set;
+  document.getElementById('sw2fa').classList.toggle('on', twofaEnabled);
+  var fpSub = document.querySelector('.list-item-title'); // 资金密码 sub
+  var items = document.querySelectorAll('.list-item');
+  items.forEach(function(it){
+    var t = (it.querySelector('.list-item-title')||{}).textContent||'';
+    if(t.indexOf('资金密码')>-1){
+      var sub = it.querySelector('.list-item-sub');
+      if(sub) sub.textContent = fundPwdSet ? '已设置，点击可修改' : '未设置，提币前请先设置';
+    }
+  });
+}).catch(function(){});
+// 通用：调用设置类接口，404 友好提示
+function postSetting(url, payload, successMsg){
+  return fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(function(r){ if(r.status===404) return {ok:false, _notfound:true, msg:'服务暂不可用，请稍后重试'}; return r.json(); })
+    .then(function(j){
+      if(j.ok){ BTCBOX.toast(successMsg, 'success'); return true; }
+      BTCBOX.toast(j.msg || '操作失败', j._notfound ? 'info' : 'error');
+      return false;
+    }).catch(function(){ BTCBOX.toast('网络异常，请稍后重试','error'); return false; });
+}
+function openPwdModal(){
+  BTCBOX.modal({iconType:'info', title:'修改登录密码',
+    bodyHtml:'<div style="display:flex;flex-direction:column;gap:10px;">'+
+      '<input class="form-input" id="__oldPwd" type="password" placeholder="当前登录密码">'+
+      '<input class="form-input" id="__newPwd" type="password" placeholder="新密码（至少6位）">'+
+      '<input class="form-input" id="__cfmPwd" type="password" placeholder="确认新密码"></div>',
+    confirmText:'确认修改', cancelText:'取消'}).then(function(ok){
+    if(!ok) return;
+    var o=document.getElementById('__oldPwd').value, n=document.getElementById('__newPwd').value, c=document.getElementById('__cfmPwd').value;
+    if(!o||!n){ BTCBOX.toast('请填写完整','warning'); return; }
+    if(n.length<6){ BTCBOX.toast('新密码至少6位','warning'); return; }
+    if(n!==c){ BTCBOX.toast('两次输入的新密码不一致','error'); return; }
+    postSetting('../api/settings/password', {old_password:o, new_password:n}, '密码修改成功，请重新登录').then(function(s){
+      if(s){ BTCBOX.logout(); setTimeout(function(){ location.href='login.html'; }, 1000); }
+    });
+  });
+}
+function openFundPwdModal(){
+  BTCBOX.modal({iconType:'info', title:'设置资金密码',
+    bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">资金密码用于提现等敏感操作，须为 6 位数字</p>'+
+      '<input class="form-input" id="__fundPwd" type="password" inputmode="numeric" maxlength="6" placeholder="6位数字资金密码">'+
+      '<input class="form-input" id="__fundPwd2" type="password" inputmode="numeric" maxlength="6" placeholder="再次输入" style="margin-top:10px;">',
+    confirmText:'确认设置', cancelText:'取消'}).then(function(ok){
+    if(!ok) return;
+    var p=document.getElementById('__fundPwd').value, p2=document.getElementById('__fundPwd2').value;
+    if(!/^\d{6}$/.test(p)){ BTCBOX.toast('资金密码须为6位数字','warning'); return; }
+    if(p!==p2){ BTCBOX.toast('两次输入不一致','error'); return; }
+    postSetting('../api/settings/fundpwd', {fund_password:p}, '资金密码设置成功');
+  });
+}
+function open2faEnableModal(){
+  // 先调后端获取真实密钥
+  fetch('../api/2fa/enable', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:'{}'})
+    .then(function(r){ if(r.status===404) return {ok:false, _nf:true}; return r.json(); })
+    .then(function(j){
+      var secret = (j && j.secret) || '';
+      BTCBOX.modal({iconType:'info', title:'启用双重验证 (2FA)',
+        bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">请使用 Google Authenticator 扫描二维码或手动输入密钥</p>'+
+          (secret ? '<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data='+encodeURIComponent('otpauth://totp/BTCBOX?secret='+secret)+'" style="width:140px;height:140px;margin:0 auto 10px;background:#fff;border-radius:8px;display:block;" alt="2FA QR">' : '<div style="width:140px;height:140px;margin:0 auto 10px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0a0e1a;font-size:11px;font-weight:700;">二维码加载中...</div>')+
+          '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;"><span style="font-size:12px;color:var(--gold);font-weight:700;word-break:break-all;">'+secret+'</span>'+
+          (secret ? '<button type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+secret+'\').then(function(){BTCBOX.toast(\'密钥已复制\',\'success\')})" style="padding:4px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text-2);font-size:11px;cursor:pointer;flex-shrink:0;">复制</button>' : '')+'</div>'+
+          '<input class="form-input" id="__2faCode" type="text" inputmode="numeric" maxlength="6" placeholder="输入6位验证码">',
+        confirmText:'确认启用', cancelText:'取消'}).then(function(ok){
+        if(!ok) return;
+        var code=(document.getElementById('__2faCode')||{}).value||'';
+        if(!/^\d{6}$/.test(code)){ BTCBOX.toast('请输入6位验证码','warning'); return; }
+        postSetting('../api/2fa/confirm', {code:code}, '双重验证已启用').then(function(s){
+          if(s){ twofaEnabled=true; document.getElementById('sw2fa').classList.add('on'); }
+        });
+      });
+    });
+}
+function open2faDisableModal(){
+  BTCBOX.modal({iconType:'warning', title:'关闭双重验证',
+    bodyHtml:'<p style="font-size:12px;color:var(--text-2);">关闭后账户安全性降低，确定要关闭吗？关闭需输入当前 6 位验证码。</p>'+
+      '<input class="form-input" id="__2faOffCode" type="text" inputmode="numeric" maxlength="6" placeholder="输入6位验证码" style="margin-top:10px;">',
+    confirmText:'确认关闭', cancelText:'取消'}).then(function(ok){
+    if(!ok){ document.getElementById('sw2fa').classList.add('on'); return; }
+    var code=document.getElementById('__2faOffCode').value;
+    if(!/^\d{6}$/.test(code)){ BTCBOX.toast('请输入6位验证码','warning'); document.getElementById('sw2fa').classList.add('on'); return; }
+    postSetting('../api/2fa/disable', {code:code}, '双重验证已关闭').then(function(s){
+      if(!s){ document.getElementById('sw2fa').classList.add('on'); } else { twofaEnabled=false; }
+    });
+  });
+}
+document.querySelectorAll('.list-item').forEach(function(item){
+  if(item.querySelector('.switch')) return;
+  if(item.tagName === 'A') return;
+  item.style.cursor = 'pointer';
+  item.addEventListener('click', function(){
+    var title = (item.querySelector('.list-item-title')||{}).textContent || '';
+    if(title.indexOf('登录密码')>-1){ openPwdModal(); return; }
+    if(title.indexOf('资金密码')>-1){ openFundPwdModal(); return; }
+    if(title.indexOf('语言')>-1){
+      if(window.I18N){
+        var langs=[{k:'zh-CN',v:'简体中文'},{k:'zh-TW',v:'繁體中文'},{k:'en',v:'English'},{k:'ja',v:'日本語'},{k:'ko',v:'한국어'},{k:'vi',v:'Tiếng Việt'}];
+        var cur=I18N.getLang();
+        var opts=langs.map(function(l){return l.v;});
+        var curVal=(langs.find(function(l){return l.k===cur;})||{}).v||opts[0];
+        var sub=item.querySelector('.list-item-sub'); if(sub) sub.textContent=curVal;
+        openPicker('Language', opts, 'lang', item);
+        // 监听选择后应用翻译
+        var origToast = BTCBOX.toast;
+      } else { openPicker('语言', ['简体中文','English','日本語','한국어'], 'lang', item); }
+      return;
+    }
+    if(title.indexOf('计价货币')>-1){ openPicker('计价货币', ['USD (USDT)','CNY','EUR','JPY','HKD'], 'fiat', item); return; }
+    BTCBOX.modal({iconType:'info', title:title||'该功能', bodyHtml:'<p style="font-size:13px;line-height:1.7;color:var(--text-2);">当前版本 v3.0.0，已是最新版本。交易、充值、提现等核心功能均可正常使用。</p>', confirmText:'我知道了', cancelText:false});
+  });
+});
+document.getElementById('sw2fa').addEventListener('click', function(e){
+  e.stopPropagation();
+  var turningOn = !this.classList.contains('on');
+  this.classList.toggle('on');
+  if(turningOn){ open2faEnableModal(); }
+  else { open2faDisableModal(); }
+});
+</script>
+</body>
+</html>
