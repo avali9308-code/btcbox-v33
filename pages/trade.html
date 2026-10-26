@@ -95,7 +95,7 @@
         <div style="font-size:10px;color:var(--text-3);margin-top:1px;" id="pairFullName">Bitcoin</div>
       </div>
     </div>
-    <button id="klineBtn" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:var(--gold-soft);border:1px solid rgba(46,174,112,.45);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">
+    <button id="klineBtn" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:var(--gold-soft);border:1px solid rgba(46,174,112,.45);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:auto;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
       图表
     </button>
@@ -256,10 +256,16 @@
     BTCBOX.drawKline('kline', klineData);
   }
   if(window.MarketAPI){
-    MarketAPI.getKline(symbol).then(function(data){
-      klineData = data.map(function(d){ return [d[1], d[4], d[3], d[2], d[5]]; });
-      if(drawerOpen) drawKlineNow();
-    });
+    function refreshKline(){
+      MarketAPI.getKline(symbol).then(function(data){
+        if(data && data.length){
+          klineData = data.map(function(d){ return [d[1], d[4], d[3], d[2], d[5]]; });
+          if(drawerOpen) drawKlineNow();
+        }
+      }).catch(function(){});
+    }
+    refreshKline();
+    setInterval(refreshKline, 30000); // 每30秒刷新真实K线数据
   }
 
   var drawer = document.getElementById('klineDrawer');
@@ -284,8 +290,22 @@
     t.addEventListener('click', function(){
       document.querySelectorAll('#chartTabs .chart-tab').forEach(function(x){x.classList.remove('active');});
       t.classList.add('active');
-      klineData = BTCBOX.genKline(60);
-      setTimeout(drawKlineNow, 50);
+      // 切换周期时拉取对应真实K线，失败则用模拟兜底
+      if(window.MarketAPI){
+        var interval = t.getAttribute('data-interval') || '15m';
+        MarketAPI.getKline(symbol, interval).then(function(data){
+          if(data && data.length){
+            klineData = data.map(function(d){ return [d[1], d[4], d[3], d[2], d[5]]; });
+            drawKlineNow();
+          } else {
+            klineData = BTCBOX.genKline(60);
+            drawKlineNow();
+          }
+        }).catch(function(){ klineData = BTCBOX.genKline(60); drawKlineNow(); });
+      } else {
+        klineData = BTCBOX.genKline(60);
+        drawKlineNow();
+      }
     });
   });
 
@@ -480,6 +500,13 @@
     var c = BTCBOX.markets.find(function(m){return m.sym===coin.sym;});
     if(!c) return;
     initPrice = c.price;
+    // K线动态更新：最新价更新最后一根蜡烛
+    if(typeof klineData!=='undefined' && klineData && klineData.length>0){
+      var lastK=klineData[klineData.length-1]; lastK[1]=c.price;
+      if(c.price>lastK[2]) lastK[2]=c.price;
+      if(c.price<lastK[3]) lastK[3]=c.price;
+      if(drawerOpen) requestAnimationFrame(drawKlineNow);
+    }
     document.getElementById('curPrice').textContent = BTCBOX.fmtPrice(c.price);
     document.getElementById('midPrice').textContent = BTCBOX.fmtPrice(c.price);
     document.getElementById('midCny').textContent = '≈ $' + BTCBOX.fmtNum(c.price, 2);
