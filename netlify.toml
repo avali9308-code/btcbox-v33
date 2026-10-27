@@ -1,7 +1,7 @@
 [build]
+  command = "rm -f data.json actions.log && rm -rf uploads"
   publish = "."
   functions = "netlify/functions"
-  command = "rm -f data.json actions.log && rm -rf uploads node_modules"
 
 # 后台入口
 [[redirects]]
