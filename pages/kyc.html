@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_22">身份认证 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div style="display:flex;align-items:center;gap:10px;">
+<a class="header-back" href="javascript:history.back()" onclick="if(history.length&lt;=1){location.href='../index.html';return false;}"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="m15 18-6-6 6-6"></path></svg></a>
+<span class="page-title"><span data-i18n="r131_23">身份认证</span></span>
+</div>
+</header>
+<div class="content">
+<div class="card-glow" id="kycTopCard" style="margin-top:14px;text-align:center;">
+<div id="kycTopIcon" style="width:56px;height:56px;border-radius:50%;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--text-3);margin:0 auto 12px;">
+<svg fill="none" height="28" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="28"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+</div>
+<div id="kycTopTitle" style="font-size:17px;font-weight:800;"><span data-i18n="r131_23">身份认证</span></div>
+<div id="kycTopSub" style="font-size:12px;color:var(--text-2);margin-top:6px;"><span data-i18n="r131_24">提交身份信息，审核通过后提升提币额度</span></div>
+<button class="btn btn-sm btn-gold" id="kycSubmitBtn" style="margin-top:14px;"><span data-i18n="r131_25">去认证</span></button>
+<div id="kycLockedNotice" style="display:none;font-size:12px;color:var(--text-2);margin-top:12px;"><span data-i18n="r131_26">认证资料已锁定</span></div>
+</div>
+<div class="card" id="kycReadonlyDetails" style="margin-top:14px;padding:16px;display:none;">
+<div class="section-head" style="margin-top:0;"><span class="section-title"><span data-i18n="r131_27">认证资料</span></span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;"><span style="color:var(--text-2);"><span data-i18n="r131_28">真实姓名</span></span><span id="kycReadonlyName" style="font-weight:600;text-align:right;word-break:break-word;"></span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;"><span style="color:var(--text-2);"><span data-i18n="r131_29">证件类型</span></span><span id="kycReadonlyType" style="font-weight:600;text-align:right;"></span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;"><span style="color:var(--text-2);"><span data-i18n="r131_30">证件号码</span></span><span id="kycReadonlyNumber" style="font-weight:600;text-align:right;word-break:break-word;"></span></div>
+<div style="font-size:12px;color:var(--text-2);margin-top:8px;"><span data-i18n="r131_26">认证资料已锁定</span></div>
+</div>
+<div class="card" id="kycForm" style="margin-top:14px;padding:16px;display:none;">
+<div class="section-head" style="margin-top:0;"><span class="section-title"><span data-i18n="r131_31">提交高级认证</span></span></div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_28">真实姓名</span></label>
+<input class="form-input" data-i18n-placeholder="r131_54" id="kycName" placeholder="请输入与证件一致的姓名" type="text"/>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_29">证件类型</span></label>
+<select class="form-input" id="kycIdType" style="appearance:none;">
+<option value="id_card"><span data-i18n="r131_32">身份证</span></option>
+<option value="passport"><span data-i18n="r131_33">护照</span></option>
+<option value="driver"><span data-i18n="r131_34">驾驶证</span></option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_30">证件号码</span></label>
+<input class="form-input" data-i18n-placeholder="r131_55" id="kycIdNumber" placeholder="请输入证件号码" type="text"/>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_35">证件正面照</span></label>
+<input accept="image/*" class="form-input" id="kycDocFront" style="padding:8px;" type="file"/>
+<div id="kycFrontPreview" style="margin-top:8px;display:none;"><img style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border);"/></div>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_36">证件反面照</span></label>
+<input accept="image/*" class="form-input" id="kycDocBack" style="padding:8px;" type="file"/>
+<div id="kycBackPreview" style="margin-top:8px;display:none;"><img style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border);"/></div>
+</div>
+<button class="btn btn-gold" id="kycFormSubmit" style="width:100%;margin-top:8px;"><span data-i18n="r131_37">提交审核</span></button>
+<p style="font-size:11px;color:var(--text-3);margin-top:10px;line-height:1.6;"><span data-i18n="r131_38">提交后审核预计 1-3 个工作日完成，审核期间可正常交易，提币额度将在认证通过后提升。</span></p>
+</div>
+<div class="section-head"><span class="section-title"><span data-i18n="r131_39">认证等级</span></span></div>
+<div class="card" style="padding:0 16px;">
+<div class="list-item">
+<div class="list-item-left">
+<div id="lv1Icon" style="width:36px;height:36px;border-radius:10px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;font-weight:800;font-size:14px;">1</div>
+<div><div class="list-item-title"><span data-i18n="r131_40">基础认证</span></div><div class="list-item-sub" id="lv1Sub"><span data-i18n="r131_41">邮箱验证</span></div></div>
+</div>
+<span class="status-pill status-cancel" id="lv1Status"><span data-i18n="r131_42">未完成</span></span>
+</div>
+<div class="list-item">
+<div class="list-item-left">
+<div id="lv2Icon" style="width:36px;height:36px;border-radius:10px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;font-weight:800;font-size:14px;">2</div>
+<div><div class="list-item-title"><span data-i18n="r131_43">高级认证</span></div><div class="list-item-sub" id="lv2Sub"><span data-i18n="r131_44">身份证信息</span></div></div>
+</div>
+<span class="status-pill status-cancel" id="lv2Status"><span data-i18n="r131_42">未完成</span></span>
+</div>
+<div class="list-item" style="border-bottom:none;">
+<div class="list-item-left">
+<div style="width:36px;height:36px;border-radius:10px;background:rgba(139,154,184,.1);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;font-weight:800;font-size:14px;">3</div>
+<div><div class="list-item-title"><span data-i18n="r131_45">机构认证</span></div><div class="list-item-sub"><span data-i18n="r131_46">企业用户专属 · 可选</span></div></div>
+</div>
+<span class="status-pill status-cancel"><span data-i18n="r131_47">未开通</span></span>
+</div>
+</div>
+<div class="section-head"><span class="section-title"><span data-i18n="r131_48">额度说明</span></span></div>
+<div class="card" style="font-size:12px;color:var(--text-2);line-height:2;">
+<div style="display:flex;justify-content:space-between;"><span><span data-i18n="r131_49">24h 充值额度</span></span><span class="num" id="quotaDeposit" style="color:var(--text);font-weight:600;"><span data-i18n="r131_50">以认证等级为准</span></span></div>
+<div style="display:flex;justify-content:space-between;"><span><span data-i18n="r131_51">24h 提币额度</span></span><span class="num" id="quotaWithdraw" style="color:var(--text);font-weight:600;"><span data-i18n="r131_50">以认证等级为准</span></span></div>
+<div style="display:flex;justify-content:space-between;"><span><span data-i18n="r131_52">法币交易</span></span><span id="quotaFiat" style="color:var(--text);font-weight:600;"><span data-i18n="r131_53">完成高级认证后可用</span></span></div>
+</div>
+</div>
+<div style="height:20px;"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  if(!BTCBOX.isLoggedIn()){
+    document.querySelector('.content').innerHTML =
+      '<div class="guest-card" style="margin-top:40px;"><div style="width:56px;height:56px;border-radius:50%;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);margin:0 auto 14px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>'+
+      '<div class="guest-title">'+I18N.t('loginViewKyc')+'</div><p class="guest-sub">'+I18N.t('kycGuestSub')+'</p>'+
+      '<div class="guest-actions"><a class="btn btn-sm btn-gold" href="login.html?redirect='+encodeURIComponent(location.pathname)+'">'+I18N.t('loginAction')+'</a></div></div>';
+    return;
+  }
+  fetch('../api/account', {credentials:'include', cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('account_unavailable'); return r.json(); })
+    .then(function(j){
+      if(!j || !j.ok) throw new Error('account_unavailable');
+      var st = (j.kyc && j.kyc.status) || 'unsubmitted';
+      var title = document.getElementById('kycTopTitle');
+      var sub = document.getElementById('kycTopSub');
+      var icon = document.getElementById('kycTopIcon');
+      var btn = document.getElementById('kycSubmitBtn');
+      if(st === 'approved'){
+        title.textContent = I18N.t('kycVerified');
+        sub.textContent = I18N.t('kycLocked');
+        document.getElementById('kycLockedNotice').style.display = 'block';
+        document.getElementById('kycForm').style.display = 'none';
+        var readonly = document.getElementById('kycReadonlyDetails');
+        readonly.style.display = 'block';
+        document.getElementById('kycReadonlyName').textContent = (j.kyc && j.kyc.name) || '--';
+        var typeLabels = {id_card:I18N.t('kycTypeIdCard'),passport:I18N.t('kycTypePassport'),driver:I18N.t('kycTypeDriver')};
+        document.getElementById('kycReadonlyType').textContent = typeLabels[(j.kyc && j.kyc.id_type) || ''] || '--';
+        var idNumber = (j.kyc && j.kyc.id_number) || '';
+        document.getElementById('kycReadonlyNumber').textContent = idNumber ? (idNumber.length > 4 ? '••••••' + idNumber.slice(-4) : '••••') : '--';
+      } else if(st === 'pending'){
+        title.textContent = I18N.t('kycReviewing');
+        sub.textContent = I18N.t('kycReviewing');
+        document.getElementById('kycForm').style.display = 'block';
+        document.querySelectorAll('#kycForm input, #kycForm select').forEach(function(el){el.disabled=true;});
+        var submitFormBtn = document.getElementById('kycFormSubmit');
+        if(submitFormBtn){submitFormBtn.disabled=true;submitFormBtn.textContent=I18N.t('kycReviewing');}
+        icon.style.background = 'var(--warning-soft)'; icon.style.color = 'var(--warning)';
+        icon.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+      } else {
+        title.textContent = st === 'rejected' ? I18N.t('kycRejected') : I18N.t('kycNotComplete');
+        sub.textContent = st === 'rejected' ? I18N.t('kycRejected') : I18N.t('kycGuestSub');
+        icon.style.background = 'var(--bg-2)'; icon.style.color = 'var(--text-3)';
+        icon.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>';
+        document.getElementById('kycForm').style.display = 'block';
+      }
+      // 同步更新认证等级列表与额度说明
+      function setLv(id, done, subText){
+        var icon = document.getElementById(id+'Icon');
+        var sub = document.getElementById(id+'Sub');
+        var status = document.getElementById(id+'Status');
+        if(!icon || !sub || !status) return;
+        if(done){
+          icon.style.background = 'var(--up-soft)'; icon.style.color = 'var(--up)';
+          status.textContent = I18N.t('kycApproved'); status.className = 'status-pill status-done';
+        } else {
+          icon.style.background = 'var(--bg-2)'; icon.style.color = 'var(--text-3)';
+          status.textContent = I18N.t('kycNotComplete'); status.className = 'status-pill status-cancel';
+        }
+        if(subText) sub.textContent = subText;
+      }
+      setLv('lv1', true, I18N.t('kycLevel1Done'));
+      if(st === 'approved'){
+        document.querySelectorAll('#kycForm input, #kycForm select, #kycFormSubmit').forEach(function(el){el.disabled=true;});
+        setLv('lv2', true, I18N.t('kycVerified'));
+        document.getElementById('quotaDeposit').textContent = I18N.t('unlimited');
+        document.getElementById('quotaWithdraw').textContent = I18N.t('riskBasedLimit');
+        document.getElementById('quotaFiat').textContent = I18N.t('enabled');
+        if(btn) btn.style.display = 'none';
+      } else if(st === 'pending'){
+        setLv('lv2', false, I18N.t('kycReviewPending'));
+        var lv2s = document.getElementById('lv2Status');
+        if(lv2s){ lv2s.textContent = I18N.t('kycReviewing'); lv2s.style.background = 'var(--warning-soft)'; lv2s.style.color = 'var(--warning)'; }
+        document.getElementById('quotaDeposit').textContent = I18N.t('basicLimit');
+        document.getElementById('quotaWithdraw').textContent = I18N.t('basicLimit');
+        document.getElementById('quotaFiat').textContent = I18N.t('availableAfterVerification');
+        if(btn) btn.style.display = 'none';
+      } else {
+        setLv('lv2', false, st === 'rejected' ? I18N.t('kycRejected') : I18N.t('kycNotSubmitted'));
+        document.getElementById('quotaDeposit').textContent = I18N.t('basicLimit');
+        document.getElementById('quotaWithdraw').textContent = I18N.t('improvedAfterVerification');
+        document.getElementById('quotaFiat').textContent = I18N.t('kycCompleteFiat');
+        if(btn) btn.style.display = 'inline-block';
+      }
+    }).catch(function(){
+      var title = document.getElementById('kycTopTitle');
+      var sub = document.getElementById('kycTopSub');
+      if(title) title.textContent = I18N.t('kycLoadFailed');
+      if(sub) sub.textContent = I18N.t('kycLoadFailed');
+    });
+  // 证件照本地预览
+  function bindPreview(inputId, previewId){
+    var inp = document.getElementById(inputId);
+    if(!inp) return;
+    inp.addEventListener('change', function(){
+      var f = inp.files && inp.files[0];
+      if(!f) return;
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var box = document.getElementById(previewId);
+        box.style.display = 'block';
+        box.querySelector('img').src = e.target.result;
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+  bindPreview('kycDocFront','kycFrontPreview');
+  bindPreview('kycDocBack','kycBackPreview');
+  document.getElementById('kycSubmitBtn').addEventListener('click', function(){
+    var form = document.getElementById('kycForm');
+    form.style.display = 'block';
+    setTimeout(function(){ form.scrollIntoView({behavior:'smooth', block:'center'}); }, 50);
+  });
+  document.getElementById('kycFormSubmit').addEventListener('click', function(){
+    var name = document.getElementById('kycName').value.trim();
+    var idType = document.getElementById('kycIdType').value;
+    var idNum = document.getElementById('kycIdNumber').value.trim();
+    var front = document.getElementById('kycDocFront').files[0];
+    var back = document.getElementById('kycDocBack').files[0];
+    if(!name){ BTCBOX.toast((window.I18N?I18N.t('kycRealName'):''),'warning'); return; }
+    if(!idNum){ BTCBOX.toast((window.I18N?I18N.t('kycIdNum'):''),'warning'); return; }
+    if(!front || !back){ BTCBOX.toast((window.I18N?I18N.t('kycIdPhoto'):''),'warning'); return; }
+    var btn = this; btn.disabled = true; btn.textContent = I18N.t('submitting');
+    function readFile(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(e){res(e.target.result);}; r.readAsDataURL(f); }); }
+    Promise.all([readFile(front), readFile(back)]).then(function(docs){
+      return fetch('../api/kyc', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:name, id_type:idType, id_number:idNum, docs:docs})});
+    }).then(function(r){ return r.json(); }).then(function(j){
+      btn.disabled = false; btn.textContent = I18N.t('kycSubmit');
+      if(j.ok){
+        BTCBOX.toast((window.I18N?I18N.t('kycSubmitted'):''),'success');
+        setTimeout(function(){ location.reload(); }, 1200);
+      } else {
+        BTCBOX.toast(I18N.t('submitFailed'),'error');
+      }
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = I18N.t('kycSubmit');
+      BTCBOX.toast((window.I18N?I18N.t('networkErr'):''),'error');
+    });
+  });
+})();
+</script>
+<div data-active="me" id="bottomNavSlot"></div>
+<script src="../assets/js/app.js"></script>
+<script>
+  // Re-render server-derived KYC status labels only when the selected locale actually changes.
+  var lastKycLocale = window.I18N && I18N.getLang ? I18N.getLang() : '';
+  document.addEventListener('langChange', function(e){
+    var nextLocale = (e && e.detail && e.detail.lang) || (window.I18N && I18N.getLang ? I18N.getLang() : '');
+    if(nextLocale && lastKycLocale && nextLocale !== lastKycLocale){ lastKycLocale = nextLocale; location.reload(); }
+  });
+  // 三级页面底部导航
+  document.addEventListener('DOMContentLoaded', function(){
+    if(window.BTCBOX && BTCBOX.renderBottomNav){
+      var path = location.pathname;
+      var active = 'me';
+      if(path.indexOf('kyc')>-1) active='me';
+      if(path.indexOf('support')>-1) active='me';
+      if(path.indexOf('legal')>-1) active='me';
+      BTCBOX.renderBottomNav(active);
+    }
+  });
+</script>
+</body>
+</html>

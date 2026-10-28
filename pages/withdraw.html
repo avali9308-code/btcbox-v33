@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_95">提现 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div style="display:flex;align-items:center;gap:10px;">
+<a class="header-back" href="javascript:history.back()" onclick="if(history.length&lt;=1){location.href='../index.html';return false;}"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="m15 18-6-6 6-6"></path></svg></a>
+<span class="page-title"><span data-i18n="r131_96">提现</span></span>
+</div>
+<a onclick="document.getElementById('wdRecords').scrollIntoView({behavior:'smooth',block:'center'});" style="font-size:12px;color:var(--gold);font-weight:600;cursor:pointer;"><span data-i18n="r131_97">提现记录</span></a>
+</header>
+<div class="content">
+<div class="security-bar">
+<svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="14"><path d="M12 9v4M12 17h.01"></path><circle cx="12" cy="12" r="10"></circle></svg>
+<span data-i18n="r131_98">提币前请确认地址正确，链上转账不可撤销</span>
+</div>
+<div class="card" style="margin-bottom:14px;">
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_5">币种</span></label>
+<div id="wdCoinSelect" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:12px;cursor:pointer;">
+<div class="coin-icon" style="background:#26a17b;width:32px;height:32px;font-size:10px;">USDT</div>
+<div style="flex:1;"><div id="wdCoinName" style="font-size:14px;font-weight:700;">USDT</div><div style="font-size:11px;color:var(--text-3);"><span data-i18n="r131_99">可用</span> <span class="num" id="wdAvail">--</span> USDT</div></div>
+<svg fill="none" height="16" stroke="#5a6478" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="m6 9 6 6 6-6"></path></svg>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_100">提币网络</span></label>
+<div class="net-wrap" id="netBtnsWrap" style="display:flex;gap:8px;">
+<button class="net-btn active" data-net="TRC20" style="flex:1;padding:10px;border-radius:10px;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;">TRC20</button>
+<button class="net-btn" data-net="ERC20" style="flex:1;padding:10px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);font-size:12px;font-weight:600;">ERC20</button>
+<button class="net-btn" data-net="BEP20" style="flex:1;padding:10px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);font-size:12px;font-weight:600;">BEP20</button>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_101">提币地址</span></label>
+<select class="form-input" id="savedWdAddress" style="margin-bottom:8px"><option value="manual"><span data-i18n="r131_102">'+I18N.t('manualNewAddress')+'</span></option></select>
+<input autocomplete="off" class="form-input" data-i18n-placeholder="r131_111" id="wdAddr" placeholder="I18N.t('newAddressPlaceholder')" type="text"/>
+<div id="wdAddressHint" style="font-size:11px;color:var(--text-3);margin-top:6px"></div>
+<a href="addresses.html" style="font-size:12px;color:var(--gold);display:inline-block;margin-top:8px"><span data-i18n="r131_103">去绑定地址</span></a>
+</div>
+<div class="form-group">
+<label class="form-label"><span data-i18n="r131_104">数量</span></label>
+<div class="input-wrap" style="margin-bottom:0;">
+<span class="input-label"><span data-i18n="r131_104">数量</span></span>
+<div style="display:flex;align-items:center;gap:6px;">
+<input class="num" id="wdAmount" inputmode="decimal" placeholder="0.00" step="any" style="width:140px;" type="number"/>
+<span class="input-unit" id="wdCoinUnit">USDT</span>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:8px;">
+<span><span data-i18n="r131_105">手续费：</span><span id="wdFeeText">1.00</span> <span id="wdFeeCoin">USDT</span></span>
+<a id="wdAll" style="color:var(--gold);font-weight:600;cursor:pointer;"><span data-i18n="r131_106">全部提现</span></a>
+</div>
+</div>
+</div>
+<div class="card" style="font-size:12px;color:var(--text-2);line-height:1.8;margin-bottom:16px;">
+<div style="display:flex;justify-content:space-between;padding:4px 0;"><span><span data-i18n="r131_107">到账数量</span></span><span class="num" id="wdReceive" style="color:var(--text);font-weight:600;">-- USDT</span></div>
+<div style="display:flex;justify-content:space-between;padding:4px 0;"><span><span data-i18n="r131_108">预计到账时间</span></span><span style="color:var(--text);"><span data-i18n="r131_109">约 5-10 分钟</span></span></div>
+</div>
+<button class="btn btn-gold" id="wdBtn"><span data-i18n="r131_110">确认提现</span></button>
+<div class="section-head" style="margin-top:24px;"><span class="section-title"><span data-i18n="r131_97">提现记录</span></span></div>
+<div class="card" id="wdRecords" style="padding:0 16px;">
+<div id="wdRecordsEmpty" style="padding:20px 0;text-align:center;font-size:12px;color:var(--text-3);"><span data-i18n="r131_12">加载中...</span></div>
+</div>
+</div>
+<div style="height:20px;"></div>
+<div data-active="assets" id="bottomNavSlot"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var FEES = {USDT: 1.0, BTC: 0.0001, ETH: 0.001, SOL: 0.01};
+  var curCoin = 'USDT';
+  var curNet = 'TRC20';
+  var FEE = FEES[curCoin];
+  // 币种选择器
+  document.getElementById('wdCoinSelect').addEventListener('click', function(){
+    var body = '<div style="display:flex;flex-direction:column;gap:6px;">' +
+      ['USDT','BTC','ETH','SOL'].map(function(co){
+        var checked = co===curCoin ? '✓ ' : '';
+        return '<button class="btn btn-sm '+(co===curCoin?'btn-gold':'btn-outline')+'" data-coin="'+co+'" style="width:100%;text-align:left;padding:10px 14px;">'+checked+co+'</button>';
+      }).join('') + '</div>';
+    BTCBOX.modal({iconType:'info', title:I18N.t('selectWithdrawCoin'), bodyHtml:body, confirmText:I18N.t('cancelAction'), cancelText:false});
+    setTimeout(function(){
+      document.querySelectorAll('.modal-body button[data-coin]').forEach(function(b){
+        b.addEventListener('click', function(){
+          curCoin = this.getAttribute('data-coin');
+          FEE = FEES[curCoin];
+          document.getElementById('wdCoinName').textContent = curCoin;
+          document.getElementById('wdCoinUnit').textContent = curCoin;
+          document.getElementById('wdFeeText').textContent = FEE.toFixed(curCoin==='USDT'?2:4);
+          document.getElementById('wdFeeCoin').textContent = curCoin;
+          // 切换币种时联动更新网络选项
+          var NETS = {
+            USDT:['TRC20','ERC20','BEP20'],
+            BTC:['BTC'],
+            ETH:['ERC20'],
+            SOL:['SOL']
+          };
+          var nets = NETS[curCoin] || ['TRC20'];
+          curNet = nets[0];
+          var netHtml = nets.map(function(n){
+            return '<button class="net-btn '+(n===curNet?'active':'')+'" data-net="'+n+'" style="flex:1;padding:10px;border-radius:10px;background:'+(n===curNet?'var(--gold-soft)':'var(--bg-2)')+';border:1px solid '+(n===curNet?'var(--gold)':'var(--border)')+';color:'+(n===curNet?'var(--gold)':'var(--text-2)')+';font-size:12px;font-weight:700;">'+n+'</button>';
+          }).join('');
+          var netWrap = document.querySelector('.net-wrap');
+          if(netWrap) netWrap.innerHTML = netHtml;
+          // 重新绑定网络按钮事件
+          document.querySelectorAll('.net-btn').forEach(function(b){
+            b.addEventListener('click', function(){
+              document.querySelectorAll('.net-btn').forEach(function(x){x.style.background='var(--bg-2)';x.style.border='1px solid var(--border)';x.style.color='var(--text-2)';x.classList.remove('active');});
+              this.style.background='var(--gold-soft)';this.style.border='1px solid var(--gold)';this.style.color='var(--gold)';this.classList.add('active');
+              curNet = this.getAttribute('data-net');
+            });
+          });
+          // Reset immediately: never validate a new coin against the previous coin's balance.
+          avail = 0;
+          document.getElementById('wdAvail').textContent = '0';
+          var requestedCoin = curCoin;
+          fetch('/api/account', {credentials:'include', cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+            // Ignore stale responses if the user switched coins again while this request was in flight.
+            if(requestedCoin !== curCoin) return;
+            if(j.ok && j.balances && j.balances[requestedCoin]){
+              var b = j.balances[requestedCoin];
+              avail = parseFloat(b.free !== undefined ? b.free : b.amount) || 0;
+              document.getElementById('wdAvail').textContent = BTCBOX.fmtNum(avail, requestedCoin==='USDT'?2:6);
+            }
+          }).catch(function(){});
+          recalc();
+          // 根据币种更新可用网络
+          var netMap = {
+            'USDT': ['TRC20','ERC20','BEP20'],
+            'BTC': ['BTC'],
+            'ETH': ['ERC20'],
+            'SOL': ['SOL']
+          };
+          var nets = netMap[curCoin] || ['TRC20'];
+          var netWrap = document.getElementById('netBtnsWrap');
+          if(netWrap){
+            netWrap.innerHTML = nets.map(function(n, i){
+              return '<button type="button" class="net-btn'+(i===0?' active':'')+'" data-net="'+n+'" style="'+(i===0?'background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);font-weight:700;':'background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);font-weight:600;')+'padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;margin-right:8px;margin-bottom:6px;">'+n+'</button>';
+            }).join('');
+            curNet = nets[0];
+            bindNetBtns();
+            renderSavedWithdrawAddresses();
+          }
+          BTCBOX.toast((I18N.t('switchedTo')||'Switched to')+' '+curCoin, 'info');
+          var overlay = document.querySelector('.modal-overlay');
+          if(overlay){ overlay.classList.remove('show'); setTimeout(function(){ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300); }
+        });
+      });
+    }, 50);
+  });
+  // 网络选择按钮事件绑定
+  function bindNetBtns(){
+    document.querySelectorAll('.net-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        document.querySelectorAll('.net-btn').forEach(function(x){
+          x.classList.remove('active');
+          x.style.background = 'var(--bg-2)';
+          x.style.border = '1px solid var(--border)';
+          x.style.color = 'var(--text-2)';
+          x.style.fontWeight = '600';
+        });
+        this.classList.add('active');
+        this.style.background = 'var(--gold-soft)';
+        this.style.border = '1px solid var(--gold)';
+        this.style.color = 'var(--gold)';
+        this.style.fontWeight = '700';
+        curNet = this.getAttribute('data-net');
+        renderSavedWithdrawAddresses();
+        BTCBOX.toast((I18N.t('switchedTo')||'Switched to')+' '+curNet+' 网络', 'info');
+      });
+    });
+  }
+  bindNetBtns();
+  var savedCryptoAddresses = [];
+  function loadSavedWithdrawAddresses(){
+    fetch('/api/addresses',{credentials:'include',cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
+      if(!j.ok)return;
+      savedCryptoAddresses=(j.addresses||[]).filter(function(a){return a.type==='crypto'&&!a.blocked&&!a.unbound;});
+      renderSavedWithdrawAddresses();
+    }).catch(function(){});
+  }
+  function escapeHtml(value){
+    return String(value == null ? '' : value).replace(/[&<>\"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+  function renderSavedWithdrawAddresses(){
+    var sel=document.getElementById('savedWdAddress'); if(!sel)return;
+    function maskSaved(addr){addr=String(addr||'');return !addr?'':(addr.length>14?addr.slice(0,6)+'••••••'+addr.slice(-6):addr.slice(0,3)+'•••');}
+    var matches=savedCryptoAddresses.filter(function(a){return a.coin===curCoin&&a.network===curNet;});
+    sel.innerHTML='<option value="manual">'+I18N.t('manualNewAddress')+'</option>'+matches.map(function(a){return '<option value="'+escapeHtml(String(a.id).replace(/[^a-zA-Z0-9_-]/g,''))+'">'+escapeHtml(a.note||a.coin+' '+a.network)+' · '+escapeHtml(maskSaved(a.address))+'</option>'}).join('');
+    document.getElementById('wdAddressHint').textContent=matches.length?I18N.t('boundAddressHint'):I18N.t('noBoundAddress');
+  }
+  document.getElementById('savedWdAddress').addEventListener('change',function(){
+    var a=savedCryptoAddresses.find(function(x){return x.id===this.value}.bind(this));
+    var input=document.getElementById('wdAddr');
+    if(this.value==='manual'||!a){input.value='';input.readOnly=false;input.placeholder=I18N.t('newAddressPlaceholder')}
+    else {input.value='';input.readOnly=true;input.placeholder=I18N.t('readingBoundAddress');fetch('/api/addresses/select?id='+encodeURIComponent(a.id),{credentials:'include',cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(j.ok){input.value=j.address;input.readOnly=true}else{input.value='';input.readOnly=false;input.placeholder=I18N.t('newAddressPlaceholder');BTCBOX.toast(I18N.t('operationFailedRetry'),'warning')}}).catch(function(){input.value='';input.readOnly=false;input.placeholder=I18N.t('newAddressPlaceholder');BTCBOX.toast(I18N.t('networkUnavailable'),'error')});}
+  });
+  var avail = 0;
+  var twofaEnabled = false;
+  if(BTCBOX.isLoggedIn()){
+    loadSavedWithdrawAddresses();
+    fetch('/api/account', {credentials:'include'})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(j.ok){
+          twofaEnabled = !!j.twofa_enabled;
+          if(j.balances && j.balances.USDT){
+            var b = j.balances.USDT;
+            avail = parseFloat(b.free !== undefined ? b.free : b.amount) || 0;
+            document.getElementById('wdAvail').textContent = BTCBOX.fmtNum(avail);
+          }
+        }
+      }).catch(function(){});
+  }
+  function recalc(){
+    var a = parseFloat(document.getElementById('wdAmount').value) || 0;
+    document.getElementById('wdReceive').textContent = BTCBOX.fmtNum(Math.max(0, a - FEE), curCoin==='USDT'?2:6) + ' ' + curCoin;
+  }
+  document.getElementById('wdAmount').addEventListener('input', recalc);
+  document.getElementById('wdAll').addEventListener('click', function(){
+    document.getElementById('wdAmount').value = Math.max(0, avail - FEE).toFixed(curCoin==='USDT'?2:6); recalc();
+  });
+  function maskAddr(addr){
+    if(!addr || addr.length < 12) return addr;
+    return addr.slice(0,8) + '...' + addr.slice(-6);
+  }
+  var WITHDRAW_REQUEST_STORAGE_KEY = 'btcbox_pending_withdraw_request_v1';
+  var pendingWithdrawRequestId = '';
+  try { pendingWithdrawRequestId = sessionStorage.getItem(WITHDRAW_REQUEST_STORAGE_KEY) || ''; } catch(e) {}
+  function persistWithdrawRequestId(){ try { if(pendingWithdrawRequestId) sessionStorage.setItem(WITHDRAW_REQUEST_STORAGE_KEY, pendingWithdrawRequestId); else sessionStorage.removeItem(WITHDRAW_REQUEST_STORAGE_KEY); } catch(e) {} }
+  function makeWithdrawRequestId(){
+    if(window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID().replace(/-/g, '');
+    return 'wd_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  }
+  function submitWithdraw(addr, amt, fundPassword, twofaCode){
+    var btn = document.getElementById('wdBtn');
+    btn.disabled = true; btn.textContent = I18N.t('submitting');
+    if(!pendingWithdrawRequestId) pendingWithdrawRequestId = makeWithdrawRequestId();
+    persistWithdrawRequestId();
+    fetch('/api/withdraw', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({coin:curCoin, network:curNet, address:addr, amount:amt, fund_password:fundPassword, twofa_code:twofaCode, request_id:pendingWithdrawRequestId})
+    })
+    .then(function(r){
+      // A 5xx response is ambiguous: persistence may have succeeded before the
+      // response failed. Keep the same key so retry can recover the prior result.
+      return r.json().then(function(j){ return {json:j, status:r.status}; });
+    })
+    .then(function(result){
+      var j = result.json;
+      if(j.ok){
+        pendingWithdrawRequestId = ''; persistWithdrawRequestId();
+        BTCBOX.toast(I18N.t(j.duplicate ? 'withdrawAlreadySubmitted' : 'wdSubmitted'), j.duplicate ? 'info' : 'success');
+        setTimeout(function(){ location.reload(); }, 1500);
+      } else {
+        // Only a client-side rejection proves this submission was not accepted.
+        // For 5xx, retain the idempotency key to avoid a duplicate on retry.
+        if(result.status >= 400 && result.status < 500){ pendingWithdrawRequestId = ''; persistWithdrawRequestId(); }
+        BTCBOX.toast(result.status >= 500 ? I18N.t('withdrawOutcomeUnknown') : I18N.t('submitFailed'), result.status >= 500 ? 'warning' : 'error');
+        btn.disabled = false; btn.textContent = I18N.t('confirmWithdrawal');
+      }
+    })
+    .catch(function(){
+      // Keep the same key after a timeout: the server may have saved the request already.
+      BTCBOX.toast(I18N.t('withdrawOutcomeUnknown'), 'warning');
+      btn.disabled = false; btn.textContent = I18N.t('confirmWithdrawal');
+    });
+  }
+  document.getElementById('wdBtn').addEventListener('click', function(){
+    if(!BTCBOX.isLoggedIn()){ BTCBOX.requireLogin(); return; }
+    var addr = document.getElementById('wdAddr').value.trim();
+    var amt = parseFloat(document.getElementById('wdAmount').value) || 0;
+    if(!addr){ BTCBOX.toast((window.I18N?I18N.t('enterWdAddr'):''), 'warning'); return; }
+    if(amt <= 0){ BTCBOX.toast((window.I18N?I18N.t('enterWdAmt'):''), 'warning'); return; }
+    if(amt + FEE > avail){ BTCBOX.toast(I18N.t('insufficientBalanceWithFee'), 'error'); return; }
+    var receive = Math.max(0, amt - FEE);
+    // 专业确认弹窗
+    var bodyHtml = ''+I18N.t('withdrawConfirmDetails')+'<div class="modal-detail">' +
+      '<div class="row"><span class="label">'+I18N.t('withdrawCoin')+'</span><span class="value">'+curCoin+' ('+curNet+')</span></div>' +
+      '<div class="row"><span class="label">'+I18N.t('withdrawAddress')+'</span><span class="value" style="max-width:60%;text-align:right;word-break:break-all;">' + maskAddr(addr) + '</span></div>' +
+      '<div class="row"><span class="label">'+I18N.t('withdrawAmount')+'</span><span class="value num">' + amt.toFixed(curCoin==='USDT'?2:6) + ' ' + curCoin + '</span></div>' +
+      '<div class="row"><span class="label">'+I18N.t('networkFee')+'</span><span class="value num">' + FEE.toFixed(curCoin==='USDT'?2:6) + ' ' + curCoin + '</span></div>' +
+      '<div class="row"><span class="label">'+I18N.t('actualReceived')+'</span><span class="value highlight num">' + receive.toFixed(curCoin==='USDT'?2:6) + ' ' + curCoin + '</span></div>' +
+      '</div>' +
+      '<div class="modal-warn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>'+I18N.t('withdrawIrreversible')+'</span></div>' +
+      '<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">' +
+      '<input class="form-input" id="__fundPwd" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="'+I18N.t('fundPasswordPlaceholder')+'" aria-label="'+I18N.t('fundPasswordPlaceholder')+'">' +
+      (twofaEnabled ? '<input class="form-input" id="__twofa" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="'+I18N.t('twofaRequiredPlaceholder')+'" aria-label="'+I18N.t('twofaRequiredPlaceholder')+'">' : '') +
+      '</div>';
+    BTCBOX.confirm({
+      iconType: 'danger',
+      title: I18N.t('confirmWithdrawTitle'),
+      bodyHtml: bodyHtml,
+      confirmText: I18N.t('confirmSubmit'),
+      cancelText: I18N.t('checkAgain'),
+      danger: true
+    }).then(function(ok){
+      if(!ok) return;
+      var fundPassword = (document.getElementById('__fundPwd')||{}).value || '';
+      var tf = (document.getElementById('__twofa')||{}).value || '';
+      if(!/^\d{6}$/.test(fundPassword)){ BTCBOX.toast(I18N.t('fundPassword6'),'warning'); return; }
+      if(twofaEnabled && !/^\d{6}$/.test(tf)){ BTCBOX.toast(I18N.t('twofa6'),'warning'); return; }
+      submitWithdraw(addr, amt, fundPassword, tf);
+    });
+  });
+  // 提现记录加载
+  function loadWdRecords(){
+    if(!BTCBOX.isLoggedIn()){
+      document.getElementById('wdRecords').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--text-3);">'+I18N.t('loginViewWithdrawHistory')+'</div>';
+      return;
+    }
+    fetch('/api/account', {credentials:'include', cache:'no-store'}).then(function(r){if(!r.ok) throw new Error('account_unavailable'); return r.json();}).then(function(j){
+      if(!j || !j.ok) throw new Error('account_unavailable');
+      var box = document.getElementById('wdRecords');
+      var list = Array.isArray(j.withdrawals) ? j.withdrawals : [];
+      if(!list.length){ box.innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--text-3);">'+I18N.t('noWithdrawHistory')+'</div>'; return; }
+      var ST = {pending:[I18N.t('kycReviewing'),'var(--warning)','var(--warning-soft)'], approved_pending_broadcast:[I18N.t('withdrawProcessing'),'var(--warning)','var(--warning-soft)'], broadcast:[I18N.t('withdrawProcessing'),'var(--warning)','var(--warning-soft)'], approved:[I18N.t('kycApproved'),'#0ecb81','rgba(14,203,129,.15)'], rejected:[I18N.t('orderRejected'),'#f6465d','rgba(246,70,93,.15)'], failed:[I18N.t('orderRejected'),'#f6465d','rgba(246,70,93,.15)']};
+      box.innerHTML = list.slice(0,10).map(function(w){
+        var s = ST[w.status] || [I18N.t('withdrawProcessing'),'var(--warning)','var(--warning-soft)'];
+        var rej = (w.status==='rejected' || w.status==='failed') && w.reject_reason ? '<div style="font-size:11px;color:#f6465d;margin-top:3px;">'+I18N.t('rejectReasonLabel')+I18N.translateMessage(escapeHtml(w.reject_reason))+'</div>' : '';
+        var coin = escapeHtml(w.coin||'USDT');
+        var network = escapeHtml(w.network||'TRC20');
+        var amount = escapeHtml(w.amount||0);
+        var fee = escapeHtml(w.fee||0);
+        var time = escapeHtml(w.time||'');
+        var address = w.address ? escapeHtml(String(w.address).slice(0,10)+'...'+String(w.address).slice(-6)) : '--';
+        return '<div style="padding:12px 0;border-bottom:1px solid var(--border);">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:700;font-size:13px;">'+coin+' · '+network+'</span>'+
+          '<span style="padding:2px 8px;border-radius:6px;background:'+s[2]+';color:'+s[1]+';font-size:11px;font-weight:700;">'+s[0]+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:5px;"><span class="num">'+amount+' '+coin+'</span><span>'+I18N.t('feeLabel')+' '+fee+'</span><span>'+time+'</span></div>'+
+          '<div style="font-size:11px;color:var(--text-3);margin-top:3px;word-break:break-all;">'+I18N.t('addressLabel')+' '+address+'</div>'+rej+'</div>';
+      }).join('');
+    }).catch(function(){
+      document.getElementById('wdRecords').innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--text-3);">'+I18N.t('recordsLoadFailed')+'</div>';
+    });
+  }
+  loadWdRecords();
+  document.addEventListener('langChange', function(){ loadWdRecords(); renderSavedWithdrawAddresses(); });
+})();
+</script>
+</body>
+</html>

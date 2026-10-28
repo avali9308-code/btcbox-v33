@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_239">订单 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div style="display:flex;align-items:center;gap:10px;">
+<a class="header-back" href="javascript:history.back()" onclick="if(history.length&lt;=1){location.href='../index.html';return false;}"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="m15 18-6-6 6-6"></path></svg></a>
+<span class="page-title"><span data-i18n="r131_240">订单记录</span></span>
+</div>
+</header>
+<div class="content">
+<div class="tabs" id="orderTabs">
+<button class="tab active" data-otab="orders"><span data-i18n="r131_198">订单</span></button>
+<button class="tab" data-otab="deposit"><span data-i18n="r131_210">充值记录</span></button>
+<button class="tab" data-otab="withdraw"><span data-i18n="r131_97">提现记录</span></button>
+<button class="tab" data-otab="trade"><span data-i18n="r131_241">交易历史</span></button>
+</div>
+<div id="orderList">
+<div class="empty-state">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" x2="16" y1="13" y2="13"></line><line x1="8" x2="13" y1="17" y2="17"></line></svg>
+<p><span data-i18n="r131_242">暂无委托记录</span></p>
+<a href="trade.html?symbol=BTCUSDT" style="display:inline-block;margin-top:14px;padding:10px 24px;background:var(--gold);color:#0a0e1a;border-radius:10px;font-size:13px;font-weight:700;"><span data-i18n="r131_243">去交易</span></a>
+</div>
+</div>
+</div>
+<div style="height:20px;"></div>
+<div data-active="me" id="bottomNavSlot"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var curTab = new URLSearchParams(location.search).get('tab') || 'orders';
+  var cachedAccount = null;
+  var esc = function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+  function money(v){var n=Number(v);return Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8}):'--';}
+  function empty(msg){return '<div class="empty-state"><p>'+esc(msg)+'</p></div>';}
+  function statusLabel(value){var v=String(value||'');var labels={pending:I18N.t('orderPending'),confirming:I18N.t('depositConfirming'),confirmed:I18N.t('depositConfirmed'),completed:I18N.t('depositConfirmed'),approved:I18N.t('kycApproved'),rejected:I18N.t('orderRejected'),failed:I18N.t('orderRejected'),processing:I18N.t('withdrawProcessing'),open:I18N.t('orderOpen'),filled:I18N.t('orderFilled'),cancelled:I18N.t('orderCanceled'),canceled:I18N.t('orderCanceled'),closed:I18N.t('orderClosed'),settled:I18N.t('orderSettled')};return labels[v.toLowerCase()] || I18N.t('orderStatusUnknown');}
+  function row(top,status,details){return '<div class="record-row"><div class="record-row-top"><span style="font-weight:700;font-size:13px;">'+top+'</span><span style="font-size:11px;color:var(--text-2);">'+status+'</span></div><div class="record-row-bottom">'+details+'</div></div>';}
+  function renderOrders(){
+    var listEl=document.getElementById('orderList');
+    if(!BTCBOX.isLoggedIn()) {listEl.innerHTML='<div class="empty-state"><p>'+I18N.t('loginViewOrders')+'</p><a class="btn btn-sm btn-gold" href="login.html?redirect='+encodeURIComponent(location.pathname+location.search)+'" style="display:inline-block;margin-top:10px;">'+I18N.t('loginAction')+'</a></div>';return;}
+    if(!cachedAccount){listEl.innerHTML=empty(I18N.t('loadingRecords'));return;}
+    var j=cachedAccount, items=[], html='';
+    if(curTab==='deposit'){
+      items=j.deposits||[];
+      html=items.slice().reverse().map(function(x){return row(esc(x.coin||'--')+' · '+esc(x.network||'--'),esc(statusLabel(x.status)),'<span>'+I18N.t('orderAmount')+' '+money(x.amount)+' '+esc(x.coin||'')+'</span><span>'+I18N.t('orderTime')+' '+esc(x.time||'--')+'</span><span>'+I18N.t('txHash')+' '+esc(x.txid||'--')+'</span>');}).join('');
+      if(!items.length) html=empty(I18N.t('noDepositRecords'));
+    } else if(curTab==='withdraw'){
+      items=j.withdrawals||[];
+      html=items.slice().reverse().map(function(x){var a=String(x.address||'');var masked=a.length>14?a.slice(0,6)+'••••••'+a.slice(-6):a;return row(esc(x.coin||'--')+' · '+esc(x.network||'--'),esc(statusLabel(x.status)),'<span>'+I18N.t('orderAmount')+' '+money(x.amount)+' '+esc(x.coin||'')+'</span><span>'+I18N.t('networkFee')+' '+money(x.fee)+'</span><span>'+I18N.t('withdrawAddress')+' '+esc(masked||'--')+'</span><span>'+I18N.t('orderTime')+' '+esc(x.time||'--')+'</span>');}).join('');
+      if(!items.length) html=empty(I18N.t('noWithdrawalRecords'));
+    } else {
+      items=j.orders||[];
+      if(curTab==='trade') items=items.filter(function(x){return x.status==='filled'||x.status==='closed'||x.status==='settled';});
+      else items=items.filter(function(x){return x.status!=='filled'&&x.status!=='closed'&&x.status!=='settled';});
+      html=items.slice().reverse().map(function(o){var labels={open:I18N.t('orderOpen'),filled:I18N.t('orderFilled'),cancelled:I18N.t('orderCanceled'),rejected:I18N.t('orderRejected'),closed:I18N.t('orderClosed'),settled:I18N.t('orderSettled')};return row(esc(o.symbol||'BTC/USDT')+' · '+(o.side==='buy'?I18N.t('buy'):I18N.t('sell')),esc(labels[o.status]||statusLabel(o.status)),'<span>'+money(o.qty||o.amount)+' @ '+money(o.price||0)+'</span><span>'+I18N.t('orderAmount')+' '+money(o.total||0)+' USDT</span><span>'+esc(o.time||'--')+'</span>');}).join('');
+      if(!items.length) html=empty(curTab==='trade'?I18N.t('noTradeHistory'):I18N.t('noOrders'));
+    }
+    listEl.innerHTML=html;
+  }
+  function load(){
+    if(!BTCBOX.isLoggedIn()){renderOrders();return;}
+    fetch('../api/account',{credentials:'include',cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('network');return r.json();}).then(function(j){if(!j.ok)throw new Error('account');cachedAccount=j;renderOrders();}).catch(function(){document.getElementById('orderList').innerHTML=empty(I18N.t('networkError'));});
+  }
+  document.querySelectorAll('#orderTabs .tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-otab')===curTab);t.addEventListener('click',function(){document.querySelectorAll('#orderTabs .tab').forEach(function(x){x.classList.remove('active');});t.classList.add('active');curTab=t.getAttribute('data-otab');var url=new URL(location.href);url.searchParams.set('tab',curTab);history.replaceState(null,'',url.toString());renderOrders();});});
+  if(!['orders','deposit','withdraw','trade'].includes(curTab))curTab='orders';
+  load();document.addEventListener('accountChange',load);document.addEventListener('langChange',function(){renderOrders();});
+})();
+</script>
+</body>
+</html>

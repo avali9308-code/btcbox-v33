@@ -1,0 +1,16 @@
+{
+  "name": "btcbox-netlify",
+  "version": "1.0.0",
+  "description": "BTCBOX crypto exchange frontend + Netlify Functions backend",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.2.0"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build": "node scripts/build-site.js"
+  }
+}

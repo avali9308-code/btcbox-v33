@@ -1,0 +1,58 @@
+{
+  "round": 144,
+  "scope": "retire legacy Python JSON financial writers; preserve admin user management; retain PostgreSQL cutover gates",
+  "static_python_balance_or_frozen_writer_count": 0,
+  "previous_static_python_writer_count": 12,
+  "legacy_writer_switch_removed": "BTCBOX_LEGACY_FINANCIAL_WRITES_ENABLED removed; no runtime mode can re-enable old writers",
+  "legacy_python_financial_routes": {
+    "spot_order": "permanently retired; fail closed",
+    "withdrawal_request": "permanently retired; fail closed",
+    "withdrawal_review_approve_reject": "permanently retired; fail closed",
+    "earn_subscribe_redeem": "permanently retired; fail closed",
+    "deposit_request_metadata": "permanently retired; fail closed; no placeholder address or JSON deposit record generation"
+  },
+  "admin_user_management": "non-financial account/profile/security/KYC handlers retained; money-moving actions must use the PostgreSQL RPC-backed API",
+  "frozen_balance_load_migration": "preserves existing dictionary balances; only historical boolean field is migrated",
+  "tests": {
+    "python": {
+      "passed": 198,
+      "failed": 0
+    },
+    "node": {
+      "passed": 155,
+      "failed": 0
+    },
+    "static_writer_audit": "0 direct balance/frozen assignments found in server.py",
+    "javascript_tests": "passed",
+    "python_compile": "passed"
+  },
+  "database_verification": {
+    "live_database_checked": false,
+    "concurrency_tested_against_staging_postgres": false,
+    "rollback_tested_against_staging_postgres": false,
+    "ledger_reconciliation_run": false,
+    "backup_restore_verified": false
+  },
+  "production_cutover_ready": false,
+  "blocking_items": [
+    "run scripts/financial_postgres_staging_drill.py against a dedicated staging PostgreSQL database",
+    "reconcile historical available and frozen balances per asset",
+    "verify backup/restore and operator rollback plan",
+    "runtime-verify PostgreSQL RPCs and financial API credentials/permissions"
+  ],
+  "static_cutover_gate": {
+    "legacy_writer_count": 0,
+    "blocking_findings": [
+      "live_postgres_validation_required"
+    ],
+    "ready_for_production_cutover": false,
+    "required_evidence_before_cutover": [
+      "all balance-changing paths use one authoritative database ledger",
+      "read-only ledger reconciliation SQL returns zero findings in staging",
+      "concurrent duplicate deposit, withdrawal, spot trade and earn tests pass against PostgreSQL",
+      "backup restore drill and independent source checksum verification pass",
+      "legacy balances and frozen amounts reconcile exactly by asset",
+      "operator-approved rollback plan and historical exception report exist"
+    ]
+  }
+}

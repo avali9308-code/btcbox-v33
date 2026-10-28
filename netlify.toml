@@ -1,0 +1,41 @@
+[build]
+  # Build only the public site allowlist; source, SQL, tests, and docs stay private to the repo.
+  # Netlify deploys are ephemeral; persistent business state belongs in Supabase.
+  command = "npm test && npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# 后台入口
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+# 所有 /api/* 请求转发到统一的 Serverless Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# 禁止直接访问敏感数据文件（兜底）
+[[redirects]]
+  from = "/data.json"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/actions.log"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://api.coingecko.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"

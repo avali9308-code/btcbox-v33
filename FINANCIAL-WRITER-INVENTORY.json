@@ -1,0 +1,109 @@
+{
+  "round": 144,
+  "purpose": "Round 144: retired legacy Python JSON balance/frozen writers; Netlify financial route audit remains static only",
+  "verification_scope": "Static source inspection and local tests only; no live PostgreSQL or production verification",
+  "cutover_flag": "FINANCIAL_POSTGRES_RPC_ENABLED",
+  "operations": [
+    {
+      "operation": "user_withdrawal",
+      "route": "POST /api/withdraw",
+      "legacy_writer_present_when_cutover_off": false,
+      "blocked_before_legacy_mutation_when_cutover_on": true,
+      "postgres_rpc_wiring_verified": false,
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "earn_subscribe_redeem",
+      "route": "POST /api/earn",
+      "legacy_writer_present_when_cutover_off": false,
+      "blocked_before_legacy_mutation_when_cutover_on": true,
+      "postgres_rpc_wiring_verified": false,
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "admin_withdraw_approve",
+      "route": "POST /api/admin/withdraw/approve",
+      "legacy_writer_present_when_cutover_off": false,
+      "blocked_before_legacy_mutation_when_cutover_on": true,
+      "postgres_rpc_wiring_verified": false,
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "admin_withdraw_reject",
+      "route": "POST /api/admin/withdraw/reject",
+      "legacy_writer_present_when_cutover_off": false,
+      "blocked_before_legacy_mutation_when_cutover_on": true,
+      "postgres_rpc_wiring_verified": false,
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "admin_deposit_confirm",
+      "route": "POST /api/admin/deposit/confirm",
+      "legacy_writer_present_when_cutover_off": false,
+      "blocked_on_incomplete_cutover": true,
+      "postgres_rpc_wiring_verified": false,
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "admin_balance_adjustment",
+      "route": "POST /api/admin/user/balance",
+      "legacy_writer_present_when_cutover_off": false,
+      "blocked_before_legacy_mutation_when_cutover_on": true,
+      "postgres_rpc_wiring_verified": false,
+      "rpc": "public.admin_adjustment_atomic",
+      "verification_scope": "source wiring only; live RPC and user-ID reconciliation remain unverified",
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "spot_order",
+      "route": "POST /api/order",
+      "legacy_writer_present_when_cutover_off": false,
+      "fail_closed_without_matching_engine": true,
+      "postgres_rpc_wiring_verified": false,
+      "legacy_source_code_retained": false,
+      "blocked_before_legacy_mutation_when_cutover_off": true,
+      "postgres_rpc_wiring_present": true
+    },
+    {
+      "operation": "chain_deposit_credit",
+      "route": "chain ingestion/confirmation; exact production wiring requires review",
+      "legacy_writer_present_when_cutover_off": "requires route-level trace",
+      "postgres_rpc_wiring_verified": false,
+      "postgres_rpc_wiring_present": true
+    }
+  ],
+  "next_gate": "Run staging PostgreSQL drill, reconcile historical available/frozen balances by asset, and verify backup/restore before production cutover.",
+  "round_96_gate": {
+    "implemented": true,
+    "live_database_checked": false,
+    "production_cutover_ready": false,
+    "api_routes_audited": [
+      "user_withdrawal",
+      "earn_subscribe_redeem",
+      "spot_order",
+      "admin_balance_adjustment",
+      "admin_deposit_confirm",
+      "admin_withdraw_approve",
+      "admin_withdraw_reject"
+    ]
+  },
+  "round_143_note": "Production Netlify API money-moving fallbacks are guarded. The static Python source audit still reports 12 balance/frozen assignments in development/test-only legacy code; production cutover remains blocked.",
+  "legacy_python_writer_audit": {
+    "source": "server.py",
+    "direct_balance_or_frozen_writer_count": 0,
+    "runtime_flag_removed": "BTCBOX_LEGACY_FINANCIAL_WRITES_ENABLED",
+    "verified_by": "scripts/audit_financial_writers.py"
+  }
+}

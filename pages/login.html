@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_56">Sign in · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+<style>
+  .auth-wrap{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:24px 18px;max-width:480px;margin:0 auto;justify-content:center;}
+  .auth-logo{text-align:center;padding:0 0 22px;}
+  .auth-panel{width:100%;padding:26px 28px 20px;border:1px solid rgba(139,154,184,.18);border-radius:18px;background:linear-gradient(155deg,rgba(19,26,42,.98),rgba(10,14,26,.98));box-shadow:0 24px 70px rgba(0,0,0,.28);}
+  .auth-heading{text-align:center;margin:0 0 22px;}
+  .auth-heading h1{font-size:22px;line-height:1.35;font-weight:750;letter-spacing:-.02em;color:var(--text);margin:0 0 7px;}
+  .auth-heading p{font-size:12px;line-height:1.6;color:var(--text-2);margin:0;}
+  .auth-tabs{display:flex;gap:0;margin-bottom:24px;justify-content:stretch;border-bottom:1px solid var(--border);}
+  .auth-tab{flex:1;text-align:center;font-size:15px;font-weight:700;color:var(--text-3);padding:0 12px 12px;border-bottom:2px solid transparent;background:none;cursor:pointer;}
+  .auth-tab.active{color:var(--text);border-bottom-color:var(--gold);}
+  .auth-panel .form-group{margin-bottom:16px;}
+  .auth-panel .form-label{display:block;margin-bottom:7px;font-size:12px;font-weight:600;color:var(--text-2);}
+  .auth-panel .form-input{min-height:46px;border-radius:10px;}
+  .auth-submit{min-height:47px;width:100%;margin-top:2px;border-radius:10px;font-size:14px;font-weight:700;}
+  .auth-consent{display:none;align-items:flex-start;gap:9px;margin:0 0 15px;font-size:11px;line-height:1.65;color:var(--text-2);}
+  .auth-consent input{margin-top:4px;accent-color:var(--gold);flex-shrink:0;}
+  .auth-consent a{color:var(--gold);}
+  .auth-password-hint{display:none;margin:-7px 0 15px;font-size:11px;line-height:1.5;color:var(--text-3);}
+  .auth-secure-note{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;font-size:10px;color:var(--text-3);}
+  .auth-footer{margin-top:18px;padding:12px 0 0;text-align:center;font-size:11px;color:var(--text-3);line-height:1.8;}
+  @media(max-width:420px){.auth-wrap{padding:16px 12px 22px;}.auth-panel{padding:22px 18px 18px;border-radius:15px;}.auth-logo{padding-bottom:16px;}.auth-heading h1{font-size:20px;}}
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0 14px;color:var(--text-3);font-size:11px;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border);}
+  .btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#3c4043;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
+  .btn-google:hover{background:#f8f9fa;}
+  .btn-google:active{transform:scale(.99);}
+  .g-logo{width:18px;height:18px;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+<div class="auth-logo">
+<div style="width:120px;height:60px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;"><img alt="BTCBOX" src="../assets/img/logo-transparent.png" style="max-width:100%;max-height:100%;object-fit:contain;display:block;"/></div>
+<div style="font-family:var(--font-serif);font-size:26px;font-weight:700;">BTC<span style="color:var(--gold);">BOX</span></div>
+<div style="font-size:11px;color:var(--text-3);letter-spacing:.15em;text-transform:uppercase;margin-top:6px;">Digital Asset Exchange</div>
+</div>
+<section class="auth-panel" aria-label="Account access">
+<div class="auth-heading"><h1 id="authHeading">Welcome back</h1><p id="authSubheading">Sign in to continue to BTCBOX.</p></div>
+<div class="auth-tabs">
+<button class="auth-tab active" data-i18n="login" id="tabLogin">Sign in</button>
+<button class="auth-tab" data-i18n="register" id="tabRegister">Create account</button>
+</div>
+<form id="authForm" onsubmit="return false;">
+<div class="form-group">
+<label class="form-label" data-i18n="email">Email</label>
+<input autocomplete="email" class="form-input" data-i18n="emailPh" data-i18n-placeholder="r131_73" id="emailInput" name="email" placeholder="Enter your email address" required="" type="email"/>
+</div>
+<div class="form-group" id="passwordGroup">
+<label class="form-label" data-i18n="password">Password</label>
+<div style="position:relative;"><input autocomplete="current-password" class="form-input" data-i18n="pwdPh" data-i18n-placeholder="r131_74" id="pwdInput" name="password" placeholder="Enter your password (at least 8 characters)" required="" style="padding-right:44px;" type="password"/><button aria-label="Show password" data-i18n-aria-label="r131_75" id="pwdToggle" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;" type="button"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
+</div>
+<div class="form-group" id="confirmGroup" style="display:none;">
+<label class="form-label" data-i18n="confirmPassword">Confirm password</label>
+<div style="position:relative;"><input autocomplete="new-password" class="form-input" data-i18n="confirmPwdPh" data-i18n-placeholder="r131_76" id="pwdConfirm" name="new_password" placeholder="Enter your password again" style="padding-right:44px;" type="password"/><button aria-label="Show password" data-i18n-aria-label="r131_75" id="pwdConfirmToggle" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;" type="button"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
+</div>
+<div id="loginOnlyRow" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:12px;">
+<label style="display:flex;align-items:center;gap:6px;color:var(--text-2);cursor:pointer;"><input style="accent-color:var(--gold);" type="checkbox"/><span data-i18n="rememberMe">Remember me</span></label>
+<a data-i18n="forgotPwd" href="#" onclick="event.preventDefault();var e=(document.getElementById('emailInput').value||'').trim();var c=window.BTCBOX_SUPABASE_AUTH_CLIENT;if(!e){BTCBOX.toast('Enter your email address first.','warning');document.getElementById('emailInput').focus();return;}if(!c){BTCBOX.toast('Password reset service is loading. Please try again.','warning');return;}c.auth.resetPasswordForEmail(e,{redirectTo:window.location.origin+'/pages/login.html?auth_callback=1&auth_method=recovery'}).then(function(r){if(r.error)throw r.error;BTCBOX.toast('If the address is registered, a password reset email will arrive shortly.','success');}).catch(function(){BTCBOX.toast('Unable to send a reset email right now. Please try again later.','error');});" style="color:var(--gold);">Forgot password?</a>
+</div>
+<label class="auth-consent" id="registerConsent"><input id="termsConsent" type="checkbox"/><span>I have read and agree to the <a href="legal.html?type=terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="legal.html?type=privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+<div class="auth-password-hint" id="registerPasswordHint">Use at least 6 characters for your password. Avoid easy-to-guess passwords.</div>
+<button class="btn btn-gold auth-submit" id="submitBtn" type="submit"><span data-i18n="r131_57">Sign in</span></button>
+<div class="auth-secure-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span id="authSecurityNote">Never share your password.</span></div>
+</form>
+<div class="divider" id="authDivider"><span data-i18n="orDivider">OR</span></div>
+<button class="btn-google" id="googleBtn" type="button">
+<svg class="g-logo" viewbox="0 0 48 48"><path d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z" fill="#FFC107"></path><path d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" fill="#FF3D00"></path><path d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" fill="#4CAF50"></path><path d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C41.5 35.6 44 30.2 44 24c0-1.2-.1-2.3-.4-3.5z" fill="#1976D2"></path></svg>
+<span data-i18n="googleLogin">Continue with Google</span>
+</button>
+<button class="btn" id="magicLinkBtn" disabled style="width:100%;margin-top:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);" type="button">
+    Send Email Sign-in Link
+  </button>
+<div aria-live="polite" id="magicLinkStatus" role="status" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6;"></div>
+<div style="text-align:center;margin-top:18px;font-size:12px;color:var(--text-3);">
+<span id="switchText"><span data-i18n="noAccount">Don't have an account?</span></span>
+<a href="#" id="switchLink" style="color:var(--gold);font-weight:600;"><span data-i18n="registerNow">Register now</span></a>
+</div>
+<div class="auth-footer">
+<span id="agreePrefixText"><span data-i18n="r131_68">By signing in, you agree to</span></span> <a data-i18n="terms" href="legal.html?type=terms" style="color:var(--text-2);">Terms of Service</a> <span data-i18n="r131_70">and</span> <a data-i18n="privacy" href="legal.html?type=privacy" style="color:var(--text-2);">Privacy Policy</a>
+</div>
+</section>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  // 已登录用户访问登录页，自动跳转首页
+  var isOAuthCallback = new URLSearchParams(location.search).get('auth_callback') === '1';
+  if(!isOAuthCallback && BTCBOX && BTCBOX.isLoggedIn && BTCBOX.isLoggedIn()){
+    location.href = '../index.html';
+    return;
+  }
+  // 根据URL参数切换模式
+  var urlMode = new URLSearchParams(location.search).get('mode');
+  function syncModeUI(){
+    var isRegister = document.getElementById('tabRegister').classList.contains('active');
+    var loginRow = document.getElementById('loginOnlyRow');
+    if(loginRow) loginRow.style.display = isRegister ? 'none' : 'flex';
+    var agText = document.getElementById('agreementText');
+    if(agText) agText.textContent = isRegister ? '注册即表示同意' : '登录即表示同意';
+  }
+  // 监听tab切换
+  setTimeout(function(){
+    ['tabLogin','tabRegister'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.addEventListener('click', function(){ setTimeout(syncModeUI, 10); });
+    });
+    syncModeUI();
+  }, 100);
+
+  // 记住我：回填邮箱
+  try{
+    var savedEmail = localStorage.getItem('btcbox_remember_email');
+    if(savedEmail){
+      document.getElementById('emailInput').value = savedEmail;
+      var cb = document.querySelector('input[type=checkbox]');
+      if(cb) cb.checked = true;
+    }
+  }catch(e){}
+  var mode = 'login';
+  var params = new URLSearchParams(location.search);
+  if(params.get('mode')==='register'){ mode='register'; updateMode(); }
+  updateMode(); // 确保 i18n 翻译后动态文本也刷新
+  document.addEventListener('langChange', updateMode); // 语言切换时重新渲染
+
+  function safeRedirectTarget(){
+    var raw = params.get('redirect');
+    if(!raw) return '../index.html';
+    try {
+      var target = new URL(decodeURIComponent(raw), window.location.origin);
+      if(target.origin === window.location.origin) return target.pathname + target.search + target.hash;
+    } catch(e) {}
+    return '../index.html';
+  }
+
+  function updateMode(){
+    var isReg = mode==='register';
+    var t = function(k){ return (window.I18N ? I18N.t(k) : k); };
+    document.getElementById('tabLogin').classList.toggle('active', !isReg);
+    document.getElementById('tabRegister').classList.toggle('active', isReg);
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('confirmGroup').style.display = isReg ? 'block' : 'none';
+    document.getElementById('registerConsent').style.display = isReg ? 'flex' : 'none';
+    document.getElementById('magicLinkBtn').style.display = 'block';
+    document.getElementById('authDivider').style.display = 'flex';
+    document.getElementById('googleBtn').style.display = 'flex';
+    var googleLabel = document.querySelector('#googleBtn span');
+    if(googleLabel) googleLabel.textContent = isReg ? 'Sign up with Google' : 'Continue with Google';
+    var magicLabel = document.getElementById('magicLinkBtn');
+    if(magicLabel) magicLabel.textContent = isReg ? 'Register with email link' : 'Send Email Sign-in Link';
+    document.getElementById('registerPasswordHint').style.display = 'none';
+    document.getElementById('termsConsent').required = false;
+    document.getElementById('pwdInput').required = true;
+    document.getElementById('pwdInput').autocomplete = isReg ? 'new-password' : 'current-password';
+    document.getElementById('pwdConfirm').required = isReg;
+    document.getElementById('registerPasswordHint').style.display = isReg ? 'block' : 'none';
+    document.getElementById('authHeading').textContent = isReg ? 'Create your BTCBOX account' : 'Welcome back';
+    document.getElementById('authSubheading').textContent = isReg ? 'Create an account with your email and password, then verify your email.' : 'Sign in to continue to BTCBOX.';
+    document.getElementById('authSecurityNote').textContent = isReg ? 'We will never ask you to share your verification link.' : 'Never share your password or verification codes.';
+    document.getElementById('submitBtn').textContent = isReg ? 'Create account' : 'Sign in';
+    var st = document.querySelector('#switchText span');
+    if(st){ st.textContent = isReg ? t('haveAccount') : t('noAccount'); }
+    var sl = document.querySelector('#switchLink span');
+    if(sl){ sl.textContent = isReg ? t('goLogin') : t('registerNow'); }
+    var agText = document.getElementById('agreePrefixText');
+    if(agText){ agText.textContent = (isReg ? t('register') : t('login')) + ' ' + t('agreePrefix'); }
+  }
+  document.getElementById('tabLogin').addEventListener('click', function(){ mode='login'; updateMode(); });
+  document.getElementById('tabRegister').addEventListener('click', function(){ mode='register'; updateMode(); });
+  document.getElementById('switchLink').addEventListener('click', function(e){
+    e.preventDefault(); mode = mode==='login'?'register':'login'; updateMode();
+  });
+
+  document.getElementById('authForm').addEventListener('submit', function(event){
+    if (event) event.preventDefault();
+    var email = document.getElementById('emailInput').value.trim().toLowerCase();
+    var pwd = document.getElementById('pwdInput').value;
+    if(!email){ BTCBOX.toast('Please enter your email address.', 'warning'); document.getElementById('emailInput').focus(); return; }
+    if(mode === 'register'){
+      if(!document.getElementById('termsConsent').checked){ BTCBOX.toast('Please agree to the Terms of Service and Privacy Policy.', 'warning'); return; }
+      var confirmPwd = document.getElementById('pwdConfirm').value;
+      if(pwd.length < 8){ BTCBOX.toast('Use a password with at least 8 characters.', 'warning'); return; }
+      if(pwd !== confirmPwd){ BTCBOX.toast('The passwords do not match.', 'warning'); document.getElementById('pwdConfirm').focus(); return; }
+      if(!authClient){ BTCBOX.toast('The account service is still loading. Please try again.', 'warning'); return; }
+      var registerBtn = document.getElementById('submitBtn');
+      registerBtn.disabled = true; registerBtn.textContent = 'Creating account…';
+      authClient.auth.signUp({email:email, password:pwd, options:{emailRedirectTo:OAUTH_REDIRECT_URL.replace('auth_callback=1','auth_callback=1&auth_method=email')}})
+        .then(function(result){
+          if(result.error) throw result.error;
+          BTCBOX.toast('If this email can be registered, check your inbox for a verification link. Verify your email before signing in.', 'success');
+          showMagicStatus('Account request submitted. Check your inbox and spam folder for the verification email. Your password is set; verify the email before signing in.', false);
+        }).catch(function(err){
+          var m=String(err && err.message || '').toLowerCase();
+          BTCBOX.toast(/already|registered|exists/.test(m) ? 'This email may already be registered. Try signing in or resetting your password.' : 'Unable to create the account. Check your details and try again.', 'error');
+        }).finally(function(){ registerBtn.disabled=false; updateMode(); });
+      return;
+    }
+    if(!pwd){ BTCBOX.toast('Please enter your password.', 'warning'); return; }
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = I18N.t('submitting');
+
+    var payload = {email: email, password: pwd};
+    var url = '/api/login';
+
+
+    fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j.ok){
+        try{
+          var cb = document.querySelector('input[type=checkbox]');
+          if(cb && cb.checked){ localStorage.setItem('btcbox_remember_email', email); }
+          else { localStorage.removeItem('btcbox_remember_email'); }
+        }catch(e){}
+        BTCBOX.login(email);
+        BTCBOX.toast(mode==='register' ? I18N.t('registerSuccess') : I18N.t('loginSuccessMessage'), 'success');
+        var target = safeRedirectTarget();
+        setTimeout(function(){ location.replace(target); }, 800);
+      } else if(j.require_2fa && j.temp_token){
+        // 开启了双重验证，要求二次验证
+        BTCBOX.modal({iconType:'info', title:I18N.t('twofaTitle'),
+          bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">'+I18N.t('twofaBody')+'</p><input class="form-input" id="__2faLogin" type="text" inputmode="numeric" maxlength="6" placeholder="'+I18N.t('please6code')+'">',
+          confirmText:I18N.t('confirmLogin'), cancelText:I18N.t('cancel')}).then(function(ok){
+          if(!ok){ btn.disabled=false; updateMode(); return; }
+          var code = (document.getElementById('__2faLogin')||{}).value || '';
+          if(!/^\d{6}$/.test(code)){ BTCBOX.toast((window.I18N?I18N.t('please6code'):''),'warning'); btn.disabled=false; updateMode(); return; }
+          fetch('/api/login/2fa', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({temp_token:j.temp_token, code:code})})
+            .then(function(r){ if(r.status===404) return {ok:false, _nf:true}; return r.json(); })
+            .then(function(j2){
+              if(j2.ok){
+                try{
+                  var cb2 = document.querySelector('input[type=checkbox]');
+                  if(cb2 && cb2.checked){ localStorage.setItem('btcbox_remember_email', email); }
+                  else { localStorage.removeItem('btcbox_remember_email'); }
+                }catch(e){}
+                BTCBOX.login(email);
+                BTCBOX.toast((window.I18N?I18N.t('loginSuccess'):''),'success');
+                var target = safeRedirectTarget();
+                setTimeout(function(){ location.replace(target); }, 800);
+              } else {
+                BTCBOX.toast(j2._nf ? I18N.t('twofaUnavailable') : I18N.t('invalidVerificationCode'), 'error');
+                btn.disabled=false; updateMode();
+              }
+            });
+        });
+      } else if(authClient) {
+        authClient.auth.signInWithPassword({email:email,password:pwd}).then(function(result){
+          if(result.error || !result.data || !result.data.session) throw (result.error || new Error('Sign in failed'));
+          return completeSupabaseLogin(authClient,result.data.session,'email');
+        }).catch(function(){
+          if(j.code === 'ACCOUNT_FROZEN' || (j.msg && j.msg.indexOf('冻结') > -1)){
+            BTCBOX.toast(I18N.t('frozenAccountBody'), 'error');
+          } else { BTCBOX.toast('Incorrect email or password. If you just registered, verify your email first.', 'error'); }
+          btn.disabled=false; updateMode();
+        });
+      } else {
+        if(j.code === 'ACCOUNT_FROZEN' || (j.msg && j.msg.indexOf('冻结') > -1)){
+          BTCBOX.modal({
+            iconType: 'danger',
+            title: I18N.t('frozenTitle'),
+            bodyHtml: '<div style="color:var(--text-2);line-height:1.7;">' + I18N.t('frozenAccountBody') + '</div><div class="modal-warn" style="margin-top:12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>' + I18N.t('frozenAppeal') + '</span></div>',
+            confirmText: I18N.t('gotIt'),
+            cancelText: false
+          });
+        } else {
+          BTCBOX.toast(I18N.t('operationFailedRetry'), 'error');
+        }
+        btn.disabled = false; updateMode();
+      }
+    })
+    .catch(function(){
+      // 身份验证必须由服务端完成；网络故障时不得创建本地假登录态。
+      BTCBOX.toast((window.I18N ? I18N.t('networkError') : 'A network error occurred. Please try again.'), 'error');
+      btn.disabled = false;
+      updateMode();
+    });
+  });
+
+  // ===== Supabase Google OAuth =====
+  // Redirect URL uses the actual deployed origin; add this exact URL to Supabase Auth > URL Configuration.
+  // Fallback defaults; overridden by /api/config when environment variables are set.
+  var SUPABASE_URL = 'https://zlozsutefnmgwwzrlipt.supabase.co';
+  var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_akou5AFUEGJRFW4mcm3jKw_D-QFGvsN';
+  // Resolve deployment-specific Supabase settings before constructing the auth client.
+  // This avoids a race where OAuth/password auth starts with stale hard-coded defaults.
+  var supabaseConfigPromise = fetch('/api/config', { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error('Config unavailable'); return r.json(); })
+    .then(function (cfg) {
+      if (cfg && cfg.supabase_auth_url) SUPABASE_URL = cfg.supabase_auth_url;
+      if (cfg && cfg.supabase_auth_publishable_key) SUPABASE_PUBLISHABLE_KEY = cfg.supabase_auth_publishable_key;
+    })
+    .catch(function () {});
+  // Use the current deployed origin so Netlify previews and custom domains work too.
+  var OAUTH_REDIRECT_URL = window.location.origin + '/pages/login.html?auth_callback=1';
+  var googleBtn = document.getElementById('googleBtn');
+  var oauthBusy = false;
+  var authClient = null;
+  window.BTCBOX_SUPABASE_AUTH_CLIENT = null;
+
+  function loadSupabaseSdk(){
+    return new Promise(function(resolve, reject){
+      if(window.supabase && window.supabase.createClient){ resolve(); return; }
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      script.async = true;
+      script.onload = function(){
+        if(window.supabase && window.supabase.createClient) resolve();
+        else reject(new Error('Supabase SDK failed to load'));
+      };
+      script.onerror = function(){ reject(new Error('Supabase SDK failed to load')); };
+      document.head.appendChild(script);
+    });
+  }
+  function setGoogleBusy(busy, label){
+    oauthBusy = busy;
+    googleBtn.disabled = busy;
+    googleBtn.style.opacity = busy ? '.65' : '1';
+    googleBtn.style.cursor = busy ? 'wait' : 'pointer';
+    var span = googleBtn.querySelector('span');
+    if(span) span.textContent = label || (mode === 'register' ? 'Sign up with Google' : 'Continue with Google');
+  }
+  function completeSupabaseTwoFactor(tempToken, client, authMethod, email){
+    return BTCBOX.modal({iconType:'info', title:I18N.t('twofaTitle'),
+      bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">'+I18N.t('twofaBody')+'</p><input class="form-input" id="__supabase2faLogin" type="text" inputmode="numeric" maxlength="6" placeholder="'+I18N.t('please6code')+'">',
+      confirmText:I18N.t('confirmLogin'), cancelText:I18N.t('cancel')}).then(function(ok){
+      if(!ok) throw new Error('Second-factor verification cancelled.');
+      var code = (document.getElementById('__supabase2faLogin')||{}).value || '';
+      if(!/^\\d{6}$/.test(code)) throw new Error(I18N.t('please6code'));
+      return fetch('/api/login/2fa', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({temp_token:tempToken, code:code})})
+        .then(function(r){ return r.json().then(function(j){ if(!r.ok || !j.ok) throw new Error(I18N.translateMessage ? I18N.translateMessage(j.msg) : I18N.t('invalidVerificationCode')); return j; }); })
+        .then(function(){
+          if(email && BTCBOX && typeof BTCBOX.login === 'function') BTCBOX.login(email);
+          return client.auth.signOut({scope:'local'}).catch(function(){}).then(function(){
+            BTCBOX.toast(I18N.t('loginSuccessMessage'), 'success');
+            var rd = params.get('redirect'); var target = '../index.html';
+            if(rd){ try { var safeTarget = new URL(decodeURIComponent(rd), window.location.origin); if(safeTarget.origin === window.location.origin) target = safeTarget.pathname + safeTarget.search + safeTarget.hash; } catch(e) {} }
+            setTimeout(function(){ location.replace(target); }, 500);
+            return {twofaComplete:true};
+          });
+        });
+    }).catch(function(error){
+      // Never retain a browser-side Supabase session after an incomplete second-factor challenge.
+      return client.auth.signOut({scope:'local'}).catch(function(){}).then(function(){ throw error; });
+    });
+  }
+  function completeSupabaseLogin(client, session, authMethod){
+    if(!session || !session.access_token){ throw new Error('No valid sign-in session was returned.'); }
+    return fetch('/api/supabase-login', {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({supabase_access_token:session.access_token})
+    }).then(function(r){
+      return r.json().then(function(j){
+        if(!r.ok) throw new Error(I18N.t('verificationFailed'));
+        if(j && j.require_2fa && j.temp_token){
+          var emailFor2fa = session.user && session.user.email ? session.user.email : '';
+          return completeSupabaseTwoFactor(j.temp_token, client, authMethod, emailFor2fa);
+        }
+        if(!j.ok) throw new Error(I18N.t('verificationFailed'));
+        return j;
+      });
+    }).then(function(result){
+      if(result && result.twofaComplete) return result;
+      var email = session.user && session.user.email ? session.user.email : '';
+      // Backend HttpOnly session is authoritative; do not create a browser-only login.
+      if(email && BTCBOX && typeof BTCBOX.login === 'function') BTCBOX.login(email);
+      return client.auth.signOut({scope:'local'}).catch(function(){}).then(function(){
+        BTCBOX.toast(authMethod === 'email' ? I18N.t('emailSignInSuccess') : I18N.t('googleSignInSuccess'), 'success');
+        var rd = params.get('redirect');
+        var target = '../index.html';
+        if(rd){
+          try { var safeTarget = new URL(decodeURIComponent(rd), window.location.origin); if(safeTarget.origin === window.location.origin) target = safeTarget.pathname + safeTarget.search + safeTarget.hash; } catch(e) {}
+        }
+        setTimeout(function(){ location.replace(target); }, 500);
+      });
+    });
+  }
+  Promise.all([loadSupabaseSdk(), supabaseConfigPromise]).then(function(){
+    var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:'pkce' }
+    });
+    authClient = client; window.BTCBOX_SUPABASE_AUTH_CLIENT = client;
+    googleBtn.addEventListener('click', function(){
+      if(oauthBusy) return;
+      if(mode === 'register' && !document.getElementById('termsConsent').checked){
+        BTCBOX.toast('Please agree to the Terms of Service and Privacy Policy.', 'warning');
+        return;
+      }
+      setGoogleBusy(true, 'Redirecting to Google…');
+      client.auth.signInWithOAuth({
+        provider:'google',
+        options:{ redirectTo:OAUTH_REDIRECT_URL, queryParams:{ access_type:'online', prompt:'select_account' } }
+      }).then(function(result){
+        if(result.error) throw result.error;
+      }).catch(function(err){
+        console.error('Supabase Google OAuth start failed');
+        BTCBOX.toast(I18N.t('googleStartFailed'), 'error');
+        setGoogleBusy(false, mode === 'register' ? 'Sign up with Google' : 'Continue with Google');
+      });
+    });
+
+    var callbackParams = new URLSearchParams(location.search);
+    var callback = callbackParams.get('auth_callback') === '1';
+    var callbackMethod = callbackParams.get('auth_method') === 'recovery' ? 'recovery' : (callbackParams.get('auth_method') === 'email' ? 'email' : 'google');
+    function cleanAuthCallbackUrl(){
+      var clean = new URL(location.href);
+      ['auth_callback','auth_method','code','error','error_code','error_description','type'].forEach(function(key){ clean.searchParams.delete(key); });
+      // Supabase may return auth errors in the URL fragment; do not leave tokens/errors visible.
+      clean.hash = '';
+      history.replaceState({}, document.title, clean.pathname + clean.search);
+    }
+    if(callback){
+      setGoogleBusy(true, callbackMethod === 'recovery' ? 'Resetting password…' : (callbackMethod === 'email' ? 'Verifying email link…' : 'Verifying sign-in…'));
+      if(callbackMethod === 'recovery'){
+        client.auth.getSession().then(function(result){
+          if(result.error) throw result.error;
+          if(!result.data || !result.data.session) throw new Error('NO_RECOVERY_SESSION');
+          cleanAuthCallbackUrl();
+          return BTCBOX.modal({iconType:'info',title:'Set a new password',bodyHtml:'<p style="color:var(--text-2);margin-bottom:10px;">Choose a new password with at least 8 characters.</p><input class="form-input" id="__recoveryPassword" type="password" minlength="8" autocomplete="new-password" placeholder="New password"><input class="form-input" id="__recoveryPasswordConfirm" type="password" minlength="8" autocomplete="new-password" placeholder="Confirm new password" style="margin-top:10px;">',confirmText:'Update password',cancelText:'Cancel'}).then(function(ok){
+            if(!ok) return;
+            var np=(document.getElementById('__recoveryPassword')||{}).value||'';
+            var cp=(document.getElementById('__recoveryPasswordConfirm')||{}).value||'';
+            if(np.length<8){ BTCBOX.toast('Use at least 8 characters. Please request a new reset link if it expires.','warning'); return; }
+            if(np !== cp){ BTCBOX.toast('The passwords do not match.','warning'); return; }
+            return client.auth.updateUser({password:np}).then(function(r){
+              if(r.error) throw r.error;
+              return client.auth.signOut({scope:'local'}).catch(function(){}).then(function(){ BTCBOX.toast('Password updated. Please sign in with your new password.','success'); });
+            });
+          });
+        }).catch(function(){ cleanAuthCallbackUrl(); BTCBOX.toast('This password reset link is invalid or expired. Request a new one.','error'); })
+          .finally(function(){ setGoogleBusy(false, mode === 'register' ? 'Sign up with Google' : 'Continue with Google'); });
+        return;
+      }
+      var fragmentParams = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+      var callbackError = callbackParams.get('error_description') || callbackParams.get('error') || fragmentParams.get('error_description') || fragmentParams.get('error');
+      if(callbackError){
+        cleanAuthCallbackUrl();
+        BTCBOX.toast(callbackMethod === 'email' ? I18N.t('emailLinkInvalid') : I18N.t('googleAuthIncomplete'), 'error');
+        setGoogleBusy(false, mode === 'register' ? 'Sign up with Google' : 'Continue with Google');
+      } else {
+        client.auth.getSession().then(function(result){
+          if(result.error) throw result.error;
+          if(!result.data || !result.data.session) throw new Error('NO_AUTH_SESSION');
+          return completeSupabaseLogin(client, result.data.session, callbackMethod);
+        }).catch(function(err){
+          console.error('Supabase auth callback failed');
+          var msg = err && err.message;
+          if(callbackMethod === 'email' && (!msg || msg === 'NO_AUTH_SESSION' || /expired|invalid|verifier|code/i.test(msg))){
+            BTCBOX.toast(I18N.t('emailLinkExpired'), 'error');
+          } else {
+            // Do not surface raw server/provider messages here: backend responses may be localized
+            // or contain implementation details. Keep user-facing auth feedback consistently English.
+            BTCBOX.toast(I18N.t('authVerifyFailed'), 'error');
+          }
+          setGoogleBusy(false, mode === 'register' ? 'Sign up with Google' : 'Continue with Google');
+          cleanAuthCallbackUrl();
+        });
+      }
+    }
+
+    // Email magic-link sign-in uses the same email field above and returns to this page.
+    var magicLinkBtn = document.getElementById('magicLinkBtn');
+    var magicLinkStatus = document.getElementById('magicLinkStatus');
+    function showMagicStatus(message, isError){
+      magicLinkStatus.setAttribute('role', isError ? 'alert' : 'status');
+      magicLinkStatus.textContent = message;
+      magicLinkStatus.style.display = 'block';
+      magicLinkStatus.style.color = isError ? '#ff9c9c' : 'var(--text-2)';
+      magicLinkStatus.style.background = isError ? 'rgba(180,45,45,.12)' : 'var(--surface-2)';
+      magicLinkStatus.style.border = '1px solid ' + (isError ? 'rgba(255,100,100,.35)' : 'var(--border)');
+    }
+    function getMagicLinkErrorMessage(err){
+      var message = String(err && err.message || '').toLowerCase();
+      if(/rate limit|too many requests|email rate limit/.test(message)){
+        return 'Too many sign-in requests. Please wait a few minutes before trying again.';
+      }
+      if(/network|fetch failed|failed to fetch|load failed|connection/.test(message)){
+        return 'Unable to contact the sign-in service. Check your internet connection and try again.';
+      }
+      if(/invalid email|email address is invalid/.test(message)){
+        return 'Please check the email address and try again.';
+      }
+      return 'Unable to send the sign-in link. Please try again later.';
+    }
+    magicLinkBtn.addEventListener('click', function(){
+      if(mode === 'register' && !document.getElementById('termsConsent').checked){
+        BTCBOX.toast('Please agree to the Terms of Service and Privacy Policy.', 'warning');
+        return;
+      }
+      var email = (document.getElementById('emailInput').value || '').trim();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        showMagicStatus('Please enter a valid email address above.', true);
+        document.getElementById('emailInput').focus();
+        return;
+      }
+      magicLinkBtn.disabled = true;
+      magicLinkBtn.textContent = 'Sending email link…';
+      client.auth.signInWithOtp({
+        email: email,
+        options: { emailRedirectTo: OAUTH_REDIRECT_URL.replace('auth_callback=1', 'auth_callback=1&auth_method=email'), shouldCreateUser: mode === 'register' }
+      }).then(function(result){
+        if(result.error) throw result.error;
+        showMagicStatus(mode === 'register' ? 'If registration is available for this email, a verification link will arrive shortly. Check your inbox and spam folder, then open the latest link in this browser.' : 'If this email can receive sign-in messages, a link will arrive shortly. Check your inbox and spam folder. Open the latest link in this browser.', false);
+      }).catch(function(err){
+        showMagicStatus(getMagicLinkErrorMessage(err), true);
+      }).finally(function(){
+        magicLinkBtn.disabled = false;
+        magicLinkBtn.textContent = mode === 'register' ? 'Register with email link' : 'Send Email Sign-in Link';
+      });
+    });
+    magicLinkBtn.disabled = false;
+    googleBtn.disabled = false;
+  }).catch(function(){
+    console.error('Supabase SDK unavailable');
+    googleBtn.disabled = true;
+    googleBtn.title = 'Unable to load the sign-in service. Please refresh the page and try again.';
+    var failedMagicBtn = document.getElementById('magicLinkBtn');
+    if(failedMagicBtn){ failedMagicBtn.disabled = true; failedMagicBtn.title = 'Unable to load the sign-in service. Please refresh the page and try again.'; }
+    var failedMagicStatus = document.getElementById('magicLinkStatus');
+    if(failedMagicStatus){ failedMagicStatus.textContent = 'The sign-in service could not load. Check your connection and refresh the page.'; failedMagicStatus.style.display = 'block'; }
+    BTCBOX.toast(I18N.t('authServiceUnavailable'), 'warning');
+  });
+})();
+
+  // 密码显示/隐藏切换
+  function bindPwdToggle(btnId, inputId){
+    var btn = document.getElementById(btnId);
+    var inp = document.getElementById(inputId);
+    if(!btn || !inp) return;
+    btn.addEventListener('click', function(){
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.style.color = show ? 'var(--gold)' : 'var(--text-3)';
+    });
+  }
+  bindPwdToggle('pwdToggle', 'pwdInput');
+  bindPwdToggle('pwdConfirmToggle', 'pwdConfirm');
+</script>
+</body>
+</html>

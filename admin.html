@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <link rel="icon" type="image/png" href="assets/img/logo-transparent.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BTCBOX 管理后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0e1a;color:#eaecef;min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+h1{font-size:20px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+h1 .badge{font-size:11px;background:#2eae70;color:#0a0e1a;padding:2px 8px;border-radius:4px;font-weight:700}
+.card{background:#131a2e;border:1px solid #1e2a45;border-radius:12px;padding:16px;margin-bottom:14px}
+.card h3{font-size:14px;margin-bottom:12px;color:#8b9ab8}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px;background:#0f1626;border:1px solid #1e2a45;border-radius:10px;padding:14px}
+.stat .num{font-size:24px;font-weight:800;color:#2eae70}
+.stat .label{font-size:11px;color:#8b9ab8;margin-top:4px}
+input,select,textarea{background:#0f1626;border:1px solid #2a3a5c;border-radius:8px;padding:9px 12px;color:#eaecef;font-size:13px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#2eae70}
+button{background:#2eae70;color:#0a0e1a;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer}
+button:hover{opacity:.9}
+button.secondary{background:#1e2a45;color:#eaecef}
+button.danger{background:#f6465d;color:#fff}
+button.small{padding:5px 10px;font-size:11px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid #1e2a45}
+th{color:#8b9ab8;font-weight:600;font-size:11px;text-transform:uppercase}
+tr:hover{background:#0f1626}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.tag.ok{background:#0ecb8122;color:#0ecb81}
+.tag.warn{background:#f0b90b22;color:#f0b90b}
+.tag.bad{background:#f6465d22;color:#f6465d}
+.tag.gray{background:#5a647822;color:#8b9ab8}
+.tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid #1e2a45}
+.tab{padding:10px 18px;cursor:pointer;font-size:13px;color:#8b9ab8;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:#2eae70;border-bottom-color:#2eae70;font-weight:700}
+.hidden{display:none}
+.login-box{max-width:360px;margin:80px auto}
+.login-box input{margin-bottom:10px}
+.login-box button{width:100%}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px}
+.detail-grid div{background:#0f1626;padding:8px 10px;border-radius:6px}
+.detail-grid .k{color:#8b9ab8;font-size:10px;margin-bottom:2px}
+.muted{color:#8b9ab8;font-size:11px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pending-list{max-height:300px;overflow-y:auto}
+textarea{resize:vertical;min-height:60px}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.config-grid label{font-size:11px;color:#8b9ab8;display:block;margin-bottom:4px}
+.msg{padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:13px;display:none}
+.msg.ok{background:#0ecb8122;color:#0ecb81;display:block}
+.msg.err{background:#f6465d22;color:#f6465d;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 登录页 -->
+<div id="loginPage" class="login-box">
+  <h1>BTCBOX <span class="badge">管理后台</span></h1>
+  <div class="card">
+    <div id="loginMsg" class="msg"></div>
+    <input id="adminUser" placeholder="管理员账号" autocomplete="username">
+    <input id="adminPass" type="password" placeholder="管理员密码">
+    <button onclick="doLogin()">登 录</button>
+    <p class="muted" style="margin-top:12px;text-align:center;">部署后请及时修改管理员密码，确保账户安全</p>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="mainPage" class="hidden">
+  <h1>BTCBOX <span class="badge">管理后台</span> <button class="secondary small" style="margin-left:auto" onclick="logout()">退出</button></h1>
+  <div id="mainMsg" class="msg"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">仪表盘</div>
+    <div class="tab" data-tab="users">用户管理</div>
+    <div class="tab" data-tab="orders">订单管理</div><div class="tab" data-tab="addresses">用户地址管理</div><div class="tab" data-tab="support">客服消息</div><div class="tab" data-tab="audit">操作日志</div><div class="tab" data-tab="config">系统配置</div>
+  </div>
+
+  <!-- 仪表盘 -->
+  <div id="tab-dashboard">
+    <div class="row" id="statsRow"></div>
+    <div class="row">
+      <div class="card" style="flex:1;min-width:300px">
+        <h3>待审核提现</h3>
+        <div class="pending-list" id="pendingWd"></div>
+      </div>
+      <div class="card" style="flex:1;min-width:300px">
+        <h3>待审核 KYC</h3>
+        <div class="pending-list" id="pendingKyc"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 用户管理 -->
+  <div id="tab-users" class="hidden">
+    <div class="card">
+      <div class="row">
+        <input id="userSearch" placeholder="搜索邮箱或 UID" style="flex:1">
+        <button onclick="searchUsers()">搜索</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0">
+      <table>
+        <thead><tr><th>UID</th><th>邮箱</th><th>KYC</th><th>总资产(USDT)</th><th>状态</th><th>2FA</th><th>注册时间</th><th>操作</th></tr></thead>
+        <tbody id="userTable"></tbody>
+      </table>
+    </div>
+    <div id="userDetail" class="hidden"></div>
+  </div>
+
+  <!-- 订单管理 -->
+  <div id="tab-orders" class="hidden"><div class="card" style="padding:0"><table><thead><tr><th>订单ID</th><th>用户</th><th>交易对</th><th>方向</th><th>价格</th><th>数量</th><th>状态</th><th>时间</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
+  <!-- 用户地址管理 -->
+  <div id="tab-addresses" class="hidden"><div class="card" style="padding:0"><table><thead><tr><th>时间</th><th>UID / 用户</th><th>类型</th><th>地址 / 银行信息</th><th>状态</th><th>操作</th></tr></thead><tbody id="addressTable"></tbody></table></div><div id="addressAudit" class="card" style="margin-top:12px"></div></div>
+  <!-- 客服消息 -->
+  <div id="tab-support" class="hidden"><div class="card" style="padding:0"><table><thead><tr><th>时间</th><th>用户</th><th>消息</th><th>操作</th></tr></thead><tbody id="supportTable"></tbody></table></div></div>
+  <!-- 操作日志 -->
+  <div id="tab-audit" class="hidden"><div class="card"><div class="row"><input id="auditUid" placeholder="按 UID 筛选" style="max-width:220px"><input id="auditAction" placeholder="按操作类型筛选（如 kyc_approve）" style="flex:1;min-width:220px"><button onclick="loadAuditLogs()">筛选</button><button class="secondary" onclick="clearAuditFilters()">重置</button></div></div><div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>时间</th><th>操作</th><th>UID</th><th>管理员</th><th>详情</th></tr></thead><tbody id="auditTable"></tbody></table></div><div class="actions"><button class="secondary" id="auditMore" onclick="loadAuditLogs(true)">加载更多</button></div></div>
+
+  <!-- 系统配置 -->
+  <div id="tab-config" class="hidden">
+    <div class="card">
+      <h3>充值地址配置（用户充值页实时读取）</h3>
+      <div class="config-grid" id="addrGrid"></div>
+      <div class="actions"><button onclick="saveAddrs()">保存充值地址</button></div>
+    </div>
+    <div class="card">
+      <h3>全站公告</h3>
+      <textarea id="announcement" placeholder="留空则不显示公告"></textarea>
+      <div class="actions"><button onclick="saveAnn()">保存公告</button></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+var authHeader = '';
+function $(id){return document.getElementById(id)}
+function showMsg(id, text, ok){var el=$(id);el.textContent=text;el.className='msg '+(ok?'ok':'err');setTimeout(function(){el.className='msg';},4000)}
+function api(path, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({'Content-Type':'application/json','Authorization':authHeader}, opts.headers||{});
+  opts.credentials = 'include';
+  return fetch('/api/'+path, opts).then(function(r){
+    if(r.status===401){logout();throw new Error('认证失败，请重新登录');}
+    return r.json();
+  });
+}
+function doLogin(){
+  var u=$('adminUser').value.trim(), p=$('adminPass').value;
+  if(!u||!p){showMsg('loginMsg','请输入账号密码',false);return;}
+  authHeader='Basic '+btoa(u+':'+p);
+  api('admin/stats').then(function(j){
+    if(j.ok){sessionStorage.setItem('btcbox_admin',authHeader);$('loginPage').classList.add('hidden');$('mainPage').classList.remove('hidden');loadAll();}
+    else{showMsg('loginMsg',j.msg||'登录失败',false);authHeader='';}
+  }).catch(function(e){showMsg('loginMsg',e.message,false);authHeader='';});
+}
+function logout(){sessionStorage.removeItem('btcbox_admin');location.reload();}
+function kycTag(s){return {'approved':'<span class="tag ok">已认证</span>','pending':'<span class="tag warn">审核中</span>','rejected':'<span class="tag bad">已拒绝</span>'}[s]||'<span class="tag gray">未提交</span>'}
+
+// Tab 切换
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+    t.classList.add('active');
+    ['dashboard','users','orders','addresses','support','audit','config'].forEach(function(k){$('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab)});
+    if(t.dataset.tab==='users') searchUsers();
+    if(t.dataset.tab==='orders') loadOrders(); if(t.dataset.tab==='addresses') loadAddresses(); if(t.dataset.tab==='support') loadSupportMsgs(); if(t.dataset.tab==='audit') { auditCursor=null; loadAuditLogs(); } if(t.dataset.tab==='config') loadConfig();
+  });
+});
+
+
+function loadAddresses(){
+  api('admin/addresses').then(function(j){
+    if(!j.ok) throw new Error(j.msg||'加载失败');
+    var rows=j.addresses||[];
+    $('addressTable').innerHTML=rows.map(function(a){
+      var detail=a.type==='bank' ? [a.account_holder,a.bank_name,'Account: '+a.account_number,'ABA: '+a.routing_number,'SWIFT: '+a.swift,a.bank_address].filter(Boolean).join(' · ') : [a.coin,a.network,a.address].filter(Boolean).join(' · ');
+      var state=(a.flagged?'已标记异常 ':'')+(a.blocked?'已拉黑 ':'')+(a.unbound?'已解绑':'正常');
+      return '<tr><td>'+escHtml(a.created_at)+'</td><td>'+escHtml(a.uid)+'<br>'+escHtml(a.email)+'</td><td>'+escHtml(a.type)+'</td><td style="max-width:380px;word-break:break-all">'+escHtml(detail)+'</td><td>'+escHtml(state)+'</td><td><button class="small" onclick="manageAddress(\''+a.id+'\',\'flag\', '+(!a.flagged)+')">'+(a.flagged?'取消异常标记':'标记异常')+'</button> <button class="small" onclick="manageAddress(\''+a.id+'\',\'block\', '+(!a.blocked)+')">'+(a.blocked?'解除拉黑':'拉黑')+'</button> <button class="small" onclick="manageAddress(\''+a.id+'\',\'unbind\')">解绑</button> <button class="small danger" onclick="manageAddress(\''+a.id+'\',\'delete\')">删除</button></td></tr>';
+    }).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px">暂无绑定地址</td></tr>';
+  }).catch(function(e){showMsg('mainMsg',e.message||'加载失败',false)});
+  api('admin/audit-logs').then(function(j){$('addressAudit').innerHTML='<h3>地址管理操作日志</h3>'+((j.logs||[]).filter(function(x){return String(x.action).indexOf('address_')===0}).slice(0,50).map(function(x){return '<div style="padding:7px 0;border-bottom:1px solid #273044;font-size:12px">'+escHtml(x.time)+' · UID '+escHtml(x.uid)+' · '+escHtml(x.action)+' · '+escHtml(x.detail||'')+'</div>'}).join('')||'<div class="muted">暂无操作日志</div>')}).catch(function(){});
+}
+function escHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function manageAddress(id,action,value){
+  var reason=prompt('操作原因（写入日志）：')||'';
+  if(['delete','unbind','update'].indexOf(action)>=0 && !reason.trim()){showMsg('mainMsg','请填写操作原因',false);return;}
+  api('admin/address/manage',{method:'POST',body:JSON.stringify({id:id,action:action,value:value,reason:reason})}).then(function(j){showMsg('mainMsg',j.msg|| (j.ok?'提交成功':'操作失败'),!!j.ok);if(j.ok)loadAddresses()}).catch(function(e){showMsg('mainMsg',e.message||'网络异常',false)});
+}
+
+function loadAll(){loadStats();loadConfig();}
+
+function loadStats(){
+  api('admin/stats').then(function(j){
+    if(!j.ok)return;
+    $('statsRow').innerHTML=
+      '<div class="stat"><div class="num">'+j.total_users+'</div><div class="label">注册用户</div></div>'+
+      '<div class="stat"><div class="num" style="color:#2eae70">'+j.pending_withdrawals+'</div><div class="label">待审核提现</div></div>'+
+      '<div class="stat"><div class="num" style="color:#0ecb81">'+j.pending_kyc+'</div><div class="label">待审核KYC</div></div>';
+    // 待审核提现和KYC列表
+    api('admin/users').then(function(uj){
+      if(!uj.ok)return;
+      var wdHtml='',kycHtml='';
+      uj.users.forEach(function(u){
+        if(u.kyc_status==='pending'){
+          kycHtml+='<div style="padding:8px 0;border-bottom:1px solid #1e2a45;display:flex;justify-content:space-between;align-items:center;"><div><strong>'+u.email+'</strong><br><span class="muted">UID '+u.uid+'</span></div><div class="actions"><button class="small" onclick="kycApprove(\''+u.uid+'\')">通过</button><button class="small danger" onclick="kycReject(\''+u.uid+'\')">拒绝</button></div></div>';
+        }
+      });
+      // 提现需要查每个用户详情，简化：提示去用户详情处理
+      wdHtml='<p class="muted">在「用户管理」中点击用户详情处理提现审核</p>';
+      $('pendingWd').innerHTML=wdHtml||'<p class="muted">暂无待审核</p>';
+      $('pendingKyc').innerHTML=kycHtml||'<p class="muted">暂无待审核</p>';
+    });
+  });
+}
+
+function kycApprove(uid){api('admin/kyc/approve',{method:'POST',body:JSON.stringify({uid:uid})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);loadStats();searchUsers();});}
+function kycReject(uid){var r=prompt('拒绝原因：');if(r===null)return;api('admin/kyc/reject',{method:'POST',body:JSON.stringify({uid:uid,reason:r})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);loadStats();searchUsers();});}
+
+function searchUsers(){
+  var q=$('userSearch').value.trim();
+  api('admin/users'+(q?'?search='+encodeURIComponent(q):'')).then(function(j){
+    if(!j.ok){$('userTable').innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:#8b9ab8">'+j.msg+'</td></tr>';return;}
+    $('userTable').innerHTML=j.users.map(function(u){
+      return '<tr><td>'+u.uid+'</td><td>'+u.email+'</td><td>'+kycTag(u.kyc_status)+'</td><td>'+(u.total_usdt||0).toFixed(2)+'</td><td>'+(u.frozen?'<span class="tag bad">已冻结</span>':'<span class="tag ok">正常</span>')+'</td><td>'+(u.twofa?'<span class="tag ok">开</span>':'<span class="tag gray">关</span>')+'</td><td class="muted">'+u.created_at+'</td><td><button class="small secondary" onclick="showUser(\''+u.uid+'\')">详情</button></td></tr>';
+    }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:#8b9ab8">无用户</td></tr>';
+  });
+}
+
+function showUser(uid){
+  api('admin/user?uid='+uid).then(function(j){
+    if(!j.ok){showMsg('mainMsg',j.msg,false);return;}
+    var u=j.user;
+    var balHtml=Object.keys(u.balances||{}).map(function(c){var b=u.balances[c];return '<div><div class="k">'+c+'</div>可用 '+(b.free||0)+' / 冻结 '+(b.frozen||0)+'</div>'}).join('');
+    var wdHtml=(u.withdrawals||[]).slice(-5).reverse().map(function(w){return '<tr><td>'+w.id+'</td><td>'+w.coin+' '+w.amount+'</td><td>'+w.address.slice(0,12)+'...</td><td>'+({'pending':'<span class="tag warn">待审核</span>','approved_pending_broadcast':'<span class="tag warn">待处理（旧记录）</span>','approved':'<span class="tag ok">已通过</span>','rejected':'<span class="tag bad">已拒绝</span>'}[w.status]||w.status)+'</td><td>'+((w.status==='pending'||w.status==='approved_pending_broadcast')?'<button class="small" onclick="wdApprove(\''+w.id+'\')">通过</button> <button class="small danger" onclick="wdReject(\''+w.id+'\')">拒绝</button>':'')+'</td></tr>'}).join('')||'<tr><td colspan="5" class="muted">无记录</td></tr>';
+    $('userDetail').classList.remove('hidden');
+    $('userDetail').innerHTML=
+      '<div class="card"><h3>用户详情 · '+u.email+' (UID '+u.uid+')</h3>'+
+      '<div class="detail-grid"><div><div class="k">KYC状态</div>'+kycTag(u.kyc.status)+(u.kyc.name?' '+u.kyc.name+' '+u.kyc.id_number:'')+'</div><div><div class="k">注册时间</div>'+u.created_at+'</div><div><div class="k">资金密码</div>'+(u.fund_password?'已设置':'未设置')+'</div><div><div class="k">2FA</div>'+(u.twofa_enabled?'已开启':'未开启')+'</div></div>'+
+      '<h3 style="margin-top:14px">资产</h3><div class="detail-grid">'+balHtml+'</div>'+
+      '<h3 style="margin-top:14px">最近提现记录</h3><table><thead><tr><th>ID</th><th>金额</th><th>地址</th><th>状态</th><th>操作</th></tr></thead><tbody>'+wdHtml+'</tbody></table>'+
+      '<div class="actions">'+
+        '<button class="small" onclick="adjBal(\''+u.uid+'\')">调整余额</button>'+
+        '<button class="small '+(u.frozen?'':'danger')+'" onclick="toggleFreeze(\''+u.uid+'\','+(!u.frozen)+')">'+(u.frozen?'解冻账户':'冻结账户')+'</button>'+
+        '<button class="small secondary" onclick="resetPwd(\''+u.uid+'\')">重置密码</button>'+
+        '<button class="small secondary" onclick="resetEmail(\''+u.uid+'\')">修改邮箱</button>'+
+        '<button class="small" onclick="manualDeposit(\''+u.uid+'\')">人工充值</button>'+
+        '<button class="small" onclick="kycApprove(\''+u.uid+'\')">管理员直接通过KYC</button><button class="small danger" onclick="kycReject(\''+u.uid+'\')">管理员直接拒绝KYC</button>'+
+      '</div></div>';
+    $('userDetail').scrollIntoView({behavior:'smooth'});
+  });
+}
+function manualDeposit(uid){
+  var coin=prompt('充值币种（USDT/BTC/ETH/SOL）：','USDT');
+  if(coin===null)return;
+  coin=coin.trim().toUpperCase();
+  if(['USDT','BTC','ETH','SOL'].indexOf(coin)<0){showMsg('mainMsg','币种不支持',false);return;}
+  var raw=prompt('充值金额（必须大于 0）：');
+  if(raw===null)return;
+  if(!/^\d+(?:\.\d{1,12})?$/.test(raw.trim())||Number(raw)<=0){showMsg('mainMsg','充值金额无效',false);return;}
+  var reference=prompt('参考编号/订单号（建议填写，重复编号会被拒绝）：','');
+  if(reference===null)return;
+  var note=prompt('人工入账备注/原因：','');
+  if(note===null)return;
+  if(!confirm('请再次核对：给用户 '+uid+' 入账 '+raw+' '+coin+'。此操作会立即增加可用余额，确认继续？'))return;
+  var requestKey=(window.crypto&&typeof window.crypto.randomUUID==='function')?window.crypto.randomUUID():('manualdeposit_'+Date.now()+'_'+Math.random().toString(36).slice(2));
+  api('admin/deposit/confirm',{method:'POST',body:JSON.stringify({uid:uid,coin:coin,amount:raw,reference:reference.trim(),note:note.trim(),idempotency_key:requestKey})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);if(j.ok)showUser(uid);});
+}
+function wdApprove(id){if(!confirm('确认人工审核通过该提现？系统将扣除冻结本金及手续费，不会执行链上广播。'))return;api('admin/withdraw/approve',{method:'POST',body:JSON.stringify({id:id})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);searchUsers();});}
+function wdReject(id){var r=prompt('拒绝原因（冻结本金及手续费将退回用户）：');if(r===null)return;api('admin/withdraw/reject',{method:'POST',body:JSON.stringify({id:id,reason:r})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);searchUsers();});}
+function adjBal(uid){var coin=prompt('币种（USDT/BTC/ETH/SOL）：','USDT');if(coin===null)return;var mode=prompt('资金操作类型：adjust=调整可用余额，freeze=冻结资金，unfreeze=解冻资金','adjust');if(mode===null)return;mode=mode.trim().toLowerCase();if(['adjust','freeze','unfreeze'].indexOf(mode)<0){showMsg('mainMsg','资金操作类型无效',false);return;}var raw=prompt(mode==='adjust'?'变动数量（正数增加，负数扣减）：':'数量（必须为正数）：');if(raw===null||!raw.trim())return;var delta=Number(raw);if(!Number.isFinite(delta)||delta===0||(mode!=='adjust'&&delta<0)){showMsg('mainMsg','操作数量无效',false);return;}var reason=prompt('操作原因（至少 5 个字符）：','人工核对调整');if(reason===null||reason.trim().length<5){showMsg('mainMsg','请填写有效操作原因',false);return;}var requestId=(crypto.randomUUID?crypto.randomUUID():('adj_'+Date.now()+'_'+Math.random().toString(36).slice(2,14)));api('admin/user/balance',{method:'POST',body:JSON.stringify({uid:uid,coin:coin,mode:mode,delta:delta,reason:reason.trim(),request_id:requestId})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);showUser(uid);});}
+function toggleFreeze(uid,fr){var reason=fr?prompt('冻结原因：'):'';if(fr&&reason===null)return;api('admin/user/freeze',{method:'POST',body:JSON.stringify({uid:uid,frozen:fr,reason:reason||''})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);searchUsers();});}
+function resetPwd(uid){var p=prompt('新密码（至少6位）：');if(p===null)return;api('admin/user/reset-pwd',{method:'POST',body:JSON.stringify({uid:uid,new_password:p})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);});}
+function resetEmail(uid){var e=prompt('新邮箱：');if(e===null)return;api('admin/user/reset-email',{method:'POST',body:JSON.stringify({uid:uid,new_email:e})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);searchUsers();});}
+var auditCursor=null;
+function clearAuditFilters(){ $('auditUid').value=''; $('auditAction').value=''; auditCursor=null; loadAuditLogs(); }
+function loadAuditLogs(append){
+  if(!append) auditCursor=null;
+  var qs=[];
+  if($('auditUid').value.trim()) qs.push('uid='+encodeURIComponent($('auditUid').value.trim()));
+  if($('auditAction').value.trim()) qs.push('action='+encodeURIComponent($('auditAction').value.trim()));
+  qs.push('limit=100');
+  if(append && auditCursor) qs.push('before='+encodeURIComponent(auditCursor));
+  api('admin/audit-logs?'+qs.join('&')).then(function(j){
+    if(!j.ok) throw new Error(j.msg||'加载日志失败');
+    var logs=j.logs||[];
+    var html=logs.map(function(x){return '<tr><td class="muted">'+escHtml(x.time)+'</td><td>'+escHtml(x.action)+'</td><td>'+escHtml(x.uid)+'</td><td>'+escHtml(x.by||'admin')+'</td><td style="max-width:420px;word-break:break-word">'+escHtml(x.detail||'')+'</td></tr>';}).join('');
+    if(append) $('auditTable').insertAdjacentHTML('beforeend',html); else $('auditTable').innerHTML=html;
+    if(!append && !logs.length) $('auditTable').innerHTML='<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">暂无操作日志</td></tr>';
+    auditCursor=j.next_before||null;
+    $('auditMore').disabled=!auditCursor;
+    $('auditMore').textContent=auditCursor?'加载更多':'没有更多记录';
+  }).catch(function(e){showMsg('mainMsg',e.message||'网络异常',false);});
+}
+
+function loadConfig(){
+  api('admin/config').then(function(j){
+    if(!j.ok)return;
+    var keys=['USDT-TRC20','USDT-ERC20','USDT-BEP20','BTC-Bitcoin','ETH-ERC20','SOL-Solana'];
+    $('addrGrid').innerHTML=keys.map(function(k){return '<div><label>'+k+'</label><input data-addr="'+k+'" value="'+(j.deposit_addresses[k]||'')+'"></div>'}).join('');
+    $('announcement').value=j.announcement||'';
+  });
+}
+function saveAddrs(){
+  var obj={};
+  document.querySelectorAll('[data-addr]').forEach(function(i){obj[i.dataset.addr]=i.value.trim();});
+  api('admin/config',{method:'POST',body:JSON.stringify({deposit_addresses:obj})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);if(j.ok){loadConfig();fetch('/api/config',{cache:'no-store'}).catch(function(){});}});
+}
+function loadOrders(){api('admin/orders').then(function(j){if(!j.ok)return;$('orderTable').innerHTML=j.orders.map(function(o){var st={'open':'<span class="tag warn">未成交</span>','filled':'<span class="tag ok">已成交</span>','canceled':'<span class="tag gray">已取消</span>'}[o.status]||o.status;var sd=o.side==='buy'?'<span style="color:#0ecb81">买入</span>':'<span style="color:#f6465d">卖出</span>';return '<tr><td class="muted">'+o.id+'</td><td>'+o.email+'</td><td>'+o.symbol+'</td><td>'+sd+'</td><td>'+(o.price||'市价')+'</td><td>'+o.amount+'</td><td>'+st+'</td><td class="muted">'+o.time+'</td></tr>';}).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:#8b9ab8">暂无订单</td></tr>';});}
+function loadSupportMsgs(){api('admin/support/messages').then(function(j){if(!j.ok)return;$('supportTable').innerHTML=j.messages.map(function(m){return '<tr><td class="muted">'+m.time+'</td><td>'+m.email+'</td><td style="max-width:300px;word-break:break-all">'+m.content+'</td><td><button class="small" onclick="replySup(\''+m.uid+'\')">回复</button></td></tr>';}).join('')||'<tr><td colspan="4" style="text-align:center;padding:20px;color:#8b9ab8">暂无消息</td></tr>';});}
+function replySup(uid){var ct=prompt('回复内容：');if(!ct)return;api('admin/support/reply',{method:'POST',body:JSON.stringify({uid:uid,content:ct})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);loadSupportMsgs();});}
+function saveAnn(){
+  api('admin/config',{method:'POST',body:JSON.stringify({announcement:$('announcement').value})}).then(function(j){showMsg('mainMsg',j.msg,j.ok);if(j.ok){fetch('/api/config',{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){document.dispatchEvent(new CustomEvent('siteConfigUpdated',{detail:c}));}).catch(function(){});}});
+}
+
+// 自动登录
+window.addEventListener('DOMContentLoaded',function(){
+  var saved=sessionStorage.getItem('btcbox_admin');
+  if(saved){authHeader=saved;$('loginPage').classList.add('hidden');$('mainPage').classList.remove('hidden');loadAll();}
+  $('adminPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  $('userSearch').addEventListener('keydown',function(e){if(e.key==='Enter')searchUsers();});
+});
+</script>
+</body>
+</html>

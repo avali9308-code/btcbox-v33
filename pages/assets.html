@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_193">资产 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div style="display:flex;align-items:center;gap:10px;">
+<a class="header-back" href="javascript:history.back()" onclick="if(history.length&lt;=1){location.href='../index.html';return false;}">
+<svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="m15 18-6-6 6-6"></path></svg>
+</a>
+<span class="page-title"><span data-i18n="r131_194">我的资产</span></span>
+</div>
+<a aria-label="交易记录" data-i18n-aria-label="tradeRecords" class="icon-btn" href="orders.html?tab=history">
+<svg fill="none" height="17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="17"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+</a>
+</header>
+<div class="content">
+<!-- 登录态 -->
+<div data-auth="logged-in">
+<div class="card-glow" style="margin-top:14px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+<span style="font-size:12px;color:var(--text-2);"><span data-i18n="r131_196">总资产估值 (USDT)</span></span>
+<button id="eyeBtn2" style="background:none;border:none;color:var(--text-2);cursor:pointer;padding:4px;display:flex;">
+<svg fill="none" height="17" id="eyeOpen2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="17"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+<svg fill="none" height="17" id="eyeOff2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="display:none;" viewbox="0 0 24 24" width="17"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 8 10 8a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
+</button>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;">
+<span class="num" id="assetTotal" style="font-size:32px;font-weight:800;letter-spacing:-.02em;">0.00</span>
+<span style="font-size:13px;color:var(--text-3);font-weight:600;">USDT</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+<span class="num" id="todayPnl" style="font-size:13px;font-weight:600;color:var(--text-3);">--</span>
+<span style="font-size:11px;color:var(--text-3);"><span data-i18n="r131_197">今日盈亏</span></span>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px;">
+<a class="btn btn-sm btn-gold" href="deposit.html" style="flex:1;"><span data-i18n="r131_113">充值</span></a>
+<a class="btn btn-sm btn-outline" href="withdraw.html" style="flex:1;"><span data-i18n="r131_96">提现</span></a>
+<a class="btn btn-sm btn-outline" href="orders.html" style="flex:1;"><span data-i18n="r131_198">订单</span></a>
+</div>
+</div>
+<div class="section-head"><span class="section-title"><span data-i18n="r131_199">币种资产</span></span><span id="hideSmallBtn" style="font-size:11px;color:var(--text-3);cursor:pointer;"><span data-i18n="r131_200">隐藏小额资产</span></span></div>
+<div id="assetList"></div>
+</div>
+<!-- 游客态 -->
+<div data-auth="guest" style="padding-top:40px;">
+<div class="guest-card">
+<div style="width:56px;height:56px;border-radius:16px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);margin:0 auto 14px;">
+<svg fill="none" height="28" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="28"><rect height="12" rx="2" width="20" x="2" y="6"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+</div>
+<div class="guest-title"><span data-i18n="r131_202">登录后查看资产</span></div>
+<p class="guest-sub"><span data-i18n="r131_203">安全管理您的数字资产，查看余额与盈亏</span></p>
+<div class="guest-actions">
+<a class="btn btn-sm btn-gold" href="login.html?mode=register" style="width:auto;padding:0 28px;"><span data-i18n="r131_67">立即注册</span></a>
+<a class="btn btn-sm btn-outline" href="login.html" style="width:auto;padding:0 28px;"><span data-i18n="r131_57">登录</span></a>
+</div>
+</div>
+</div>
+</div>
+<div style="height:16px;"></div>
+<div data-active="assets" id="bottomNavSlot"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var realBalances = {};
+  var realTotal = 0;
+  var COIN_NAMES = {USDT:'Tether', BTC:'Bitcoin', ETH:'Ethereum', SOL:'Solana', BNB:'BNB', XRP:'Ripple', DOGE:'Dogecoin', LINK:'Chainlink'};
+  function loadAccount(){
+    fetch('../api/account', {credentials:'include'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j.ok){
+          realBalances = j.balances || {};
+          realTotal = j.total_usdt || 0;
+          renderAssets();
+        }
+      }).catch(function(){});
+  }
+  function renderAssets(){
+    var hidden = BTCBOX.account.hideAsset;
+    var listEl = document.getElementById('assetList');
+    var items = [];
+    Object.keys(realBalances).forEach(function(sym){
+      var b = realBalances[sym];
+      var amt = b.amount || 0;
+      if(amt <= 0) return;
+      var value = b.usdt || 0;
+      items.push({sym: sym, name: COIN_NAMES[sym] || sym, free: amt, value: value});
+    });
+    if(items.length === 0){
+      listEl.innerHTML = '<div style="padding:28px 0;text-align:center;font-size:12px;color:var(--text-3);">暂无资产，<a href="deposit.html" style="color:var(--gold);">立即充值</a></div>';
+    } else {
+      if(hideSmall){ items = items.filter(function(b){ return b.value >= 1; }); }
+    items.sort(function(a,b){ return b.value - a.value; });
+      listEl.innerHTML = items.map(function(b){
+        return '<div class="list-item" style="cursor:default;">'+
+          '<div class="list-item-left">'+BTCBOX.coinIconHtml(b.sym,36)+
+          '<div><div class="list-item-title">'+b.sym+'</div><div class="list-item-sub num">可用 '+BTCBOX.fmtNum(b.free, b.sym==='USDT'?2:6)+'</div></div></div>'+
+          '<div style="text-align:right;"><div class="num" style="font-size:14px;font-weight:700;">'+(hidden?'******':BTCBOX.fmtNum(b.value))+'</div>'+
+          '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">≈ '+BTCBOX.fmtNum(b.value)+' USDT</div></div></div>';
+      }).join('');
+    }
+    document.getElementById('assetTotal').textContent = hidden ? '******' : BTCBOX.fmtNum(realTotal);
+  }
+  renderAssets();
+  loadAccount();
+  document.addEventListener('accountChange', loadAccount);
+  var hideSmall = false;
+  document.getElementById('hideSmallBtn').addEventListener('click', function(){
+    hideSmall = !hideSmall;
+    this.style.color = hideSmall ? 'var(--gold)' : 'var(--text-3)';
+    this.textContent = hideSmall ? I18N.t('showAllAssets') : I18N.t('hideSmallAssets');
+    renderAssets();
+  });
+  document.getElementById('eyeBtn2').addEventListener('click', function(){
+    BTCBOX.account.hideAsset = !BTCBOX.account.hideAsset;
+    BTCBOX.saveAccount();
+    document.getElementById('eyeOpen2').style.display = BTCBOX.account.hideAsset?'none':'block';
+    document.getElementById('eyeOff2').style.display = BTCBOX.account.hideAsset?'block':'none';
+    renderAssets();
+    BTCBOX.toast(BTCBOX.account.hideAsset ? I18N.t('assetHidden') : I18N.t('assetShown'), 'info');
+  });
+})();
+</script>
+</body>
+</html>

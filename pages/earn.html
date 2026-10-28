@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_145">理财 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div style="display:flex;align-items:center;gap:10px;">
+<a class="header-back" href="javascript:history.back()" onclick="if(history.length&lt;=1){location.href='../index.html';return false;}"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="m15 18-6-6 6-6"></path></svg></a>
+<span class="page-title"><span data-i18n="r131_146">理财赚币</span></span>
+</div>
+</header>
+<div class="content">
+<div class="card-glow" style="margin-top:14px;text-align:center;">
+<div style="font-size:12px;color:var(--text-2);margin-bottom:6px;"><span data-i18n="r131_147">累计收益 (USDT)</span></div>
+<div class="num" style="font-size:28px;font-weight:800;color:var(--teal);">0.00</div>
+<div style="font-size:11px;color:var(--text-3);margin-top:6px;"><span data-i18n="r131_148">昨日收益 --</span></div>
+</div>
+<div class="security-bar" style="margin-top:12px;">
+<svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="14"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>
+<span data-i18n="r131_149">理财非存款，历史年化不代表未来收益，数字资产投资有风险，申购前请仔细阅读产品说明与风险揭示书</span>
+</div>
+<div class="tabs" style="margin-top:14px;">
+<button class="tab active"><span data-i18n="r131_150">活期理财</span></button>
+<button class="tab"><span data-i18n="r131_151">定期理财</span></button>
+<button class="tab"><span data-i18n="r131_152">我的持仓</span></button>
+</div>
+<div id="earnFlexible" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
+<div class="card earn-card">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+<div><div class="earn-title" style="font-size:15px;font-weight:700;"><span data-i18n="r131_153">USDT 活期</span></div><div style="font-size:11px;color:var(--text-3);margin-top:2px;"><span data-i18n="r131_154">随存随取 · T+0 到账</span></div></div>
+<div style="text-align:right;"><div class="num" style="font-size:20px;font-weight:800;color:var(--teal);">5.20%</div><div style="font-size:10px;color:var(--text-3);"><span data-i18n="r131_155">历史年化·近7日</span></div></div>
+</div>
+<div style="display:flex;gap:8px;"><button class="btn btn-sm btn-gold" data-pid="flex_USDT" style="flex:1;"><span data-i18n="r131_156">立即申购</span></button><button class="btn btn-sm btn-outline" style="flex:1;"><span data-i18n="r131_157">查看详情</span></button></div>
+</div>
+</div>
+<div id="earnFixed" style="margin-top:14px;display:none;flex-direction:column;gap:12px;">
+<div class="card earn-card">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+<div><div class="earn-title" style="font-size:15px;font-weight:700;"><span data-i18n="r131_158">USDT 30天定期</span></div><div style="font-size:11px;color:var(--text-3);margin-top:2px;"><span data-i18n="r131_159">锁仓30天 · 到期自动赎回</span></div></div>
+<div style="text-align:right;"><div class="num" style="font-size:20px;font-weight:800;color:var(--teal);">8.50%</div><div style="font-size:10px;color:var(--text-3);"><span data-i18n="r131_160">历史年化·参考</span></div></div>
+</div>
+<div style="display:flex;gap:8px;"><button class="btn btn-sm btn-gold" data-pid="fixed30" style="flex:1;"><span data-i18n="r131_156">立即申购</span></button><button class="btn btn-sm btn-outline" style="flex:1;"><span data-i18n="r131_157">查看详情</span></button></div>
+</div>
+<div class="card earn-card">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+<div><div class="earn-title" style="font-size:15px;font-weight:700;"><span data-i18n="r131_161">USDT 90天定期</span></div><div style="font-size:11px;color:var(--text-3);margin-top:2px;"><span data-i18n="r131_162">锁仓90天 · 到期自动赎回</span></div></div>
+<div style="text-align:right;"><div class="num" style="font-size:20px;font-weight:800;color:var(--teal);">12.00%</div><div style="font-size:10px;color:var(--text-3);"><span data-i18n="r131_160">历史年化·参考</span></div></div>
+</div>
+<div style="display:flex;gap:8px;"><button class="btn btn-sm btn-gold" data-pid="fixed90" style="flex:1;"><span data-i18n="r131_156">立即申购</span></button><button class="btn btn-sm btn-outline" style="flex:1;"><span data-i18n="r131_157">查看详情</span></button></div>
+</div>
+<div class="card earn-card">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+<div><div class="earn-title" style="font-size:15px;font-weight:700;"><span data-i18n="r131_163">USDT 180天定期</span></div><div style="font-size:11px;color:var(--text-3);margin-top:2px;"><span data-i18n="r131_164">锁仓180天 · 到期自动赎回</span></div></div>
+<div style="text-align:right;"><div class="num" style="font-size:20px;font-weight:800;color:var(--teal);">6.80%</div><div style="font-size:10px;color:var(--text-3);"><span data-i18n="r131_160">历史年化·参考</span></div></div>
+</div>
+<div style="display:flex;gap:8px;"><button class="btn btn-sm btn-gold" data-pid="fixed180" style="flex:1;"><span data-i18n="r131_156">立即申购</span></button><button class="btn btn-sm btn-outline" style="flex:1;"><span data-i18n="r131_157">查看详情</span></button></div>
+</div>
+</div>
+<div id="earnHold" style="margin-top:14px;display:none;">
+<div class="empty-state" id="earnHoldEmpty"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg><p><span data-i18n="r131_12">加载中...</span></p></div>
+<div id="earnHoldList" style="display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+</div>
+<div style="height:20px;"></div>
+<div data-active="assets" id="bottomNavSlot"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+function postEarn(payload){
+  return fetch('../api/earn', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(function(r){ return r.json().then(function(j){ j._status = r.status; if(r.status===404) j._notfound = true; return j; }); })
+    .catch(function(){ return {ok:false, _network_error:true, msg:'网络异常'}; });
+}
+function earnRequestId(productId, amount){
+  var key = 'btcbox_earn_request_' + productId + '_' + String(amount);
+  try {
+    var existing = sessionStorage.getItem(key);
+    if(existing) return {id:existing,key:key};
+    var id = (window.crypto&&crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'') : 'E'+Date.now()+Math.random().toString(36).slice(2,18));
+    sessionStorage.setItem(key,id);
+    return {id:id,key:key};
+  } catch(e) {
+    return {id:(window.crypto&&crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'') : 'E'+Date.now()+Math.random().toString(36).slice(2,18)),key:''};
+  }
+}
+document.querySelectorAll('.earn-card .btn-gold').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    if(!BTCBOX.isLoggedIn()){
+        // 二次确认：检查cookie中是否有session
+        var hasSession = document.cookie.indexOf('session_token=') > -1;
+        if(hasSession){
+          // 有cookie但localStorage没同步，强制同步一次
+          BTCBOX.syncAccount && BTCBOX.syncAccount();
+        } else {
+          if(!BTCBOX.isLoggedIn()){
+            BTCBOX.toast(I18N.t('pleaseLogin'), 'warning');
+            setTimeout(function(){ location.href='login.html'; }, 800);
+            return;
+          }
+        }
+      }
+    var card = btn.closest('.earn-card');
+    var title = card ? (card.querySelector('.earn-title')||{}).textContent || I18N.t('earnProduct') : I18N.t('earnProduct');
+    var pid = btn.dataset.pid || ('flex_' + (title.trim().split(' ')[0]||'USDT'));
+    BTCBOX.modal({iconType:'info', title:I18N.t('earnSubscribeTitle'),
+      bodyHtml:I18N.t('earnSubscribeBody')+' <strong style="color:var(--text);">'+title.trim()+'</strong><div style="margin-top:10px;"><input class="form-input" id="__earnAmt" type="number" step="any" inputmode="decimal" placeholder="'+I18N.t('earnAmountPlaceholder')+'"></div>',
+      confirmText:I18N.t('confirmSubscribeAction'), cancelText:I18N.t('cancelAction')}).then(function(ok){
+      if(!ok) return;
+      var amt = parseFloat((document.getElementById('__earnAmt')||{}).value) || 0;
+      if(amt <= 0){ BTCBOX.toast((window.I18N?I18N.t('enterSubAmt'):''),'warning'); return; }
+      btn.disabled = true; btn.textContent = I18N.t('submitting');
+      var req = earnRequestId(pid, amt);
+      postEarn({action:'subscribe', product_id:pid, amount:amt, request_id:req.id}).then(function(j){
+        btn.disabled = false; btn.textContent = I18N.t('subscribeNow');
+        if(j.ok){
+          if(req.key) try { sessionStorage.removeItem(req.key); } catch(e) {}
+          BTCBOX.toast((window.I18N?I18N.t('subOk'):''),'success'); loadHoldings();
+        } else {
+          // Keep the same idempotency key after network/5xx ambiguity so retry cannot create a second subscription.
+          if(!j._network_error && !(j._status >= 500) && req.key) try { sessionStorage.removeItem(req.key); } catch(e) {}
+          BTCBOX.toast(I18N.t('submitFailed'), j._notfound?'info':'error');
+        }
+      });
+    });
+  });
+});
+document.querySelectorAll('.earn-card .btn-outline').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var card = btn.closest('.earn-card');
+    var title = card ? (card.querySelector('.earn-title')||{}).textContent || I18N.t('earnProduct') : I18N.t('earnProduct');
+    var apy = card ? (card.querySelector('.num')||{}).textContent || '--' : '--';
+    BTCBOX.modal({iconType:'info', title: title.trim() + ' · '+I18N.t('earnProductInfo'),
+      bodyHtml: '<div style="font-size:13px;line-height:1.9;color:var(--text-2);">'+
+        '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>'+I18N.t('earnHistoricalApy')+'</span><span class="num" style="color:var(--teal);font-weight:700;">'+apy+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>'+I18N.t('earnMinimum')+'</span><span>'+I18N.t('earnMinDetail')+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>'+I18N.t('earnPayout')+'</span><span>'+I18N.t('earnPayoutDetail')+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>'+I18N.t('earnRedemption')+'</span><span>'+I18N.t('earnRedemptionDetail')+'</span></div>'+
+        '<div class="modal-warn" style="margin-top:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>'+I18N.t('earnRisk')+'</span></div></div>',
+      confirmText:I18N.t('acknowledge'), cancelText:false});
+  });
+});
+function loadHoldings(){
+  var empty = document.getElementById('earnHoldEmpty');
+  var list = document.getElementById('earnHoldList');
+  if(!BTCBOX.isLoggedIn()){ empty.style.display=''; empty.innerHTML = '<p>'+I18N.t('loginViewEarnHoldings')+'</p>'; list.innerHTML=''; return; }
+  fetch('../api/account', {credentials:'include'}).then(function(r){return r.json();}).then(function(j){
+    var recs = (j.ok && j.earn_records) ? j.earn_records : [];
+    if(!recs.length){ empty.style.display=''; empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.5;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>'+I18N.t('noEarnHoldingsEmpty')+'</p>'; list.innerHTML=''; return; }
+    empty.style.display='none';
+    list.innerHTML = recs.map(function(r){
+      var name = r.product || r.product_id || I18N.t('earnProduct');
+      var isFixed = r.type === 'fixed' || (r.end && r.end !== '随存随取' && !r.end_ts);
+      var redeemable = r.status === 'active' || r.status === '持有中';
+      return '<div class="card" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;"><span style="font-weight:700;font-size:13px;">'+name+'</span><span class="num" style="color:var(--teal);font-weight:700;">'+(r.amount||0)+' USDT</span></div>'+
+        '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:5px;"><span>到期：'+(r.end||'随存随取')+'</span><span>预期收益：'+(r.expected_interest||0)+' USDT</span><span>年化：'+(r.apy||0)+'%</span></div>'+
+        (redeemable ? '<button class="btn btn-sm btn-outline" style="margin-top:8px;width:100%;" data-rid="'+(r.id||'')+'">'+I18N.t('earnRedeem')+'</button>' : '<div style="margin-top:8px;font-size:11px;color:var(--text-3);text-align:center;">'+(r.status||'')+'</div>')+'</div>';
+    }).join('');
+    list.querySelectorAll('button[data-rid]').forEach(function(b){
+      b.addEventListener('click', function(){
+        BTCBOX.confirm({iconType:'warning', title:I18N.t('redeemConfirmTitle'), bodyHtml:I18N.t('redeemConfirmBody'), confirmText:I18N.t('confirmRedeem'), cancelText:I18N.t('cancel'), danger:true}).then(function(ok){
+          if(!ok) return;
+          var redeemReq = earnRequestId('redeem_' + b.dataset.rid, 0);
+          postEarn({action:'redeem', record_id:b.dataset.rid, request_id:redeemReq.id}).then(function(j){
+            if(j.ok && redeemReq.key) try { sessionStorage.removeItem(redeemReq.key); } catch(e) {}
+            if(!j.ok && !j._network_error && !(j._status >= 500) && redeemReq.key) try { sessionStorage.removeItem(redeemReq.key); } catch(e) {}
+            BTCBOX.toast(j.ok?I18N.t('submitSuccess'):I18N.t('submitFailed'), j.ok?'success':(j._notfound?'info':'error'));
+            if(j.ok) loadHoldings();
+          });
+        });
+      });
+    });
+  }).catch(function(){ empty.style.display=''; empty.innerHTML='<p>'+I18N.t('earnLoadFailed')+'</p>'; });
+}
+var EARN_PANELS = ['earnFlexible','earnFixed','earnHold'];
+document.querySelectorAll('.tabs .tab').forEach(function(t, i){
+  t.addEventListener('click', function(){
+    document.querySelectorAll('.tabs .tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    EARN_PANELS.forEach(function(id, idx){
+      var el = document.getElementById(id);
+      if(idx===i){ el.style.display = (id==='earnFixed') ? 'flex' : 'block'; }
+      else { el.style.display = 'none'; }
+    });
+    if(i===2) loadHoldings();
+  });
+});
+</script>
+</body>
+</html>

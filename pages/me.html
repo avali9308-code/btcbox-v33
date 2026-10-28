@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_244">我的 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<span class="page-title"><span data-i18n="r131_245">我的</span></span>
+<a aria-label="设置" class="icon-btn" data-i18n-aria-label="r131_128" href="settings.html">
+<svg fill="none" height="17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="17"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+</a>
+</header>
+<div class="content">
+<!-- 登录态 -->
+<div data-auth="logged-in">
+<div style="display:flex;align-items:center;justify-content:flex-end;gap:14px;padding-top:8px;">
+<a aria-label="在线客服" class="icon-btn" data-i18n-aria-label="r131_78" href="support.html">💬</a>
+<a aria-label="设置" class="icon-btn" data-i18n-aria-label="r131_128" href="settings.html">⚙️</a>
+</div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:8px;padding:4px 0 14px;">
+<div id="userAvatar" style="width:54px;height:54px;border-radius:50%;background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0;">U</div>
+<div style="flex:1;min-width:0;"><div id="userEmail" style="font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</div><div style="display:flex;align-items:center;gap:8px;margin-top:5px;"><span id="kycBadge" style="font-size:11px;color:var(--text-2);"><span data-i18n="r131_246">❌ 未实名认证</span></span><span id="userUid" style="font-size:11px;color:var(--text-3);">UID: --</span></div></div>
+</div>
+<div class="card-glow" style="padding:16px;margin-bottom:14px;"><div style="font-size:12px;color:var(--text-2);"><span data-i18n="r131_247">Total Assets (USDT)</span></div><div class="num" id="totalAssetsUsdt" style="font-size:27px;font-weight:800;margin-top:5px;">-- USDT</div><div style="font-size:12px;margin-top:8px;display:flex;gap:8px;align-items:center;"><span style="color:var(--text-3);">24h:</span><span id="assetPnlUsdt" style="color:var(--up);">-- USDT</span><span id="assetPnlPct" style="color:var(--up);">--</span></div></div>
+<div class="card" style="padding:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;margin-bottom:18px;">
+<a class="btn btn-gold" href="deposit.html" style="padding:10px 4px;"><span data-i18n="r131_113">充值</span></a><a class="btn btn-outline" href="withdraw.html" style="padding:10px 4px;"><span data-i18n="r131_96">提现</span></a><button class="btn btn-outline" id="frozenStatusBtn" style="padding:10px 4px;" type="button"><span data-i18n="r131_248">已冻结</span></button>
+</div>
+<div class="section-head"><span class="section-title"><span data-i18n="r131_249">💰 我的资产</span></span><a href="assets.html" style="font-size:12px;color:var(--text-3);"><span data-i18n="r131_250">全部资产</span></a></div>
+<div class="card" style="padding:4px 14px;margin-bottom:18px;"><div style="display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:6px;padding:8px 0;color:var(--text-3);font-size:10px;"><span><span data-i18n="r131_5">币种</span></span><span style="text-align:right;"><span data-i18n="r131_251">余额</span></span><span style="text-align:right;"><span data-i18n="r131_204">USDT Value / 24h</span></span></div><div id="myAssetRows"><div style="padding:18px 0;text-align:center;color:var(--text-3);font-size:12px;"><span data-i18n="r131_205">加载资产中</span></div></div></div>
+<div class="card" style="padding:0 14px;margin-bottom:18px;">
+<a class="list-item" href="kyc.html"><div class="list-item-left"><div class="list-item-icon">✅</div><div><div class="list-item-title"><span data-i18n="r131_206">KYC认证</span></div><div class="list-item-sub" id="kycStatus"><span data-i18n="r131_207">未实名认证</span></div></div></div><span class="chevron">›</span></a>
+<a class="list-item" href="addresses.html"><div class="list-item-left"><div class="list-item-icon">📍</div><div><div class="list-item-title"><span data-i18n="r131_1">地址绑定</span></div></div></div><span class="chevron">›</span></a>
+<a class="list-item" href="settings.html#security"><div class="list-item-left"><div class="list-item-icon">🔐</div><div><div class="list-item-title"><span data-i18n="r131_208">安全中心</span></div></div></div><span class="chevron">›</span></a>
+<div style="height:1px;background:var(--border);"></div>
+<a class="list-item" href="orders.html"><div class="list-item-left"><div class="list-item-icon">📊</div><div><div class="list-item-title"><span data-i18n="r131_209">订单与交易历史</span></div></div></div><span class="chevron">›</span></a>
+<a class="list-item" href="orders.html?tab=deposit"><div class="list-item-left"><div class="list-item-icon">💳</div><div><div class="list-item-title"><span data-i18n="r131_210">充值记录</span></div></div></div><span class="chevron">›</span></a>
+<a class="list-item" href="orders.html?tab=withdraw" style="border-bottom:none;"><div class="list-item-left"><div class="list-item-icon">💸</div><div><div class="list-item-title"><span data-i18n="r131_97">提现记录</span></div></div></div><span class="chevron">›</span></a>
+</div>
+<button class="btn btn-outline" id="logoutBtn" style="margin-top:8px;margin-bottom:16px;"><span data-i18n="r131_211">退出登录</span></button>
+</div>
+<!-- 游客态 -->
+<div data-auth="guest" style="padding-top:40px;">
+<div class="guest-card">
+<div style="width:56px;height:56px;border-radius:50%;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);margin:0 auto 14px;">
+<svg fill="none" height="28" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="28"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+</div>
+<div class="guest-title"><span data-i18n="r131_212">登录 BTCBOX</span></div>
+<p class="guest-sub"><span data-i18n="r131_213">登录后享受完整交易功能，管理您的数字资产</span></p>
+<div class="guest-actions">
+<a class="btn btn-sm btn-gold" href="login.html?mode=register" style="width:auto;padding:0 28px;"><span data-i18n="r131_67">立即注册</span></a>
+<a class="btn btn-sm btn-outline" href="login.html" style="width:auto;padding:0 28px;"><span data-i18n="r131_57">登录</span></a>
+</div>
+</div>
+</div>
+</div>
+<div style="height:16px;"></div>
+<div data-active="me" id="bottomNavSlot"></div>
+</div>
+<script src="../assets/js/market-api.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+(function(){
+  var emailEl = document.getElementById('userEmail');
+  if(emailEl && BTCBOX.account.email) emailEl.textContent = BTCBOX.account.email;
+  // 从服务器加载账户与余额；资产只展示真实返回的非零余额，不构造演示资产。
+  function loadRealAccount(){
+    if(!BTCBOX.isLoggedIn()) return;
+    fetch('../api/account', {credentials:'include', cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+      if(!j || !j.ok) return;
+      var emailEl=document.getElementById('userEmail'); if(emailEl) emailEl.textContent=j.email||'--';
+      var avatar=document.getElementById('userAvatar'); if(avatar) avatar.textContent=((j.email||'U').charAt(0)||'U').toUpperCase();
+      var uidEl=document.getElementById('userUid'); if(uidEl) uidEl.textContent='UID: '+(j.uid||'--');
+      var status=(j.kyc&&j.kyc.status)||'unsubmitted'; var badge=document.getElementById('kycBadge'); var statusEl=document.getElementById('kycStatus');
+      var labels={approved:'✅ 已实名认证',pending:'⏳ 审核中',rejected:'❌ 未实名认证',unsubmitted:'❌ 未实名认证'};
+      if(badge) badge.textContent=labels[status]||'❌ 未实名认证'; if(statusEl) statusEl.textContent=labels[status]||'❌ 未实名认证';
+      var total=Number(j.totalUsdt!=null?j.totalUsdt:j.total_usdt); var totalEl=document.getElementById('totalAssetsUsdt'); if(totalEl) totalEl.textContent=Number.isFinite(total)?total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT':'-- USDT';
+      var pnlKnown=Number.isFinite(Number(j.todayPnl)) && j.todayPnl!==null && j.todayPnl!==undefined; var pctKnown=Number.isFinite(Number(j.todayPnlPct)) && j.todayPnlPct!==null && j.todayPnlPct!==undefined; var pnl=Number(j.todayPnl), pct=Number(j.todayPnlPct); var pnlEl=document.getElementById('assetPnlUsdt'), pctEl=document.getElementById('assetPnlPct');
+      if(pnlEl){pnlEl.textContent=pnlKnown?((pnl>=0?'+':'-')+Math.abs(pnl).toFixed(2)+' USDT'):'--';if(pnlKnown)pnlEl.style.color=pnl>=0?'var(--up)':'var(--down)';}
+      if(pctEl){pctEl.textContent=pctKnown?((pct>=0?'+':'')+pct.toFixed(2)+'% '+(pct>=0?'↑':'↓')):'--';if(pctKnown)pctEl.style.color=pct>=0?'var(--up)':'var(--down)';}
+      var rows=document.getElementById('myAssetRows'); if(rows){var balances=j.balances||{}; var keys=Object.keys(balances).filter(function(k){var b=balances[k]||{};return Number(b.amount!=null?b.amount:b.free||0)>0;});
+        if(!keys.length){rows.innerHTML='<div style="padding:18px 0;text-align:center;color:var(--text-3);font-size:12px;">暂无有余额的资产</div>';}
+        else {rows.innerHTML=keys.map(function(k){var b=balances[k]||{}, amount=Number(b.amount!=null?b.amount:b.free||0), usdtValue=Number(b.usdt||0);var fmt=amount.toLocaleString('en-US',{maximumFractionDigits:8});return '<div style="display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:6px;align-items:center;padding:12px 0;border-top:1px solid var(--border);font-size:12px;"><span style="font-weight:700;">'+String(k).replace(/[<>"']/g,'')+'</span><span class="num" style="text-align:right;">'+fmt+'</span><span class="num" style="text-align:right;">'+(Number.isFinite(usdtValue)?usdtValue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDT':'--')+'</span></div>';}).join('');}
+      }
+    }).catch(function(){});
+  }
+  loadRealAccount();
+  document.addEventListener('accountChange', loadRealAccount);
+  var logoutBtn = document.getElementById('logoutBtn');
+  if(logoutBtn){
+    logoutBtn.addEventListener('click', function(){
+      BTCBOX.confirm({
+        iconType: 'warning',
+        title: '退出登录',
+        bodyHtml: '确定要退出当前账号吗？退出后需重新登录才能查看资产与交易。',
+        confirmText: '退出登录',
+        cancelText: '取消'
+      }).then(function(ok){
+        if(!ok) return;
+        BTCBOX.logout();
+        BTCBOX.toast((window.I18N?I18N.t('logoutOk'):''), 'success');
+        setTimeout(function(){ location.href = '../index.html'; }, 1000);
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

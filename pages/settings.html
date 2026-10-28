@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<link href="../assets/img/logo-transparent.png" rel="icon" type="image/png"/>
+<meta content="#0a0e1a" name="theme-color"/>
+<title data-i18n="r131_127">设置 · BTCBOX</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div style="display:flex;align-items:center;gap:10px;">
+<a class="header-back" href="me.html"><svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20"><path d="m15 18-6-6 6-6"></path></svg></a>
+<span class="page-title"><span data-i18n="r131_128">设置</span></span>
+</div>
+</header>
+<div class="content">
+<div class="section-head"><span class="section-title"><span data-i18n="r131_129">安全设置</span></span></div>
+<div class="card" style="padding:0 16px;">
+<div class="list-item" data-setting-action="password"><div class="list-item-left"><div class="list-item-icon"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><rect height="11" rx="2" width="18" x="3" y="11"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div><div><div class="list-item-title"><span data-i18n="r131_130">登录密码</span></div><div class="list-item-sub"><span data-i18n="r131_131">定期修改更安全</span></div></div></div><svg class="chevron" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="m9 18 6-6-6-6"></path></svg></div>
+<div class="list-item" data-setting-action="fund-password"><div class="list-item-left"><div class="list-item-icon"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><div><div class="list-item-title"><span data-i18n="r131_132">资金密码</span></div><div class="list-item-sub"><span data-i18n="r131_133">提币与资金操作验证</span></div></div></div><svg class="chevron" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="m9 18 6-6-6-6"></path></svg></div>
+<div class="list-item" style="border-bottom:none;"><div class="list-item-left"><div class="list-item-icon"><svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18"><rect height="18" rx="2" width="18" x="3" y="3"></rect><path d="M8 12h8M12 8v8"></path></svg></div><div><div class="list-item-title"><span data-i18n="r131_134">双重验证 (2FA)</span></div><div class="list-item-sub">Google Authenticator</div></div></div><div class="switch" id="sw2fa"></div></div>
+</div>
+<div class="section-head"><span class="section-title">Preferences</span></div>
+<div class="card" style="padding:0 16px;margin:14px 0;">
+<button class="list-item" id="themeToggle" style="width:100%;background:none;border:0;text-align:left;color:var(--text);cursor:pointer;" type="button"><div class="list-item-left"><div class="list-item-icon">🎨</div><div><div class="list-item-title"><span data-i18n="r131_141">深色/浅色模式</span></div><div class="list-item-sub" id="themeLabel"><span data-i18n="r131_142">深色模式</span></div></div></div><span class="chevron">⇄</span></button>
+</div>
+<div class="section-head"><span class="section-title"><span data-i18n="r131_143">关于</span></span></div>
+<div class="card" style="padding:0 16px;">
+<a class="list-item" href="legal.html?type=terms"><div class="list-item-left"><div class="list-item-title" style="font-size:14px;"><span data-i18n="r131_69">服务条款</span></div></div><svg class="chevron" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="m9 18 6-6-6-6"></path></svg></a>
+<a class="list-item" href="legal.html?type=privacy"><div class="list-item-left"><div class="list-item-title" style="font-size:14px;"><span data-i18n="r131_71">隐私政策</span></div></div><svg class="chevron" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="m9 18 6-6-6-6"></path></svg></a>
+<div class="list-item" style="border-bottom:none;"><div class="list-item-left"><div class="list-item-title" style="font-size:14px;"><span data-i18n="r131_144">版本</span></div></div><span style="font-size:12px;color:var(--text-3);">v3.0.0</span></div>
+</div>
+</div>
+<div style="height:20px;"></div>
+<script>
+(function(){
+  var key='btcbox_theme';
+  function applyTheme(){var theme=localStorage.getItem(key)||'dark';document.documentElement.setAttribute('data-theme',theme);var label=document.getElementById('themeLabel');if(label)label.textContent=window.I18N?I18N.t(theme==='light'?'themeLight':'themeDark'):(theme==='light'?'Light mode':'Dark mode');}
+  applyTheme();document.addEventListener('langChange',applyTheme);var btn=document.getElementById('themeToggle');if(btn)btn.addEventListener('click',function(){localStorage.setItem(key,(localStorage.getItem(key)||'dark')==='dark'?'light':'dark');applyTheme();});
+})();
+</script>
+<div data-active="me" id="bottomNavSlot"></div>
+</div>
+<script src="../assets/js/market-api.js">
+</script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/app.js"></script>
+<script>
+// 未登录引导
+if(!BTCBOX.isLoggedIn()){
+  BTCBOX.toast((window.I18N?I18N.t('pleaseLoginSettings'):''), 'warning');
+  setTimeout(function(){ location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname); }, 1200);
+}
+// 同步后端初始状态（2FA开关、资金密码已设标记）
+var twofaEnabled = false, fundPwdSet = false;
+fetch('../api/account', {credentials:'include'}).then(function(r){return r.json();}).then(function(j){
+  if(!j.ok) return;
+  twofaEnabled = !!j.twofa_enabled;
+  fundPwdSet = !!j.fund_pwd_set;
+  document.getElementById('sw2fa').classList.toggle('on', twofaEnabled);
+  var fpSub = document.querySelector('.list-item-title'); // 资金密码 sub
+  var items = document.querySelectorAll('.list-item');
+  items.forEach(function(it){
+    var t = (it.querySelector('.list-item-title')||{}).textContent||'';
+    if(t.indexOf('资金密码')>-1){
+      var sub = it.querySelector('.list-item-sub');
+      if(sub) sub.textContent = fundPwdSet ? I18N.t('fundPasswordSet') : I18N.t('fundPasswordMissing');
+    }
+  });
+}).catch(function(){});
+// 通用：调用设置类接口，404 友好提示
+function postSetting(url, payload, successMsg){
+  return fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(function(r){ if(r.status===404) return {ok:false, _notfound:true, msg:'服务暂不可用，请稍后重试'}; return r.json(); })
+    .then(function(j){
+      if(j.ok){ BTCBOX.toast(I18N.translateMessage(successMsg), 'success'); return true; }
+      BTCBOX.toast(I18N.t('operationFailedRetry'), j._notfound ? 'info' : 'error');
+      return false;
+    }).catch(function(){ BTCBOX.toast((window.I18N?I18N.t('networkErr'):''),'error'); return false; });
+}
+function openPwdModal(){
+  BTCBOX.modal({iconType:'info', title:I18N.t('changeLoginPassword'),
+    bodyHtml:'<div style="display:flex;flex-direction:column;gap:10px;">'+
+      '<input class="form-input" id="__oldPwd" type="password" placeholder="当前登录密码" data-i18n-placeholder="currentLoginPassword">'+
+      '<input class="form-input" id="__newPwd" type="password" placeholder="新密码（至少6位）" data-i18n-placeholder="newPasswordMin">'+
+      '<input class="form-input" id="__cfmPwd" type="password" placeholder="确认新密码" data-i18n-placeholder="confirmNewPassword"></div>',
+    confirmText:I18N.t('confirmChange'), cancelText:I18N.t('cancel')}).then(function(ok){
+    if(!ok) return;
+    var o=document.getElementById('__oldPwd').value, n=document.getElementById('__newPwd').value, c=document.getElementById('__cfmPwd').value;
+    if(!o||!n){ BTCBOX.toast((window.I18N?I18N.t('fillComplete'):''),'warning'); return; }
+    if(n.length<6){ BTCBOX.toast((window.I18N?I18N.t('newPwdMin6'):''),'warning'); return; }
+    if(n!==c){ BTCBOX.toast((window.I18N?I18N.t('newPwdMismatch'):''),'error'); return; }
+    postSetting('../api/settings/password', {old_password:o, new_password:n}, I18N.t('passwordChanged')).then(function(s){
+      if(s){ BTCBOX.logout(); setTimeout(function(){ location.href='login.html'; }, 1000); }
+    });
+  });
+}
+function openFundPwdModal(){
+  BTCBOX.modal({iconType:'info', title:I18N.t('setFundPasswordTitle'),
+    bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">'+I18N.t('fundPasswordPurpose')+'</p>'+
+      '<input class="form-input" id="__fundPwd" type="password" inputmode="numeric" maxlength="6" placeholder="6位数字资金密码" data-i18n-placeholder="fundPassword6">'+
+      '<input class="form-input" id="__fundPwd2" type="password" inputmode="numeric" maxlength="6" placeholder="再次输入" data-i18n-placeholder="enterAgain" style="margin-top:10px;">',
+    confirmText:I18N.t('confirmSet'), cancelText:I18N.t('cancel')}).then(function(ok){
+    if(!ok) return;
+    var p=document.getElementById('__fundPwd').value, p2=document.getElementById('__fundPwd2').value;
+    if(!/^\d{6}$/.test(p)){ BTCBOX.toast((window.I18N?I18N.t('fundPwdRule'):''),'warning'); return; }
+    if(p!==p2){ BTCBOX.toast((window.I18N?I18N.t('pwdMismatch2'):''),'error'); return; }
+    postSetting('../api/settings/fundpwd', {fund_password:p}, I18N.t('fundPasswordCreated'));
+  });
+}
+function open2faEnableModal(){
+  // 先调后端获取真实密钥
+  fetch('../api/2fa/enable', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:'{}'})
+    .then(function(r){ if(r.status===404) return {ok:false, _nf:true}; return r.json(); })
+    .then(function(j){
+      var secret = (j && j.secret) || '';
+      BTCBOX.modal({iconType:'info', title:I18N.t('enable2faTitle'),
+        bodyHtml:'<p style="font-size:12px;color:var(--text-3);margin-bottom:8px;">'+I18N.t('twofaInstruction')+'</p>'+
+          (secret ? '<div role="status" style="width:140px;height:140px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--text-2);font-size:11px;">Use the secret below to configure your authenticator app.</div>' : '<div style="width:140px;height:140px;margin:0 auto 10px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0a0e1a;font-size:11px;font-weight:700;">'+I18N.t('qrLoading')+'</div>')+
+          '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;"><span style="font-size:12px;color:var(--gold);font-weight:700;word-break:break-all;">'+secret+'</span>'+
+          (secret ? '<button type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+secret+'\').then(function(){BTCBOX.toast(I18N.t(\'secretCopied\'),\'success\')})" style="padding:4px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text-2);font-size:11px;cursor:pointer;flex-shrink:0;">'+I18N.t('copySecret')+'</button>' : '')+'</div>'+
+          '<input class="form-input" id="__2faCode" type="text" inputmode="numeric" maxlength="6" placeholder="输入6位验证码" data-i18n-placeholder="enter2fa">',
+        confirmText:I18N.t('confirmEnable'), cancelText:I18N.t('cancel')}).then(function(ok){
+        if(!ok) return;
+        var code=(document.getElementById('__2faCode')||{}).value||'';
+        if(!/^\d{6}$/.test(code)){ BTCBOX.toast((window.I18N?I18N.t('please6code'):''),'warning'); return; }
+        postSetting('../api/2fa/confirm', {code:code}, I18N.t('twofaEnabled')).then(function(s){
+          if(s){ twofaEnabled=true; document.getElementById('sw2fa').classList.add('on'); }
+        });
+      });
+    });
+}
+function open2faDisableModal(){
+  BTCBOX.modal({iconType:'warning', title:I18N.t('disable2faTitle'),
+    bodyHtml:'<p style="font-size:12px;color:var(--text-2);">'+I18N.t('disable2faWarning')+'</p>'+
+      '<input class="form-input" id="__2faOffCode" type="text" inputmode="numeric" maxlength="6" placeholder="输入6位验证码" data-i18n-placeholder="enter2fa" style="margin-top:10px;">',
+    confirmText:I18N.t('confirmDisable'), cancelText:I18N.t('cancel')}).then(function(ok){
+    if(!ok){ document.getElementById('sw2fa').classList.add('on'); return; }
+    var code=document.getElementById('__2faOffCode').value;
+    if(!/^\d{6}$/.test(code)){ BTCBOX.toast((window.I18N?I18N.t('please6code'):''),'warning'); document.getElementById('sw2fa').classList.add('on'); return; }
+    postSetting('../api/2fa/disable', {code:code}, I18N.t('twofaDisabled')).then(function(s){
+      if(!s){ document.getElementById('sw2fa').classList.add('on'); } else { twofaEnabled=false; }
+    });
+  });
+}
+document.querySelectorAll('.list-item').forEach(function(item){
+  if(item.querySelector('.switch')) return;
+  if(item.tagName === 'A') return;
+  item.style.cursor = 'pointer';
+  item.addEventListener('click', function(){
+    var title = (item.querySelector('.list-item-title')||{}).textContent || '';
+    var action = item.getAttribute('data-setting-action');
+    if(action === 'password'){ openPwdModal(); return; }
+    if(action === 'fund-password'){ openFundPwdModal(); return; }
+    BTCBOX.modal({iconType:'info', title:title||'该功能', bodyHtml:'<p style="font-size:13px;line-height:1.7;color:var(--text-2);">当前版本 v3.0.0，已是最新版本。交易、充值、提现等核心功能均可正常使用。</p>', confirmText:'我知道了', cancelText:false});
+  });
+});
+document.getElementById('sw2fa').addEventListener('click', function(e){
+  e.stopPropagation();
+  var turningOn = !this.classList.contains('on');
+  this.classList.toggle('on');
+  if(turningOn){ open2faEnableModal(); }
+  else { open2faDisableModal(); }
+});
+</script>
+</body>
+</html>

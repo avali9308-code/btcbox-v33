@@ -1,0 +1,149 @@
+{
+  "report_version": 1,
+  "source": "server.py",
+  "analysis": "AST static classification; does not prove deployment reachability",
+  "live_database_checked": false,
+  "legacy_json_mode_only": true,
+  "writer_count": 13,
+  "classification_counts": {
+    "legacy_admin_balance_adjustment": 1,
+    "legacy_earn_balance_writer": 2,
+    "legacy_simulated_trade_writer": 4,
+    "legacy_withdrawal_lifecycle_writer": 3,
+    "legacy_withdrawal_writer": 2,
+    "normalization": 1
+  },
+  "writers": [
+    {
+      "line": 255,
+      "function": "load_data",
+      "target": "_u['frozen']",
+      "kind": "Assign",
+      "classification": "normalization",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Legacy JSON load-time compatibility normalization; not a customer funds movement.",
+      "required_action": "Retain only while legacy JSON mode exists; remove with the legacy store."
+    },
+    {
+      "line": 538,
+      "function": "do_order",
+      "target": "user['balances']['USDT']",
+      "kind": "AugAssign",
+      "classification": "legacy_simulated_trade_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Directly changes two in-memory balances and records simulated fills.",
+      "required_action": "Do not expose as real trading. Replace with trusted matcher plus atomic PostgreSQL trade settlement."
+    },
+    {
+      "line": 539,
+      "function": "do_order",
+      "target": "user['balances'][sym]",
+      "kind": "Assign",
+      "classification": "legacy_simulated_trade_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Directly changes two in-memory balances and records simulated fills.",
+      "required_action": "Do not expose as real trading. Replace with trusted matcher plus atomic PostgreSQL trade settlement."
+    },
+    {
+      "line": 543,
+      "function": "do_order",
+      "target": "user['balances'][sym]",
+      "kind": "AugAssign",
+      "classification": "legacy_simulated_trade_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Directly changes two in-memory balances and records simulated fills.",
+      "required_action": "Do not expose as real trading. Replace with trusted matcher plus atomic PostgreSQL trade settlement."
+    },
+    {
+      "line": 544,
+      "function": "do_order",
+      "target": "user['balances']['USDT']",
+      "kind": "Assign",
+      "classification": "legacy_simulated_trade_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Directly changes two in-memory balances and records simulated fills.",
+      "required_action": "Do not expose as real trading. Replace with trusted matcher plus atomic PostgreSQL trade settlement."
+    },
+    {
+      "line": 603,
+      "function": "do_withdraw",
+      "target": "user['balances'][coin]",
+      "kind": "AugAssign",
+      "classification": "legacy_withdrawal_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Moves available balance to frozen balance and creates a pending withdrawal in legacy state.",
+      "required_action": "Retire after the atomic withdrawal RPC is deployed and reconciled."
+    },
+    {
+      "line": 604,
+      "function": "do_withdraw",
+      "target": "user['frozen'][coin]",
+      "kind": "Assign",
+      "classification": "legacy_withdrawal_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Moves available balance to frozen balance and creates a pending withdrawal in legacy state.",
+      "required_action": "Retire after the atomic withdrawal RPC is deployed and reconciled."
+    },
+    {
+      "line": 627,
+      "function": "admin_review_withdraw",
+      "target": "u['frozen'][coin]",
+      "kind": "Assign",
+      "classification": "legacy_withdrawal_lifecycle_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Approves/rejects withdrawal by changing frozen/available balances in legacy state.",
+      "required_action": "Replace with one atomic lifecycle RPC and audited state transition."
+    },
+    {
+      "line": 631,
+      "function": "admin_review_withdraw",
+      "target": "u['frozen'][coin]",
+      "kind": "Assign",
+      "classification": "legacy_withdrawal_lifecycle_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Approves/rejects withdrawal by changing frozen/available balances in legacy state.",
+      "required_action": "Replace with one atomic lifecycle RPC and audited state transition."
+    },
+    {
+      "line": 632,
+      "function": "admin_review_withdraw",
+      "target": "u['balances'][coin]",
+      "kind": "Assign",
+      "classification": "legacy_withdrawal_lifecycle_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Approves/rejects withdrawal by changing frozen/available balances in legacy state.",
+      "required_action": "Replace with one atomic lifecycle RPC and audited state transition."
+    },
+    {
+      "line": 1120,
+      "function": "do_GET",
+      "target": "target_user['balances'][coin_adj]",
+      "kind": "Assign",
+      "classification": "legacy_admin_balance_adjustment",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Admin GET/action handler mutates a user's balance in legacy state.",
+      "required_action": "Remove legacy branch; use authenticated admin adjustment RPC only."
+    },
+    {
+      "line": 1459,
+      "function": "do_POST",
+      "target": "user['balances']['USDT']",
+      "kind": "Assign",
+      "classification": "legacy_earn_balance_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Legacy earn subscribe/redeem paths adjust USDT directly in legacy state.",
+      "required_action": "Replace with subscribe/redeem RPCs and ledger-backed reads; no fallback."
+    },
+    {
+      "line": 1531,
+      "function": "do_POST",
+      "target": "user['balances']['USDT']",
+      "kind": "Assign",
+      "classification": "legacy_earn_balance_writer",
+      "runtime_boundary": "server.py legacy JSON path; distinct from Netlify Functions API",
+      "meaning": "Legacy earn subscribe/redeem paths adjust USDT directly in legacy state.",
+      "required_action": "Replace with subscribe/redeem RPCs and ledger-backed reads; no fallback."
+    }
+  ],
+  "decision": "BLOCK_CUTOVER_UNTIL_LEGACY_WRITERS_RETIRED_AND_STAGING_EVIDENCE_APPROVED"
+}
