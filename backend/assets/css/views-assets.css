@@ -1,0 +1,217 @@
+/* BTCBOX views-assets.css — asset/deposit/withdraw/earn view upgrade (feature/uiux-upgrade).
+ * Scoped with va- prefix. Uses only frozen design tokens (tokens.css).
+ * Additive only; does not override base/components/overlays/layouts.
+ */
+
+/* ============ shared ============ */
+.va-page{padding:4px 2px 40px}
+.va-hero{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;margin-bottom:16px;position:relative;overflow:hidden}
+.va-hero-label{font-size:var(--fs-aux);color:var(--text-secondary);margin-bottom:8px;letter-spacing:.02em}
+.va-hero-total{font-size:32px;font-weight:700;line-height:1.1;margin-bottom:4px}
+.va-hero-total .va-unit{font-size:15px;color:var(--text-secondary);font-weight:500;margin-left:6px}
+.va-hero-sub{font-size:var(--fs-aux);color:var(--text-muted);margin-bottom:16px}
+.va-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.va-stat{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px}
+.va-stat-label{font-size:var(--fs-minor);color:var(--text-muted);margin-bottom:4px;letter-spacing:.03em}
+.va-stat-val{font-size:16px;font-weight:600}
+.va-stat-val .va-unit{font-size:11px;color:var(--text-muted);font-weight:500;margin-left:3px}
+.va-quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.va-quick .btn{flex:1;min-width:110px}
+.va-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:16px}
+.va-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.va-card-title{font-size:var(--fs-module);font-weight:600}
+.va-card-body{padding:16px}
+.va-search{position:relative;flex:1;min-width:180px;max-width:320px}
+.va-search input{width:100%;padding-left:34px;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);min-height:36px;font-size:13px}
+.va-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.va-toggle{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-aux);color:var(--text-secondary);cursor:pointer;user-select:none}
+.va-toggle input{accent-color:var(--brand-bright);width:15px;height:15px;cursor:pointer}
+
+/* asset table — numeric columns right aligned + mono */
+.va-table-wrap{overflow-x:auto}
+.va-table{width:100%;border-collapse:collapse;min-width:640px}
+.va-table th{font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;text-align:right;border-bottom:1px solid var(--border)}
+.va-table th:first-child{text-align:left}
+.va-table td{padding:12px;font-size:var(--fs-sm);text-align:right;border-top:1px solid var(--border);vertical-align:middle}
+.va-table td:first-child{text-align:left}
+.va-table tbody tr:hover{background:var(--bg-raised)}
+.va-coin-cell{display:flex;align-items:center;gap:10px}
+.va-coin-ico{width:32px;height:32px;border-radius:50%;background:var(--bg-raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:var(--brand-bright);flex-shrink:0}
+.va-coin-name{font-weight:600;line-height:1.2}
+.va-coin-sub{font-size:11px;color:var(--text-muted)}
+.va-num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+.va-act-link{color:var(--brand-bright);font-size:12px;font-weight:600;margin-right:14px;cursor:pointer}
+.va-act-link:hover{text-decoration:underline}
+.va-act-link.secondary{color:var(--text-secondary)}
+.va-empty{padding:40px 16px;text-align:center;color:var(--text-secondary);font-size:13px}
+
+/* ============ deposit ============ */
+.va-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.va-field{margin-bottom:16px}
+.va-net-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;min-height:44px;font-size:var(--fs-sm);color:var(--text-primary);cursor:pointer;text-align:left}
+.va-net-btn:hover{border-color:var(--border-strong)}
+.va-net-btn .va-net-val{font-weight:600}
+.va-net-btn .va-chevron{color:var(--text-muted);flex-shrink:0}
+.va-qr-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;text-align:center;margin-bottom:16px}
+.va-qr-box{display:inline-block;background:#fff;padding:10px;border-radius:10px;margin-bottom:14px;min-height:160px;min-width:160px}
+.va-addr-row{display:flex;gap:8px;align-items:stretch}
+.va-addr-row input{flex:1;font-size:12px;word-break:break-all}
+.va-memo-box{background:var(--bg-raised);border:1px solid var(--warning);border-radius:var(--radius-md);padding:14px;margin-bottom:16px}
+.va-memo-box .va-memo-label{font-size:var(--fs-aux);color:var(--warning);font-weight:600;margin-bottom:6px}
+.va-warn{background:var(--down-soft);border:1px solid rgba(246,70,93,.3);border-radius:var(--radius-md);padding:14px 16px;font-size:12px;color:var(--text-secondary);line-height:1.7}
+.va-warn b{color:var(--text-primary)}
+.va-warn-title{color:var(--down);font-weight:600;margin-bottom:6px;font-size:13px}
+.va-warn ul{margin:0;padding-left:18px}
+.va-info{background:var(--info-soft);border:1px solid rgba(74,159,245,.3);border-radius:var(--radius-md);padding:12px 14px;font-size:12px;color:var(--text-secondary);margin-bottom:16px}
+.va-drawer-item{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;border:1px solid transparent}
+.va-drawer-item:hover{background:var(--bg-raised)}
+.va-drawer-item.active{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-bright)}
+.va-drawer-item .va-net-desc{font-size:11px;color:var(--text-muted);margin-top:2px}
+.va-addr-loading{color:var(--text-muted)}
+
+/* ============ withdraw stepper ============ */
+.va-stepper{display:flex;align-items:center;gap:0;margin-bottom:24px;overflow-x:auto;padding-bottom:4px}
+.va-step-h{flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.va-step-dot{width:28px;height:28px;border-radius:50%;background:var(--bg-raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text-muted);flex-shrink:0;z-index:1}
+.va-step-h.done .va-step-dot{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-bright)}
+.va-step-h.active .va-step-dot{background:var(--brand-bright);border-color:var(--brand-bright);color:#0B0E11}
+.va-step-label{font-size:11px;color:var(--text-muted);text-align:center;white-space:nowrap}
+.va-step-h.active .va-step-label{color:var(--text-primary);font-weight:600}
+.va-step-line{flex:1;height:1px;background:var(--border);margin:0 4px;transform:translateY(-14px);min-width:12px}
+.va-step-line.done{background:var(--brand)}
+.va-step-panel{display:none}
+.va-step-panel.active{display:block;animation:viewIn .25s var(--ease-out)}
+.va-amt-row{display:flex;gap:8px;align-items:stretch}
+.va-amt-row input{flex:1;min-width:0}
+.va-amt-meta{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-secondary);margin-top:8px;flex-wrap:wrap}
+.va-receive-box{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.va-receive-box .va-r-label{font-size:12px;color:var(--text-secondary)}
+.va-receive-box .va-r-val{font-size:18px;font-weight:700;color:var(--brand-bright);min-width:0;max-width:100%;overflow-wrap:anywhere;text-align:right}
+.va-nav-row{display:flex;gap:10px;margin-top:8px}
+.va-nav-row .btn{flex:1}
+
+/* review (step 2) full-width list */
+.va-review{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.va-review-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:13px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.va-review-row:last-child{border-bottom:none}
+.va-review-row .va-k{color:var(--text-secondary);flex-shrink:0;min-width:110px}
+.va-review-row .va-v{text-align:right;font-weight:500;word-break:break-all}
+.va-review-row .va-v.addr{font-family:var(--font-mono);font-size:12px;line-height:1.6}
+.va-review-row.total{background:var(--bg-raised)}
+.va-review-row.total .va-v{color:var(--brand-bright);font-weight:700;font-size:15px}
+.va-risk-box{background:var(--down-soft);border:1px solid rgba(246,70,93,.35);border-radius:var(--radius-md);padding:14px 16px;margin:16px 0;font-size:12px;color:var(--text-secondary);line-height:1.7}
+.va-risk-box .va-risk-title{color:var(--down);font-weight:700;margin-bottom:6px;font-size:13px}
+
+/* result (step 4) status states */
+.va-result{text-align:center;padding:24px 16px}
+.va-result-ico{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;font-weight:700}
+.va-result-ico.review{background:var(--info-soft);color:var(--info)}
+.va-result-ico.processing{background:var(--info-soft);color:var(--info);animation:vaPulse 1.6s ease-in-out infinite}
+.va-result-ico.submitted{background:var(--brand-soft);color:var(--brand-bright)}
+.va-result-ico.done{background:var(--brand-soft);color:var(--brand-bright)}
+.va-result-ico.failed{background:var(--down-soft);color:var(--down)}
+.va-result-ico.cancelled{background:var(--bg-hover);color:var(--text-muted)}
+@keyframes vaPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,159,245,.4)}50%{box-shadow:0 0 0 10px rgba(74,159,245,0)}}
+.va-result-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.va-result-sub{font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6}
+.va-result-id{display:inline-block;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);margin-bottom:16px;word-break:break-all;max-width:100%}
+.va-result-note{font-size:11px;color:var(--text-muted);margin-top:12px;line-height:1.6}
+
+/* ============ earn ============ */
+.va-earn-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.va-earn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.va-earn-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;display:flex;flex-direction:column;transition:border-color .2s var(--ease),transform .2s var(--ease)}
+.va-earn-card:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+.va-earn-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.va-earn-name{font-weight:700;font-size:16px}
+.va-earn-term{font-size:11px;color:var(--text-muted);margin-top:3px}
+.va-apy{margin-bottom:12px}
+.va-apy-label{font-size:11px;color:var(--text-muted);margin-bottom:2px}
+.va-apy-val{font-size:28px;font-weight:700;color:var(--brand-bright);line-height:1.1}
+.va-apy-val .va-unit{font-size:14px}
+.va-earn-desc{font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;flex:1}
+.va-earn-meta{font-size:11px;color:var(--text-muted);margin-bottom:14px}
+.va-risk-note{font-size:11px;color:var(--warning);background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.25);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:14px;line-height:1.5}
+/* field error / hint reuse with scope */
+.va-field .field-error{min-height:0}
+
+/* focus scroll margin so mobile keyboard never hides the submit area */
+.va-page input,.va-page select,.va-page textarea{scroll-margin-bottom:280px}
+.va-page .btn{scroll-margin-bottom:280px}
+
+/* ============ assets overview hierarchy ============ */
+.va-assets-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 16px}
+.va-assets-heading .page-title{margin:0}
+.va-assets-heading .page-sub{margin:5px 0 0}
+.va-wallet-tag{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-raised);color:var(--text-secondary);font-size:10px;font-weight:650;letter-spacing:.07em}
+.va-hero-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.va-hero-dot{width:3px;height:3px;border-radius:50%;background:var(--text-muted)}
+.va-stat-note{margin-top:4px;color:var(--text-muted);font-size:10px;line-height:1.4}
+.va-assets-table-head{align-items:center}
+.va-assets-table-head .va-card-title{font-size:14px}
+@media(max-width:480px){
+  .va-assets-heading{align-items:flex-start;margin-bottom:12px}
+  .va-wallet-tag{margin-top:2px}
+  .va-hero-sub{font-size:10px}
+}
+
+/* ============ deposit / withdrawal page headers ============ */
+.va-deposit-page,.va-withdraw-page{max-width:820px;margin:0 auto}
+.va-flow-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 18px}
+.va-flow-heading .page-title{margin:0}
+.va-flow-heading .page-sub{margin:6px 0 0;line-height:1.5}
+.va-flow-step{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-raised);color:var(--text-secondary);font-size:9px;font-weight:650;letter-spacing:.09em;white-space:nowrap}
+.va-deposit-page .va-card,.va-withdraw-page .va-card{margin-bottom:14px}
+.va-deposit-page .va-card-body,.va-withdraw-page .va-card-body{padding:20px}
+.va-deposit-page .va-qr-card{margin-top:4px;padding:22px}
+.va-deposit-page .va-info{line-height:1.6}
+.va-withdraw-page .va-stepper{margin:0 0 18px;padding:14px 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-card)}
+.va-withdraw-page .va-step-label{font-size:10px;letter-spacing:.01em}
+@media(max-width:600px){
+  .va-flow-heading{align-items:flex-start;margin-bottom:14px}
+  .va-flow-heading .page-title{font-size:21px}
+  .va-flow-step{margin-top:2px}
+  .va-deposit-page .va-card-body,.va-withdraw-page .va-card-body{padding:14px}
+  .va-deposit-page .va-qr-card{padding:16px 12px}
+  .va-withdraw-page .va-stepper{padding:12px 6px;margin-bottom:14px}
+}
+
+/* ============ responsive ============ */
+@media (max-width:768px){
+  .va-hero{padding:18px 16px}
+  .va-hero-total{font-size:26px}
+  .va-hero .va-stat-grid{grid-template-columns:1fr;gap:8px}
+  .va-form-grid{grid-template-columns:1fr;gap:12px}
+  .va-quick .btn{min-width:0}
+  .va-card-head{padding:10px 12px}
+  .va-card-body{padding:12px}
+  .va-review-row{flex-direction:column;gap:4px;padding:11px 12px}
+  .va-review-row .va-v{text-align:left}
+  .va-stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;overflow:visible}
+  .va-step-h{min-width:0}
+  .va-step-line{display:none}
+  .va-step-label{font-size:10px}
+  .va-nav-row{flex-direction:column}
+  .va-addr-row{flex-direction:column}
+  .va-addr-row .btn{width:100%}
+  .va-amt-meta{flex-direction:column;gap:2px}
+}
+@media (max-width:480px){
+  .va-page{min-width:0;padding-left:0;padding-right:0}
+  .va-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .va-quick .btn{width:100%;min-width:0;padding:10px 8px}
+  .va-hero{min-width:0;padding:16px 14px}
+  .va-hero-total{font-size:24px;overflow-wrap:anywhere}
+  .va-stat{min-width:0;padding:10px 12px}
+  .va-stat-val{font-size:14px;overflow-wrap:anywhere}
+  .va-card{min-width:0;overflow:hidden}
+  .va-card-head{align-items:stretch}
+  .va-card-head > div:last-child{width:100%;min-width:0;flex-direction:column;align-items:stretch;gap:10px}
+  .va-search{width:100%;max-width:none;min-width:0}
+  .va-search input{min-height:42px}
+  .va-table-wrap{width:100%;max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .va-table{min-width:640px}
+  .va-addr-row input{min-width:0}
+  .va-addr-row .btn,.va-nav-row .btn,.va-amt-row .btn,.va-quick .btn{min-height:44px}
+  .va-qr-card{padding:16px 12px}
+}

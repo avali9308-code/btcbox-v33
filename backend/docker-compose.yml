@@ -1,0 +1,26 @@
+# 本地测试环境 PostgreSQL 17 + 迁移初始化。
+# 仅用于本地开发/测试，禁止用于生产。生产使用 Supabase 托管 Postgres。
+# 用法: docker compose up -d  →  DATABASE_URL=postgresql://postgres:postgres@localhost:5432/btcbox ./scripts/run_migrations.sh
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: btcbox-local-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: btcbox
+    ports:
+      - "5432:5432"
+    volumes:
+      - btcbox_pg_data:/var/lib/postgresql/data
+      # 启动时自动按编号顺序应用迁移（docker-entrypoint-initdb.d 仅在首次初始化时执行）
+      - ./supabase/sql:/docker-entrypoint-initdb.d/migrations:ro
+      - ./scripts/docker-init-migrations.sh:/docker-entrypoint-initdb.d/99-run-migrations.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d btcbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  btcbox_pg_data:

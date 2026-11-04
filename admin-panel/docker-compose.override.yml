@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  admin-panel:
+    image: ghcr.io/opexdev/admin-panel
+    build:
+      context: .
+      args:
+        - GENERATE_SOURCEMAP=$GENERATE_SOURCEMAP

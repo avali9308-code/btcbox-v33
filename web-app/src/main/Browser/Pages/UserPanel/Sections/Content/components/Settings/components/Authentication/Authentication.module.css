@@ -1,0 +1,8 @@
+.wizardBox {
+  height: 6vh;
+  width: 60%;
+}
+.activeStep {
+  color: var(--activeTab);
+  font-size: 1vw;
+}

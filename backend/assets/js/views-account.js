@@ -1,0 +1,614 @@
+/* BTCBOX views-account.js — upgraded account/auth views. Load order: after app-core + ui-components. */
+"use strict";
+/* ===== module bootstrap: inject CSS + load views-missing.js + repoint mobile Account tab ===== */
+(function(){
+  var CSS_HREF='/assets/css/views-account.css';
+  if(!document.querySelector('link[href="'+CSS_HREF+'"]')){
+    var l=document.createElement('link');l.rel='stylesheet';l.href=CSS_HREF;document.head.appendChild(l);
+  }
+  var MISSING_SRC='/assets/js/views-missing.js';
+  if(!document.querySelector('script[src="'+MISSING_SRC+'"]')){
+    var s=document.createElement('script');s.src=MISSING_SRC;s.async=false;document.head.appendChild(s);
+  }
+  // mobile bottom-nav "Account" tab → 我的 (#/me)
+  document.querySelectorAll('.mob-tab[data-route=account]').forEach(function(a){a.setAttribute('href','#/me');});
+})();
+
+/* ===== Logout confirm (shared by me page + anywhere else) ===== */
+window.confirmLogout = function(){
+  if(typeof BTCBox==='undefined'||!BTCBox.modal){
+    (async function(){
+      var r=null;
+      try{r=await apiAdapter.logout();}catch(e){}
+      var unknown=!r||Number(r.status||0)===0||r.code==='NETWORK_ERROR'||r.code==='NETWORK_RESPONSE_ERROR'||Number(r.status)>=500;
+      if(r&&r.ok===true){
+        try{if(window.supabaseClient)await window.supabaseClient.auth.signOut();}catch(e){}
+        clearPrivateUserState();location.hash='#/login';return;
+      }
+      if(unknown){
+        clearPrivateUserState();location.hash='#/login';
+        toast('Sign-out status could not be confirmed. Local account data was cleared; please sign in again.','warn');
+      }
+    })();
+    return;
+  }
+  BTCBox.modal({
+    title:'Log Out?',
+    content:'You will need to sign in again to view your account.',
+    buttons:[
+      {text:'Cancel',variant:'ghost',onClick:function(close){close();}},
+      {text:'Log Out',variant:'danger',onClick:function(close,btn){
+        btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Signing out…';
+        (async function(){
+          var r=null,failed=false,unknown=false,errMsg='';
+          try{r=await apiAdapter.logout();}
+          catch(e){failed=true;unknown=true;errMsg='Sign-out response could not be confirmed.';}
+          if(!failed&&(!r||r.ok!==true)){
+            failed=true;
+            unknown=!!(!r||Number(r.status||0)===0||r.code==='NETWORK_ERROR'||r.code==='NETWORK_RESPONSE_ERROR'||Number(r.status)>=500);
+            errMsg=unknown?'Sign-out response could not be confirmed.':'Sign-out failed. Please try again.';
+            if(r&&(r.error||r.message||r.msg)&&!unknown)errMsg=r.error||r.message||r.msg;
+          }
+          if(failed){
+            if(unknown){
+              clearPrivateUserState();close();location.hash='#/login';
+              toast('Sign-out status could not be confirmed. Local account data was cleared; please sign in again.','warn');
+              return;
+            }
+            btn.disabled=false;btn.textContent='Log Out';
+            BTCBox.modal({title:'Sign-Out Failed',content:errMsg,buttons:[{text:'OK',variant:'primary',onClick:function(c){c();}}]});
+            return;
+          }
+          try{if(window.supabaseClient)await window.supabaseClient.auth.signOut();}catch(e){}
+          clearPrivateUserState();close();
+          if(typeof toast==='function')toast('Signed out.','ok');
+          location.hash='#/login';
+        })();
+      }}
+    ],
+    closable:true
+  });
+};
+
+/* ===== shared header helper ===== */
+function vaHeader(title, sub, backHref){
+  return '<div class="va-header">'+
+    '<a class="va-back" href="'+(backHref||'#/me')+'" aria-label="Back">'+
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>'+
+    '</a>'+
+    '<div style="flex:1;min-width:0"><h1 class="va-title">'+title+'</h1>'+(sub?'<div class="va-sub">'+sub+'</div>':'')+'</div>'+
+  '</div>';
+}
+
+/* ================= KYC ================= */
+function kycStatusValue(){
+  var raw=state.kyc&&state.kyc.status;
+  return raw&&typeof raw==='object'?String(raw.status||'unverified').toLowerCase():String(raw||'unverified').toLowerCase();
+}
+VIEWS.kyc = function(){
+  // The current API's kyc_level is derived from status (pending=1, approved=2),
+  // not a separately confirmed tier number. Do not present that status code as Lv.2.
+  var st=kycStatusValue(), approved=st==='approved';
+  var tiers=[
+    {n:0,name:'Unverified',desc:'Deposits only; withdrawals and trading are unavailable.',limit:'0 USDT daily withdrawal',cls:'',badge:'<span class="va-badge va-badge-muted"><span class="va-dot"></span>Unverified</span>'},
+    {n:1,name:'Basic Verification',desc:'Name and identity document; takes about 5 minutes.',limit:'2 BTC daily withdrawal',cls:(approved?'va-tier-done':(st==='pending'?'va-tier-pending':'')),badge:(approved?'<span class="va-badge va-badge-up"><span class="va-dot"></span>Approved</span>':(st==='pending'?'<span class="va-badge va-badge-warn"><span class="va-dot"></span>Under Review</span>':'<span class="va-badge va-badge-muted">Locked</span>'))},
+    {n:2,name:'Advanced Verification',desc:'Proof of address and enhanced review for higher limits.',limit:'Unlimited withdrawals',cls:'',badge:'<span class="va-badge va-badge-muted">Locked</span>'}
+  ];
+  var banner='';
+  if(st==='pending') banner='<div class="va-banner va-banner-warn">Your verification is under review. We will email the result within approximately 1–2 business days.</div>';
+  else if(approved) banner='<div class="va-banner va-banner-ok">Basic verification approved. Apply for advanced verification to increase withdrawal limits.</div>';
+  else banner='<div class="va-banner va-banner-info">Complete identity verification to unlock withdrawals and fiat features. Your information is encrypted and used only for verification.</div>';
+
+  var form='';
+  if(!approved && st!=='pending'){
+    form='<form id="kyc-form">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'+
+        '<div class="va-field"><label class="va-field-label">Full Name (as shown on document)</label><input id="kyc-name" class="va-input" placeholder="Enter your full name" required></div>'+
+        '<div class="va-field"><label class="va-field-label">Document Type</label><select id="kyc-idtype" class="va-input" style="appearance:none"><option value="passport">Passport</option><option value="id_card">Identity Card</option><option value="driver_license">Driver License</option></select></div>'+
+      '</div>'+
+      '<div class="va-field"><label class="va-field-label">Document Number</label><input id="kyc-idnum" class="va-input num" placeholder="Enter document number" required></div>'+
+      '<div class="va-field"><label class="va-field-label">Document Photo</label><div id="kyc-upload" style="border:1px dashed var(--border-strong);border-radius:10px;padding:22px;text-align:center;color:var(--text-muted);font-size:13px;cursor:pointer">No photo upload is required in this version; submit your document details below.</div></div>'+
+      '<button type="submit" class="btn btn-primary btn-block" style="padding:12px;margin-top:6px">Submit for Review</button>'+
+    '</form>';
+  } else if(approved){
+    form='<div class="va-empty"><div class="va-empty-title">Advanced verification is handled by support</div><div class="va-empty-sub">Contact the support team to confirm the current requirements and availability.</div><a href="#/support" class="btn btn-ghost btn-block" style="padding:12px;margin-top:12px">Ask Support About Advanced Verification</a></div>';
+  } else {
+    form='<div class="va-empty"><div class="va-empty-title">Under Review</div><div class="va-empty-sub">The result will be sent by email</div></div>';
+  }
+
+  return '<div class="va-account-page va-page va-page-narrow">'+
+    vaHeader('Identity Verification (KYC)','Higher verification levels unlock higher withdrawal limits','#/me')+
+    '<div class="va-tiers">'+tiers.map(function(t){
+      return '<div class="va-tier '+t.cls+'"><div class="va-tier-head"><span class="va-tier-name">Lv.'+t.n+' '+t.name+'</span>'+t.badge+'</div>'+
+        '<div class="va-tier-desc">'+t.desc+'</div><div class="va-tier-limit">'+t.limit+'</div></div>';
+    }).join('')+'</div>'+
+    banner+
+    '<div class="card" style="padding:20px">'+
+      '<div class="va-section-title">'+(!approved&&st!=='pending'?'Submit Basic Verification':'Verification Status')+'</div>'+
+      form+
+    '</div>'+
+  '</div>';
+};
+VIEWS.kyc.afterRender = function(){
+  var f=$('#kyc-form');
+  var kycUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+  var submitting=false, outcomeUnknown=!!(kycUserKey&&state._kycUnknownUserKey===kycUserKey);
+  function isKycOutcomeUnknown(r){
+    if(!r||Number(r.status||0)===0||r.code==='NETWORK_ERROR'||r.code==='NETWORK_RESPONSE_ERROR')return true;
+    return Number(r.status)===408||Number(r.status)>=500;
+  }
+  async function reconcileKycOutcome(btn){
+    var check=null;
+    try{check=await apiAdapter.account();}catch(reconcileError){}
+    if(check&&check.ok){
+      var status=kycStatusValue();
+      if(status==='pending'||status==='approved'){
+        state.kyc={level:status==='approved'?2:1,status:status};
+        if(kycUserKey&&state._kycUnknownUserKey===kycUserKey)delete state._kycUnknownUserKey;
+        outcomeUnknown=false;
+        toast(status==='pending'?'Your verification application was received and is under review.':'Your identity verification is already approved.','ok');
+        router();
+        return true;
+      }
+    }
+    // A non-pending account snapshot immediately after a timeout is not proof that
+    // the original request can never commit. Keep the form locked rather than retry.
+    outcomeUnknown=true;
+    if(kycUserKey)state._kycUnknownUserKey=kycUserKey;
+    btn.disabled=true; btn.textContent='Status Unconfirmed';
+    toast('We could not confirm whether your application was received. Do not submit it again; refresh account status or contact support.','warn');
+    return false;
+  }
+  if(f&&outcomeUnknown){
+    var pendingBtn=f.querySelector('button[type=submit]');
+    if(pendingBtn){pendingBtn.disabled=true;pendingBtn.textContent='Status Unconfirmed';reconcileKycOutcome(pendingBtn);}
+  }
+  if(f) f.onsubmit=async function(e){
+    e.preventDefault();
+    if(submitting||outcomeUnknown)return;
+    var btn=f.querySelector('button[type=submit]');
+    if(!btn)return;
+    var old=btn.textContent;
+    submitting=true; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Submitting…';
+    try{
+      var r;
+      try{
+        r=await apiAdapter.kycSubmit({name:$('#kyc-name').value,id_type:$('#kyc-idtype').value,id_number:$('#kyc-idnum').value});
+      }catch(err){
+        await reconcileKycOutcome(btn);
+        return;
+      }
+      if(r&&r.ok){
+        if(kycUserKey&&state._kycUnknownUserKey===kycUserKey)delete state._kycUnknownUserKey;
+        outcomeUnknown=false;
+        state.kyc={level:0,status:'pending'};
+        toast('KYC submitted for review.','ok');
+        router();
+      }else if(r&&r.code==='KYC_ALREADY_PENDING'){
+        if(kycUserKey&&state._kycUnknownUserKey===kycUserKey)delete state._kycUnknownUserKey;
+        outcomeUnknown=false;
+        state.kyc={level:1,status:'pending'};
+        toast('Your identity verification is already under review.','ok');
+        router();
+      }else if(r&&r.code==='KYC_ALREADY_APPROVED'){
+        if(kycUserKey&&state._kycUnknownUserKey===kycUserKey)delete state._kycUnknownUserKey;
+        outcomeUnknown=false;
+        state.kyc={level:2,status:'approved'};
+        toast('Your identity verification is already approved.','ok');
+        router();
+      }else if(isKycOutcomeUnknown(r)){
+        await reconcileKycOutcome(btn);
+      }else{
+        toast((r&&(r.error||r.message||r.msg))||'Submission failed. Check your information and try again.','err');
+      }
+    }finally{
+      submitting=false;
+      if(!outcomeUnknown){btn.disabled=false;btn.textContent=old;}
+    }
+  };
+  var up=$('#kyc-upload'); if(up) up.onclick=function(){toast('No photo upload is required in this version.','ok');};
+};
+
+/* ================= Support ================= */
+VIEWS.support = function(){
+  return '<div class="va-account-page va-page va-page-narrow va-support-page">'+
+    vaHeader('Support Center','Send a question to the BTCBOX support team','#/me')+
+    '<section class="va-support-intro">'+
+      '<span class="va-support-intro-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h8M8 14h5"/></svg></span>'+
+      '<span><b>How can we help?</b><small>Your message will be submitted to the support system.</small></span>'+
+    '</section>'+
+    '<section class="card va-chat-wrap" aria-label="Support conversation">'+
+      '<div class="va-chat-head"><span class="va-support-brand-mark" aria-hidden="true">B</span><span class="va-support-head-copy"><b>BTCBOX Support</b><small>Message Center</small></span></div>'+
+      '<div id="chat-body" class="va-chat-body scroll" aria-live="polite" aria-relevant="additions text"></div>'+
+      '<div class="va-chat-input"><input id="chat-input" class="va-input" type="text" aria-label="Your support message" placeholder="Describe your question…" style="flex:1"><button id="chat-send" type="button" class="btn btn-primary" style="min-height:44px">Send</button></div>'+
+    '</section>'+
+    '<section class="va-support-topics" aria-labelledby="support-topics-title">'+
+      '<div class="va-support-topics-title" id="support-topics-title">Quick topics</div>'+
+      ['How long do deposits take?','What are the trading fees?','How do I enable 2FA?','How does Earn work?'].map(function(q){
+        return '<button type="button" class="chat-q btn btn-ghost">'+q+'</button>';
+      }).join('')+
+    '</section>'+
+  '</div>';
+};
+VIEWS.support.afterRender = function(){
+  var supportUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+  if(state._supportMessagesUserKey!==supportUserKey){
+    state.supportMsgs=[];
+    state._supportMessagesUserKey=supportUserKey;
+  }
+  if(!Array.isArray(state.supportMsgs)) state.supportMsgs=[];
+  var greeting={from:'bot',text:'Hello, I am the BTCBOX support assistant. Describe your question and I will help or connect you with an agent.',ts:Date.now()};
+  if(!state.supportMsgs.length) state.supportMsgs.push(greeting);
+  var sendInFlight=false;
+  var historyLoading=false;
+  var historyFailed=false;
+  var chatInput=$('#chat-input'), chatSend=$('#chat-send');
+  var historyNotice=document.createElement('div');
+  historyNotice.style.cssText='display:none;padding:10px 12px;margin:8px 0;border:1px solid var(--warning);border-radius:8px;color:var(--text-secondary);font-size:12px;line-height:1.5';
+  historyNotice.setAttribute('role','status');
+  historyNotice.setAttribute('aria-live','polite');
+  var historyRetry=document.createElement('button');
+  historyRetry.type='button';
+  historyRetry.className='btn btn-ghost';
+  historyRetry.style.cssText='margin-left:8px;padding:5px 9px;min-height:30px;font-size:12px';
+  historyRetry.textContent='Retry';
+  var historyNoticeText=document.createTextNode('Conversation history could not be loaded. Sending is paused to avoid duplicate messages. ');
+  historyNotice.appendChild(historyNoticeText);
+  historyNotice.appendChild(historyRetry);
+  var chatBody=$('#chat-body');
+  if(chatBody&&chatBody.parentNode) chatBody.parentNode.insertBefore(historyNotice,chatBody.nextSibling);
+  function setHistoryControls(){
+    var blocked=historyLoading||historyFailed;
+    if(chatSend){chatSend.disabled=blocked;chatSend.textContent=historyLoading?'Loading…':historyFailed?'History Unavailable':'Send';}
+    if(chatInput) chatInput.disabled=blocked;
+    $$('.chat-q').forEach(function(b){b.disabled=blocked;});
+    historyNotice.style.display=historyFailed?'block':'none';
+  }
+  function render(){
+    var body=$('#chat-body');
+    if(!body)return;
+    // Message text is untrusted (user input and server history): never parse it as HTML.
+    while(body.firstChild) body.removeChild(body.firstChild);
+    state.supportMsgs.forEach(function(m){
+      var item=document.createElement('div');
+      item.className=m.from==='bot'?'bot-msg':'user-msg';
+      item.style.fontSize='13px';
+      item.style.lineHeight='1.5';
+      item.textContent=String(m.text==null?'':m.text);
+      body.appendChild(item);
+    });
+    body.scrollTop=body.scrollHeight;
+  }
+  render();
+  async function loadHistory(){
+    if(historyLoading||!supportUserKey)return;
+    historyLoading=true;historyFailed=false;setHistoryControls();
+    try{
+      // The server stores conversations per authenticated user; refresh on every visit and before sending.
+      var r=await apiAdapter.supportMessages();
+      if(state._supportMessagesUserKey!==supportUserKey)return;
+      if(!r||r.ok!==true||!Array.isArray(state.supportMsgs)) throw new Error('History unavailable');
+      if(!state.supportMsgs.length) state.supportMsgs.push(greeting);
+      historyNoticeText.textContent='Conversation history could not be loaded. Sending is paused to avoid duplicate messages. ';
+      render();
+    }catch(err){
+      if(state._supportMessagesUserKey===supportUserKey){
+        historyFailed=true;
+        toast('Conversation history is unavailable. Sending is paused until it can be loaded.','warn');
+      }
+    }finally{
+      if(state._supportMessagesUserKey===supportUserKey){
+        historyLoading=false;
+        setHistoryControls();
+      }
+    }
+  }
+  historyRetry.onclick=loadHistory;
+  if(supportUserKey) loadHistory();
+  async function send(text){
+    var message=String(text||'').trim();
+    if(!message||sendInFlight||historyLoading||historyFailed)return;
+    sendInFlight=true;
+    var sendBtn=$('#chat-send'), input=$('#chat-input');
+    var oldLabel=sendBtn?sendBtn.textContent:'Send';
+    if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending…';}
+    try{
+      var r=await apiAdapter.supportChat(message);
+      if(!r||r.ok!==true){
+        var ambiguous=!!(r&&(r.status===0||r.code==='NETWORK_ERROR'||r.status>=500));
+        if(ambiguous){
+          historyFailed=true;
+          historyNoticeText.textContent='Message delivery is unconfirmed. Reload conversation history before sending again. ';
+          setHistoryControls();
+        }
+        toast(ambiguous
+          ?'Delivery could not be confirmed. Reload conversation history before trying again.'
+          :(r&&(r.error||r.message))||'Message was not sent. Please check and try again.','err');
+        if(input&&!input.value.trim()) input.value=message;
+        return;
+      }
+      state.supportMsgs.push({from:'user',text:message,ts:Date.now()});
+      if(input&&input.value.trim()===message) input.value='';
+      render();
+    }catch(e){
+      historyFailed=true;
+      historyNoticeText.textContent='Message delivery is unconfirmed. Reload conversation history before sending again. ';
+      setHistoryControls();
+      toast('Delivery could not be confirmed. Reload conversation history before trying again.','warn');
+      if(input&&!input.value.trim()) input.value=message;
+    }finally{
+      sendInFlight=false;
+      setHistoryControls();
+    }
+  }
+  $('#chat-send').onclick=function(){send($('#chat-input').value);};
+  $('#chat-input').onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(e.target.value);}};
+  $$('.chat-q').forEach(function(b){b.onclick=function(){send(b.textContent);};});
+};
+
+/* ================= Settings ================= */
+VIEWS.settings = function(){
+  var twofaOn=!!state.settings.twofa;
+  var fundSet=!!state.settings.fundPwdSet;
+  return '<div class="va-account-page va-page va-page-narrow va-settings-page">'+
+    vaHeader('Settings','Security controls and account preferences','#/me')+
+    '<section class="va-settings-overview" aria-label="Security overview">'+
+      '<div class="va-settings-overview-head"><span class="va-settings-shield" aria-hidden="true">✓</span><span><b>Protect your account</b><small>Review your sign-in and withdrawal security controls</small></span></div>'+
+      '<div class="va-settings-status-grid">'+
+        '<div class="va-settings-status"><span>Two-factor authentication</span><b class="'+(twofaOn?'is-on':'is-off')+'">'+(twofaOn?'Enabled':'Not enabled')+'</b></div>'+
+        '<div class="va-settings-status"><span>Fund password</span><b class="'+(fundSet?'is-on':'is-off')+'">'+(fundSet?'Configured':'Not configured')+'</b></div>'+
+      '</div>'+
+    '</section>'+
+    '<section class="va-settings-group" aria-labelledby="settings-security-title">'+
+      '<div class="va-settings-group-head"><div><h2 id="settings-security-title">Account Security</h2><p>Manage credentials and additional account protection</p></div></div>'+
+      '<div class="va-settings-list">'+
+        '<div class="va-settings-row"><span class="va-settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><div class="va-settings-copy"><b>Login Password</b><small>Update the password used to sign in</small></div><button type="button" id="set-pwd" class="btn btn-ghost btn-sm">Change</button></div>'+
+        '<div class="va-settings-row"><span class="va-settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="m9 12 2 2 4-4"/></svg></span><div class="va-settings-copy"><b>Fund Password</b><small>'+(fundSet?'A separate password is configured for protected fund actions':'Set a separate password to protect fund actions')+'</small></div><button type="button" id="set-fundpwd" class="btn btn-ghost btn-sm">'+(fundSet?'Change':'Set up')+'</button></div>'+
+        '<div class="va-settings-row"><span class="va-settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12v-2a4 4 0 0 1 8 0v2M8 12h8v5H8z"/></svg></span><div class="va-settings-copy"><b>Two-Factor Authentication</b><small>'+(twofaOn?'An additional verification step is enabled':'Add an extra verification step to your account')+'</small></div><button type="button" id="set-2fa" class="btn '+(twofaOn?'btn-red':'btn-primary')+' btn-sm">'+(twofaOn?'Disable':'Enable')+'</button></div>'+
+      '</div>'+
+    '</section>'+
+    '<section class="va-settings-group" aria-labelledby="settings-preferences-title">'+
+      '<div class="va-settings-group-head"><div><h2 id="settings-preferences-title">Preferences</h2><p>Personalize your account display</p></div></div>'+
+      '<div class="va-settings-list">'+
+        '<div class="va-settings-row"><span class="va-settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/><circle cx="12" cy="12" r="2.5"/></svg></span><div class="va-settings-copy"><b>Hide Small Balances</b><small>Hide assets valued below 1 USDT on the Assets page</small></div><label class="va-switch"><input type="checkbox" id="pref-hide" '+(state.settings.hideSmall?'checked':'')+'><span class="va-slider"></span></label></div>'+
+        '<div class="va-settings-row"><span class="va-settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M12 6v13M8 19l4-8 4 8M7 10h10"/></svg></span><div class="va-settings-copy"><b>Interface Language</b><small>Current display language</small></div><span class="va-settings-value">English</span></div>'+
+      '</div>'+
+    '</section>'+
+  '</div>';
+};
+VIEWS.settings.afterRender = function(){
+  $('#set-pwd').onclick=function(){
+    modal('Change Login Password','<form id="pwd-form"><div style="margin-bottom:12px"><label class="auth-label">Current Password</label><input id="pwd-old" class="auth-input" type="password" required></div><div style="margin-bottom:12px"><label class="auth-label">New Password</label><input id="pwd-new" class="auth-input" type="password" required></div><div style="margin-bottom:16px"><label class="auth-label">Confirm New Password</label><input id="pwd-new2" class="auth-input" type="password" required></div><button class="btn btn-primary btn-block">Update Password</button></form>',function(close){
+      var pwdModalUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+    if(pwdModalUserKey&&state._passwordChangeUnknownUserKey===pwdModalUserKey){var pwdStatusButton=$('#pwd-form button');if(pwdStatusButton){pwdStatusButton.disabled=true;pwdStatusButton.textContent='Status Unconfirmed';}}
+    $('#pwd-form').onsubmit=async function(e){
+        e.preventDefault();
+        if($('#pwd-new').value!==$('#pwd-new2').value){toast('The new passwords do not match.','err');return;}
+        var pwdUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+        if(pwdUserKey&&state._passwordChangeUnknownUserKey===pwdUserKey){toast('The previous password change is still unconfirmed. Verify your sign-in status before trying again.','warn');return;}
+        var btn=$('#pwd-form button'); var old=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Updating…';
+        var r, pwdUnknown=false;
+        try{ r=await apiAdapter.changePassword({old_password:$('#pwd-old').value,new_password:$('#pwd-new').value}); }
+        catch(err){pwdUnknown=true;}
+        if(!pwdUnknown&&(!r||Number(r.status||0)===0||Number(r.status||0)>=500||r.code==='NETWORK_ERROR'||r.code==='NETWORK_RESPONSE_ERROR'))pwdUnknown=true;
+        if(pwdUnknown){
+          if(pwdUserKey)state._passwordChangeUnknownUserKey=pwdUserKey;
+          btn.disabled=true;btn.textContent='Status Unconfirmed';
+          toast('The password change may have been applied. Verify account access before attempting another change.','warn');
+          return;
+        }
+        btn.disabled=false;btn.textContent=old;
+        if(r&&r.ok){toast('Password updated.','ok');close();}else toast((r&&(r.error||r.message||r.msg))||'Update failed.','err');
+      };
+    });
+  };
+  $('#set-fundpwd').onclick=function(){
+    modal(fundSet?'Change Fund Password':'Set Fund Password','<form id="fp-form"><div style="margin-bottom:12px"><label class="auth-label">'+(fundSet?'Current Fund Password':'New Fund Password (6 digits)')+'</label><input id="fp-new" class="auth-input num" type="password" maxlength="6" required></div><div style="margin-bottom:16px"><label class="auth-label">Current Login Password</label><input id="fp-cur" class="auth-input" type="password" required></div><button class="btn btn-primary btn-block">'+(fundSet?'Confirm Change':'Set Fund Password')+'</button></form>',function(close){
+      var fundModalUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+      if(fundModalUserKey&&state._fundPasswordUnknownUserKey===fundModalUserKey){var fundStatusButton=$('#fp-form button');if(fundStatusButton){fundStatusButton.disabled=true;fundStatusButton.textContent='Status Unconfirmed';}}
+      $('#fp-form').onsubmit=async function(e){
+        e.preventDefault();
+        if(!/^\d{6}$/.test($('#fp-new').value)){toast('Fund password must be 6 digits.','err');return;}
+        var fundUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+        if(fundUserKey&&state._fundPasswordUnknownUserKey===fundUserKey){toast('The previous fund-password change is still unconfirmed. Verify the account security status before trying again.','warn');return;}
+        var btn=$('#fp-form button'); var old=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Submitting…';
+        var r, fundUnknown=false;
+        try{r=await apiAdapter.setFundPassword({fund_password:$('#fp-new').value,current_password:$('#fp-cur').value});}
+        catch(err){fundUnknown=true;}
+        if(!fundUnknown&&(!r||Number(r.status||0)===0||Number(r.status||0)>=500||r.code==='NETWORK_ERROR'||r.code==='NETWORK_RESPONSE_ERROR'))fundUnknown=true;
+        if(fundUnknown){
+          if(fundUserKey)state._fundPasswordUnknownUserKey=fundUserKey;
+          btn.disabled=true;btn.textContent='Status Unconfirmed';
+          toast('The fund-password change may have been applied. Verify account security status before attempting another change.','warn');
+          return;
+        }
+        btn.disabled=false;btn.textContent=old;
+        if(r&&r.ok){state.settings.fundPwdSet=true;toast('Fund password set.','ok');close();router();}else toast((r&&(r.error||r.message||r.msg))||'Setup failed.','err');
+      };
+    });
+  };
+  var fundSet=!!state.settings.fundPwdSet;
+  var securityUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
+  var twofaOutcomeUnknown=!!(securityUserKey&&state._twofaChangeUnknownUserKey===securityUserKey);
+  var twofaButton=$('#set-2fa');
+  if(twofaButton&&twofaOutcomeUnknown){twofaButton.disabled=true;twofaButton.textContent='Status Unconfirmed';}
+  $('#set-2fa').onclick=async function(){
+    var btn=$('#set-2fa');
+    if(!btn||btn.disabled||twofaOutcomeUnknown)return;
+    var old=btn.textContent;
+    var enabling=!state.settings.twofa;
+    var confirmed=false;
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Processing…';
+    try{
+      var r=enabling?await apiAdapter.twofaEnable():await apiAdapter.twofaDisable();
+      if(r&&r.ok===true){
+        confirmed=true;
+        toast(enabling?'Two-factor authentication enabled.':'Two-factor authentication disabled.','ok');
+      }else{
+        var status=Number(r&&r.status||0);
+        var unknown=!r||status===0||status>=500||!!(r&&(r.code==='NETWORK_ERROR'||r.code==='NETWORK_RESPONSE_ERROR'));
+        if(unknown){
+          twofaOutcomeUnknown=true;
+          if(securityUserKey)state._twofaChangeUnknownUserKey=securityUserKey;
+          btn.textContent='Status Unconfirmed';
+          toast('The security change may have been applied. Check account security status before trying again.','warn');
+          return;
+        }
+        toast((r&&(r.msg||r.error))||'The server did not confirm this security change. Please try again.','err');
+      }
+    }catch(e){
+      twofaOutcomeUnknown=true;
+      if(securityUserKey)state._twofaChangeUnknownUserKey=securityUserKey;
+      btn.textContent='Status Unconfirmed';
+      toast('The security change may have been applied. Check account security status before trying again.','warn');
+      return;
+    }finally{
+      if(!twofaOutcomeUnknown){btn.disabled=false;btn.textContent=old;}
+    }
+    if(confirmed) router();
+  };
+  $('#pref-hide').onchange=function(e){state.settings.hideSmall=e.target.checked;toast('Preference saved.','ok');};
+};
+
+/* ================= Admin ================= */
+VIEWS.admin = function(){
+  return '<div class="va-account-page va-page" style="max-width:1200px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">'+
+      '<div style="display:flex;align-items:center;gap:12px">'+
+        '<a class="va-back" href="#/markets" aria-label="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>'+
+        '<h1 class="va-title" style="margin:0">管理后台 Admin Console</h1>'+
+      '</div>'+
+      '<span class="tag" style="background:rgba(240,185,11,.12);color:var(--warning)">管理员 — HTTP Basic Auth</span>'+
+    '</div>'+
+    '<div id="admin-stats" class="va-admin-stats">'+skeleton(4,1)+'</div>'+
+    '<div id="admin-err" style="display:none" class="va-banner va-banner-err"></div>'+
+    '<div class="card" style="padding:0;margin-bottom:16px">'+
+      '<div style="display:flex;border-bottom:1px solid var(--border);overflow-x:auto" class="no-scrollbar">'+
+        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="deposits">充值审核</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div>'+
+      '</div>'+
+      '<div id="admin-body" style="overflow-x:auto" class="scroll">'+skeleton(5,4)+'</div>'+
+    '</div>'+
+  '</div>';
+};
+VIEWS.admin.afterRender = function(){
+  apiAdapter.adminStats().then(function(r){
+    if(!r.ok){
+      var err=$('#admin-err'); if(err){err.style.display='block';err.textContent='统计数据加载失败：'+(r.error||'请确认管理员权限与网络连接。');}
+      $('#admin-stats').innerHTML='';
+      return;
+    }
+    var cards=[['总用户数',r.total_users,'var(--brand-bright)'],['待审批提币',r.pending_withdrawals,'var(--warning)'],['待审核 KYC',r.pending_kyc,'var(--down)'],['充值地址数',r.deposit_addresses,'var(--text-secondary)']];
+    $('#admin-stats').innerHTML=cards.map(function(c){
+      return '<div class="card va-stat"><div class="va-stat-label">'+c[0]+'</div><div class="va-stat-val" style="color:'+c[2]+'">'+fmt(c[1],0)+'</div></div>';
+    }).join('');
+  }).catch(function(){
+    var err=$('#admin-err'); if(err){err.style.display='block';err.textContent='网络错误，统计数据加载失败。';}
+  });
+  async function runAdminAction(button, action, successText, pendingText){
+    if(button.disabled) return;
+    var oldText=button.textContent;
+    var row=button.closest('tr');
+    var rowButtons=row?Array.from(row.querySelectorAll('button')):[button];
+    var previousDisabled=rowButtons.map(function(item){return item.disabled;});
+    rowButtons.forEach(function(item){item.disabled=true;});
+    button.textContent=pendingText||'处理中…';
+    try{
+      var result=await action();
+      if(result&&result.ok){
+        button.textContent=successText;
+        toast(successText,'ok');
+        return;
+      }
+      var status=Number(result&&result.status||0);
+      var unknown=status===0||status>=500||!!(result&&(result.code==='NETWORK_ERROR'||result.code==='NETWORK_RESPONSE_ERROR'));
+      if(unknown){
+        button.textContent='结果待核实';
+        toast('操作结果暂时无法确认。请先刷新并核对服务器记录，不要重复执行。','warn');
+        return;
+      }
+      rowButtons.forEach(function(item,index){item.disabled=previousDisabled[index];});
+      button.textContent=oldText;
+      toast((result&&(result.error||result.msg||result.message))||'操作未成功，请检查权限和服务器返回。','err');
+    }catch(error){
+      button.textContent='结果待核实';
+      toast('网络中断，操作结果无法确认。请先核对服务器记录，不要重复执行。','warn');
+    }
+  }
+  /* Admin sensitive-action confirmation. Resolves true only after the operator explicitly confirms.
+     Summary HTML must be built with escapeHtml() around every record field. */
+  function confirmAdminAction(title, summaryHTML){
+    return new Promise(function(resolve){
+      if(!(window.BTCBox&&BTCBox.modal)){ resolve(true); return; }
+      BTCBox.modal({title:title, width:'md', closable:true,
+        content:'<div style="font-size:14px;line-height:1.8;color:var(--text-secondary)">'+summaryHTML+'</div><div style="margin-top:14px;padding:10px 12px;border-radius:8px;background:rgba(246,180,60,.08);border:1px solid var(--warning);color:var(--warning);font-size:12px">此操作立即生效并写入审计日志。请核对上述信息，确认无误后再执行。</div>',
+        buttons:[
+          {text:'取消', variant:'ghost', onClick:function(close){close();resolve(false);}},
+          {text:'确认执行', variant:'danger', onClick:function(close){close();resolve(true);}}
+        ]});
+    });
+  }
+  function render(tab){
+    if(tab==='users'){
+      if(!state.admin.users||!state.admin.users.length){$('#admin-body').innerHTML=emptyState('暂无用户数据','用户列表为空。');return;}
+      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">UID</th><th class="th">邮箱</th><th class="th">KYC</th><th class="th">状态</th><th class="th" style="text-align:right">余额 (USDT)</th><th class="th">操作</th></tr></thead><tbody>'+
+        state.admin.users.map(function(u){
+          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(u.uid)+'</td><td class="td">'+escapeHtml(u.email)+'</td><td class="td" style="text-transform:capitalize;color:'+(u.kyc==='verified'?'var(--up)':u.kyc==='pending'?'var(--warning)':'var(--text-muted)')+'">'+escapeHtml(u.kyc)+'</td><td class="td">'+(u.frozen?'<span style="color:var(--down);font-weight:600">已冻结</span>':'<span style="color:var(--up)">正常</span>')+'</td><td class="td num" style="text-align:right">'+fmt(u.balances.USDT,2)+'</td><td class="td"><button class="au-freeze" data-uid="'+escapeHtml(u.uid)+'" data-f="'+(u.frozen?0:1)+'" style="color:'+(u.frozen?'var(--up)':'var(--down)')+';font-size:12px;font-weight:600;margin-right:10px;background:none;border:none;cursor:pointer">'+(u.frozen?'解冻':'冻结')+'</button></td></tr>';
+        }).join('')+'</tbody></table>';
+      $$('.au-freeze').forEach(function(b){b.onclick=async function(){
+        var freeze=b.dataset.f==='1';
+        var ok=await confirmAdminAction(freeze?'确认冻结用户':'确认解冻用户','<b>用户 UID：</b>'+escapeHtml(b.dataset.uid)+'<br><b>操作：</b>'+(freeze?'冻结账户（禁止登录与交易）':'解冻账户（恢复正常）'));
+        if(!ok)return;
+        await runAdminAction(b,()=>apiAdapter.adminFreeze({uid:b.dataset.uid,frozen:freeze,reason:'Admin action'}),'状态已更新');
+      };});
+    } else if(tab==='deposits'){
+      var list=(state.admin.deposits||[]).filter(function(d){return d.status==='pending';});
+      if(!list.length){$('#admin-body').innerHTML=emptyState('暂无待审核充值','所有充值均已处理。');return;}
+      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">ID</th><th class="th">用户</th><th class="th">币种</th><th class="th" style="text-align:right">数量</th><th class="th">网络</th><th class="th">参考号</th><th class="th">操作</th></tr></thead><tbody>'+
+        list.map(function(d){
+          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(d.id)+'</td><td class="td">'+escapeHtml(d.uid)+'</td><td class="td">'+escapeHtml(d.coin)+'</td><td class="td num" style="text-align:right">'+fmt(d.amount,d.coin==='USDT'?2:6)+'</td><td class="td" style="color:var(--text-secondary)">'+escapeHtml(d.network)+'</td><td class="td num" style="font-size:11px">'+escapeHtml(d.reference)+'</td><td class="td"><button class="ad-confirm" data-id="'+escapeHtml(d.id)+'" style="color:var(--up);font-weight:600;font-size:12px;margin-right:10px;background:none;border:none;cursor:pointer">确认到账</button><button style="color:var(--down);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer" disabled>驳回</button></td></tr>';
+        }).join('')+'</tbody></table>';
+      $$('.ad-confirm').forEach(function(b){b.onclick=async function(){
+        var d=state.admin.deposits.find(function(x){return String(x.id)===String(b.dataset.id);});
+        if(!d){toast('无法找到对应充值记录，请刷新列表。','err');return;}
+        var ok=await confirmAdminAction('确认充值到账（人工入账）','<b>充值 ID：</b>'+escapeHtml(d.id)+'<br><b>用户 UID：</b>'+escapeHtml(d.uid)+'<br><b>币种/数量：</b>'+escapeHtml(d.coin)+' '+escapeHtml(d.amount)+'<br><b>参考号：</b>'+escapeHtml(d.reference||'—'));
+        if(!ok)return;
+        await runAdminAction(b,()=>apiAdapter.adminConfirmDeposit({id:d.id,uid:d.uid,coin:d.coin,amount:d.amount,reference:d.reference,note:'manual',idempotency_key:uid()}),'充值已确认');
+      };});
+    } else if(tab==='withdrawals'){
+      var wlist=(state.admin.withdrawals||[]).filter(function(w){return w.status==='pending';});
+      if(!wlist.length){$('#admin-body').innerHTML=emptyState('暂无待审批提币','所有提币均已处理。');return;}
+      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">ID</th><th class="th">用户</th><th class="th">币种</th><th class="th" style="text-align:right">数量</th><th class="th">地址</th><th class="th">操作</th></tr></thead><tbody>'+
+        wlist.map(function(w){
+          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(w.id)+'</td><td class="td">'+escapeHtml(w.uid)+'</td><td class="td">'+escapeHtml(w.coin)+'</td><td class="td num" style="text-align:right">'+fmt(w.amount,w.coin==='USDT'?2:6)+'</td><td class="td num" style="font-size:11px;color:var(--text-secondary)">'+escapeHtml(w.address)+'</td><td class="td"><button class="aw-approve" data-id="'+escapeHtml(w.id)+'" style="color:var(--up);font-weight:600;font-size:12px;margin-right:10px;background:none;border:none;cursor:pointer">批准</button><button class="aw-reject" data-id="'+escapeHtml(w.id)+'" style="color:var(--down);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer">驳回</button></td></tr>';
+        }).join('')+'</tbody></table>';
+      $('.aw-approve').forEach(function(b){b.onclick=async function(){var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};var ok=await confirmAdminAction('批准提币','<b>提币 ID：</b>'+escapeHtml(b.dataset.id)+'<br><b>用户 UID：</b>'+escapeHtml(w.uid||'—')+'<br><b>币种/数量：</b>'+escapeHtml(w.coin||'—')+' '+escapeHtml(w.amount||'—')+'<br><b>目标地址：</b>'+escapeHtml(w.address||'—'));if(!ok)return;await runAdminAction(b,()=>apiAdapter.adminApproveWithdraw(b.dataset.id),'提币审批已提交');};});
+      $('.aw-reject').forEach(function(b){b.onclick=async function(){var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};var ok=await confirmAdminAction('驳回提币','<b>提币 ID：</b>'+escapeHtml(b.dataset.id)+'<br><b>用户 UID：</b>'+escapeHtml(w.uid||'—')+'<br><b>币种/数量：</b>'+escapeHtml(w.coin||'—')+' '+escapeHtml(w.amount||'—')+'<br><b>目标地址：</b>'+escapeHtml(w.address||'—')+'<br><b>驳回原因：</b>地址不匹配 (Address mismatch)');if(!ok)return;await runAdminAction(b,()=>apiAdapter.adminRejectWithdraw({id:b.dataset.id,reason:'Address mismatch'}),'提币驳回已提交');};});
+    } else {
+      var klist=(state.admin.kycs||[]).filter(function(k){return k.status==='pending';});
+      if(!klist.length){$('#admin-body').innerHTML=emptyState('暂无待审核 KYC','所有 KYC 申请均已审核。');return;}
+      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr><th class="th">用户</th><th class="th">姓名</th><th class="th">证件类型</th><th class="th">操作</th></tr></thead><tbody>'+
+        klist.map(function(k){
+          return '<tr class="trow"><td class="td">'+escapeHtml(k.uid)+'</td><td class="td">'+escapeHtml(k.name)+'</td><td class="td" style="text-transform:capitalize;color:var(--text-secondary)">'+escapeHtml((k.id_type||'').replace('_',' '))+'</td><td class="td"><button class="ak-approve" data-uid="'+escapeHtml(k.uid)+'" style="color:var(--up);font-weight:600;font-size:12px;margin-right:10px;background:none;border:none;cursor:pointer">通过</button><button class="ak-reject" data-uid="'+escapeHtml(k.uid)+'" style="color:var(--down);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer">驳回</button></td></tr>';
+        }).join('')+'</tbody></table>';
+      $('.ak-approve').forEach(function(b){b.onclick=async function(){var k=(state.admin.kycs||[]).find(function(x){return String(x.uid)===String(b.dataset.uid);})||{};var ok=await confirmAdminAction('通过 KYC 审核','<b>用户 UID：</b>'+escapeHtml(b.dataset.uid)+'<br><b>姓名：</b>'+escapeHtml(k.name||'—')+'<br><b>证件类型：</b>'+escapeHtml(k.id_type||'—'));if(!ok)return;await runAdminAction(b,()=>apiAdapter.adminApproveKyc({uid:b.dataset.uid}),'KYC 审核已提交');};});
+      $('.ak-reject').forEach(function(b){b.onclick=async function(){var k=(state.admin.kycs||[]).find(function(x){return String(x.uid)===String(b.dataset.uid);})||{};var ok=await confirmAdminAction('驳回 KYC 审核','<b>用户 UID：</b>'+escapeHtml(b.dataset.uid)+'<br><b>姓名：</b>'+escapeHtml(k.name||'—')+'<br><b>证件类型：</b>'+escapeHtml(k.id_type||'—')+'<br><b>驳回原因：</b>证件不清晰 (Document unclear)');if(!ok)return;await runAdminAction(b,()=>apiAdapter.adminRejectKyc({uid:b.dataset.uid,reason:'Document unclear'}),'KYC 驳回已提交');};});
+    }
+  }
+  var tab='users'; render(tab);
+  $$('[data-atab]').forEach(function(t){t.onclick=function(){tab=t.dataset.atab;$$('[data-atab]').forEach(function(x){x.classList.remove('active');});t.classList.add('active');render(tab);};});
+};
+
+/* ================= 404 (override app-core stub) ================= */
+VIEWS['404'] = function(){
+  return '<div class="va-account-page va-page va-page-narrow">'+
+    '<div class="card va-soon">'+
+      '<div class="va-soon-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>'+
+      '<div class="va-soon-title">404 — 页面不存在</div>'+
+      '<div class="va-soon-sub">您访问的页面不存在或已被移除。请检查链接是否正确，或返回首页继续交易。</div>'+
+      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
+        '<a href="#/markets" class="btn btn-primary">返回行情</a>'+
+        '<a href="#/me" class="btn btn-ghost">我的账户</a>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+};

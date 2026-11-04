@@ -1,0 +1,23 @@
+.container {
+    background-color: var(--footer);
+    -webkit-transition: background-color 0.4s;
+    -o-transition: background-color 0.4s;
+    transition: background-color 0.4s;
+}
+
+.languages span {
+    border-left: 0.01vh solid #f58634;
+}
+
+:global(.ltr) .languages span {
+    border-right: 0.01vh solid #f58634;
+    border-left: initial;
+}
+
+.languages span:last-child {
+    border-left: initial;
+}
+:global(.ltr) .languages span:last-child {
+    border-left: initial;
+    border-right: initial;
+}

@@ -1,0 +1,29 @@
+@media (max-width: 480px) {
+
+    html,body{
+        font-size: 3.3vw;
+        line-height: 3.5vh;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        position: absolute;
+
+    }
+
+}
+
+
+@media screen and (orientation: landscape) {
+    .mobile-view {
+        font-size: 1vw;
+        line-height: 14vh;
+        border: 0.4vw dotted #4a5eab;
+    }
+    .mobile-view img {
+        width: 12vw;
+    }
+    .mobile-view h1 {
+        padding: 5vh 0;
+    }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Authorize Application — BTCBOX</title>
+<meta name="description" content="BTCBOX OAuth authorization consent screen. Review and approve or deny third-party application access.">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAdCAMAAAD8QJ61AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAC0FBMVEX////+/v77+/uxsrJOUFDHyMj8/Py4ublNT09RU1NTVVXLzMz7/Py3uLhJS0tWWFhQUlJKTExUVlbMzc25urpPUVFXWVnNzs66u7tKTU1YWlpHSUl8fX3Y2Nhpa2tZWlpSVFTOz8/+//67vLxLTU1ISkp3eHjz8/Po6OhmaGjP0ND+//+8vb12d3f19fXp6ellZ2fQ0dH8/f3m8+y9vr5IS0t1d3f09PT9/f1lZmZLTk7R0tL7/fzr9fCj07vd7ua+v79MTk50dnbn6OhkZmZZW1v+/f643cths4vW6+G/wMBzdXXm5+djZGRAQ0N8fH3m4eTB39A6pHA8onDg8OjAwcFzdHTl5uZjZGRAQ0N8fH3m4eTB39A6pHA8onDg8OjAwcFzdHTl5uZjZG">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg-page);color:var(--text-primary);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;max-width:100%}
+.btn:focus-visible,button:focus-visible,a:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+a{color:var(--brand-bright);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.card{width:100%;max-width:440px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 28px;box-shadow:var(--elevation-oauth-card)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.brand-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-bright));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--on-brand);font-size:16px}
+.brand-name{font-weight:700;font-size:16px;letter-spacing:.02em}
+h1{font-size:20px;font-weight:600;margin:0 0 6px}
+.sub{color:var(--text-secondary);font-size:13px;margin:0 0 20px;line-height:1.5}
+.app-box{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-raised);margin-bottom:18px}
+.app-icon{width:44px;height:44px;border-radius:10px;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--text-secondary);flex-shrink:0}
+.app-name{font-weight:600;font-size:15px;word-break:break-all}
+.app-meta{font-size:12px;color:var(--color-text-muted-subtle);margin-top:2px;word-break:break-all}
+.scopes{margin:0 0 22px;padding:0;list-style:none}
+.scopes li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-secondary);line-height:1.45}
+.scopes li:last-child{border-bottom:none}
+.scopes li::before{content:'✓';color:var(--brand-bright);font-weight:700;flex-shrink:0;margin-top:1px}
+.scope-name{color:var(--text-primary);font-weight:500}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;border-radius:var(--radius-sm);padding:11px 16px;font-size:14px;transition:background .2s,opacity .2s;user-select:none;width:100%}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.btn-primary{background:var(--brand-bright);color:var(--on-brand)}
+.btn-primary:hover{background:var(--brand-hover)}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+.btn-danger{background:transparent;color:var(--down);border:1px solid var(--color-negative-border)}
+.btn-danger:hover{background:var(--down-soft)}
+.btn-row{display:flex;gap:12px;flex-direction:column}
+@media(min-width:420px){.btn-row{flex-direction:row}.btn-row .btn{flex:1}}
+.alert{padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;line-height:1.5;margin-bottom:18px}
+.alert-err{background:var(--oauth-alert-negative-soft);border:1px solid var(--oauth-alert-negative-border);color:var(--oauth-alert-negative-text)}
+.alert-warn{background:var(--color-warning-soft);border:1px solid var(--color-warning-border);color:var(--color-warning-text)}
+.alert-info{background:var(--brand-soft);border:1px solid var(--color-brand-border);color:var(--color-brand-text)}
+.skel{height:14px;background:linear-gradient(90deg,var(--bg-hover) 25%,var(--border-strong) 50%,var(--bg-hover) 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:4px;margin-bottom:10px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.foot{margin-top:20px;text-align:center;font-size:12px;color:var(--color-text-muted-subtle)}
+.code{font-family:var(--font-mono);font-size:11px;color:var(--color-text-muted-subtle);word-break:break-all;background:var(--bg-raised);padding:2px 6px;border-radius:4px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="brand">
+      <div class="brand-mark">B</div>
+      <div class="brand-name">BTCBOX</div>
+    </div>
+    <div id="stage-loading">
+      <h1>Loading authorization…</h1>
+      <p class="sub">Please wait while we verify the authorization request.</p>
+      <div class="skel" style="width:60%"></div>
+      <div class="skel" style="width:90%"></div>
+      <div class="skel" style="width:75%"></div>
+    </div>
+
+    <div id="stage-error" class="hidden">
+      <h1>Authorization unavailable</h1>
+      <div class="alert alert-err" id="error-msg">Unable to load authorization details. Please try again.</div>
+      <button class="btn btn-ghost" id="retry-btn">Retry</button>
+      <div class="foot"><a href="/">Return to BTCBOX</a></div>
+    </div>
+
+    <div id="stage-signin" class="hidden">
+      <h1>Sign in required</h1>
+      <p class="sub">You must be signed in to BTCBOX to authorize this application. You will be returned here after signing in.</p>
+      <a class="btn btn-primary" href="/#/login">Sign in to BTCBOX</a>
+      <div class="foot"><a href="/">Return to BTCBOX</a></div>
+    </div>
+
+    <div id="stage-consent" class="hidden">
+      <h1>Authorize application</h1>
+      <p class="sub">A third-party application is requesting access to your BTCBOX account. Review the permissions below before continuing.</p>
+      <div class="app-box">
+        <div class="app-icon" id="app-icon">?</div>
+        <div>
+          <div class="app-name" id="app-name">Third-party application</div>
+          <div class="app-meta" id="app-meta"></div>
+        </div>
+      </div>
+      <div id="scopes-wrap">
+        <div style="font-size:12px;color:var(--color-text-muted-subtle);margin-bottom:8px;font-weight:500;letter-spacing:.03em">REQUESTED PERMISSIONS</div>
+        <ul class="scopes" id="scopes-list"></ul>
+      </div>
+      <div class="alert alert-warn" id="consent-note" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn btn-danger" id="btn-deny">Deny</button>
+        <button class="btn btn-primary" id="btn-allow">Allow access</button>
+      </div>
+      <div class="foot">You can revoke access at any time in <a href="/#/settings">Account Settings</a>.</div>
+    </div>
+  </div>
+</div>
+
+<script src="/oauth/consent.js"></script>
+</body>
+</html>

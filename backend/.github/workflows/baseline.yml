@@ -1,0 +1,81 @@
+name: BTCBOX branch baseline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/uiux-upgrade
+      - feature/ai3-batch-remediation-2026-11-02
+      - fix/ai2-seconds-persistent-guard-20261103
+      - fix/ai2-seconds-entry-gate-20261103
+    paths:
+      - 'package.json'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'index.html'
+      - 'admin.html'
+      - 'pages/**'
+      - 'oauth/**'
+      - 'assets/**'
+      - 'api/**'
+      - '.github/workflows/baseline.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+      - feature/uiux-upgrade
+      - feature/ai1-sitewide-refinement-20261103
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and source smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Report runtime
+        run: node --version && npm --version
+      - name: Build public site
+        run: npm run build
+      - name: Run smoke tests
+        run: npm test
+      - name: Deployment preflight shape check (fail-closed defaults)
+        env:
+          SUPABASE_URL: https://shape-check.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: shape_check_dummy_service_role_not_a_real_key
+          SUPABASE_AUTH_PUBLISHABLE_KEY: shape_check_dummy_anon_key
+          ADMIN_USER: ci-shape-check-admin
+          ADMIN_PASS: ci-shape-check-admin-pass-16
+          FINANCIAL_POSTGRES_RPC_ENABLED: '0'
+          FINANCIAL_POSTGRES_FULL_CUTOVER_APPROVED: '0'
+          FINANCIAL_POSTGRES_READS_ENABLED: '0'
+          FINANCIAL_MATCHING_ENGINE_ENABLED: '0'
+        run: npm run preflight
+      - name: No default credentials or service-role material in public tree
+        run: |
+          test ! -f dist/.env.example
+          test ! -f dist/api/core.js
+          test ! -f dist/supabase-migration-runner.sql
+          ! grep -q 'ADMIN_PASS=feiji123456' .env.example
+          ! grep -q 'ADMIN_USER=feiji' .env.example
+          ! grep -rq 'service_role' dist/
+      - name: Verify public build excludes source-only files
+        shell: bash
+        run: |
+          test -f dist/index.html
+          test -f dist/admin.html
+          test -f dist/assets/js/app-core.js
+          test -f dist/assets/css/tokens.css
+          test ! -f dist/api/core.js
+          test ! -f dist/supabase-migration-runner.sql
+          test ! -f dist/.env.example

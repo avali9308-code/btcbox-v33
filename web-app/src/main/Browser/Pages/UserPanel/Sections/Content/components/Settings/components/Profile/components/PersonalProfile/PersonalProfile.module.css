@@ -1,0 +1,30 @@
+.container {
+  height: 65vh;
+}
+.header {
+  height: 12%;
+}
+.content {
+  height: 88%;
+}
+.content :global(.row) {
+  width: 100%;
+}
+.addressInput :global(.lead) {
+  width: 24.5%;
+}
+.addressInput :global(input) {
+  width: 75.5%;
+}
+.thisButton {
+  width: 20%;
+}
+.thisButton.prev{
+  background-color: var(--orange);
+}
+.thisButton.next{
+  background-color: var(--darkGreen);
+}
+.content :global(input){
+  cursor: not-allowed;
+}

@@ -1,0 +1,41 @@
+.container {
+  height: 40vh;
+}
+.header {
+  height: 23%;
+  padding: 1vh 1vw;
+}
+.header span {
+  width: 50%;
+  text-align: center;
+}
+.content {
+  height: 77%;
+}
+
+.thisLoading{
+  width: 5vw;
+}
+
+.thisButton {
+  width: 10%;
+  background-color: var(--darkGreen);
+}
+.submit{
+  width: 15%;
+}
+.disableOtp{
+  background-color: var(--darkRed);
+  width: 15%;
+}
+
+.thisInput :global(.lead) {
+  width: 35%;
+}
+.thisInput :global(input) {
+  width: 75% !important;
+  letter-spacing: 1rem;
+}
+/*.thisInput :global(input) {
+  width: 85% !important;
+}*/

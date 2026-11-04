@@ -1,0 +1,49 @@
+/* BTCBOX overlays.css — extracted from index.html, behavior unchanged */
+/* toast */
+#toast-root{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:8px;max-width:360px}
+.toast{background:var(--bg-raised);border:1px solid var(--border-strong);border-left:3px solid var(--brand-bright);border-radius:var(--radius-sm);padding:12px 16px;font-size:var(--fs-sm);box-shadow:var(--shadow-modal);animation:toastIn .3s var(--ease-out);display:flex;gap:10px;align-items:flex-start}
+.toast.err{border-left-color:var(--down)}
+.toast.warn{border-left-color:var(--warning)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+/* modal */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:150;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .2s}
+.modal-box{display:flex;flex-direction:column;background:var(--bg-card);border:1px solid var(--border-strong);border-radius:var(--radius-lg);box-shadow:var(--shadow-modal);max-width:480px;width:100%;max-height:85vh;max-height:min(85vh,calc(100dvh - 32px));min-height:0;overflow:hidden;animation:popIn .25s var(--ease-out)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+/* splash */
+#splash{position:fixed;inset:0;background:var(--bg-page);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .5s var(--ease)}
+#splash.hide{opacity:0;pointer-events:none}
+.splash-icon{width:96px;height:96px;animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
+.splash-bar{width:160px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.splash-bar>div{height:100%;width:40%;background:var(--brand-bright);animation:loadbar 1.2s var(--ease) infinite}
+@keyframes loadbar{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+body.modal-open{overflow:hidden !important}
+/* ===== Frozen design system: modal size presets + drawer ===== */
+.modal-box[data-w="sm"]{max-width:var(--modal-w-sm)}
+.modal-box[data-w="md"]{max-width:var(--modal-w-md)}
+.modal-box[data-w="lg"]{max-width:var(--modal-w-lg)}
+.modal-box[data-w="risk"]{max-width:var(--modal-w-risk);border-color:var(--danger-ring)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border);flex-wrap:wrap;flex-shrink:0}
+.modal-actions .btn{flex:1;min-width:120px}
+.modal-body{padding:20px;flex:1 1 auto;min-height:0;max-height:none;overflow:auto;overscroll-behavior:contain}
+.drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:var(--z-drawer);animation:fadeIn .2s}
+.drawer-panel{position:fixed;background:var(--bg-card);border:1px solid var(--border-strong);box-shadow:var(--shadow-modal);z-index:calc(var(--z-drawer) + 1);display:flex;flex-direction:column;animation:drawerIn .28s var(--ease-out)}
+.drawer-panel[data-side="bottom"]{left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:85vh;padding-bottom:env(safe-area-inset-bottom)}
+.drawer-panel[data-side="right"]{top:0;right:0;bottom:0;width:min(440px,92vw);border-radius:16px 0 0 16px;animation:drawerInRight .28s var(--ease-out)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+#modal-x,#drawer-x{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;border-radius:8px}
+#modal-x:focus-visible,#drawer-x:focus-visible{outline:2px solid var(--brand-bright);outline-offset:2px}
+.drawer-body{padding:20px;overflow:auto;flex:1}
+@keyframes drawerIn{from{transform:translateY(100%)}to{transform:none}}
+@keyframes drawerInRight{from{transform:translateX(100%)}to{transform:none}}
+@media (max-width:768px){
+  .modal-mask{padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+  .modal-box{max-width:none !important;width:100%;max-height:calc(100dvh - 32px)}
+  .modal-body{padding:16px;max-height:none}
+  .modal-actions{padding:12px 16px}
+  .modal-actions .btn{min-width:0}
+}
+
+.modal-box[tabindex="-1"]:focus{outline:none}

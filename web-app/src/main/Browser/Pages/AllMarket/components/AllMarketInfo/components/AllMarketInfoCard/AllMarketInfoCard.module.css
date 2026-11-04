@@ -1,0 +1,27 @@
+.container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 20% 20% 20% 20% 20%;
+}
+
+.item {
+    margin: 1vh 0.5vw;
+    border-radius: 8px;
+    height: 37vh;
+}
+
+.thisButton:hover {
+    background-color: var(--container) !important;
+    color: var(--activeTab);
+}
+
+.thisButton {
+    width: 80%;
+    background: var(--cardHeaderAlpha);
+    color: var(--textColor);
+    bottom: 0;
+}
+
+.filter {
+    filter: blur(4px);
+}

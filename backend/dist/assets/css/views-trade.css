@@ -1,0 +1,770 @@
+/* ============================================================
+   BTCBOX views-trade.css — trade / kline / seconds / orders
+   Feature: uiux-upgrade. Loaded via <link> injected from views-trade.js.
+   Uses frozen design tokens (tokens.css) + component classes (components.css).
+   ============================================================ */
+
+/* ---------- shared page shell ---------- */
+.trade-page, .seconds-page, .orders-page { color: var(--text-primary); }
+.trade-page .num, .seconds-page .num, .orders-page .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.trade-page .td.num, .seconds-page .td.num, .orders-page .td.num { text-align: right; }
+.trade-page .th.num, .seconds-page .th.num, .orders-page .th.num { text-align: right; }
+
+/* scrollbars */
+.trade-page .scroll::-webkit-scrollbar, .seconds-page .scroll::-webkit-scrollbar, .orders-page .scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.trade-page .scroll::-webkit-scrollbar-thumb, .seconds-page .scroll::-webkit-scrollbar-thumb, .orders-page .scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+/* ============================================================
+   TRADE — desktop professional workspace (≥769px)
+   columns: pair-list | chart | orderbook(~45% of right) | form(~55% of right)
+   ============================================================ */
+.trade-top { display: grid; grid-template-columns: 170px minmax(0,1fr) minmax(240px, 20%) minmax(280px, 24%); gap: 12px; align-items: start; }
+.pair-list-card { padding: 8px 0; max-height: 640px; overflow: auto; }
+.pair-list-head { padding: 6px 12px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.pair-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; color: var(--text-primary); text-decoration: none; }
+.pair-item:hover { background: var(--bg-raised); }
+.pair-item.active { background: var(--brand-soft); }
+.pair-item .pair-base { font-weight: 600; }
+.pair-item .pair-quote { color: var(--text-muted); font-weight: 400; }
+.pair-item .pair-right { text-align: right; }
+.pair-item .pair-price { display: block; }
+.pair-item .pair-chg { font-size: 11px; }
+
+.chart-card { padding: 0; overflow: hidden; min-width: 0; }
+.chart-header { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.chart-header .pair-title { font-size: 18px; font-weight: 700; }
+.chart-header .price-big { font-size: 20px; font-weight: 700; }
+.chart-header .chg-small { font-size: 12px; }
+.chart-header .hl { font-size: 12px; color: var(--text-secondary); }
+.chart-header .hl .num { color: var(--text-primary); }
+.chart-header .spacer { flex: 1; }
+.tf-switch { display: flex; gap: 2px; background: var(--bg-raised); padding: 3px; border-radius: 6px; }
+.tf-btn { padding: 4px 10px; font-size: 12px; border-radius: 4px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; font-weight: 400; }
+.tf-btn.active { background: var(--brand-bright); color: #0B0E11; font-weight: 600; }
+
+#trade-chart { height: 440px; width: 100%; }
+
+/* orderbook panel */
+.ob-card { padding: 0; display: flex; flex-direction: column; min-width: 0; }
+.ob-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.ob-tabs .tab { flex: 1; text-align: center; }
+.ob-panel { flex: 1; overflow: auto; max-height: 560px; min-height: 200px; }
+.ob-head { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 11px; color: var(--text-muted); }
+.ob-row { display: flex; justify-content: space-between; align-items: center; padding: 1px 12px; line-height: 24px; font-size: 12px; cursor: pointer; position: relative; }
+.ob-row:hover { background: var(--bg-hover); }
+.ob-depth { position: absolute; left: 0; top: 0; bottom: 0; opacity: .12; pointer-events: none; }
+.ob-row .ob-price { position: relative; flex: 1.3 1 0; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ob-row .ob-amt { position: relative; flex: 1 1 0; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+.ob-row .ob-total { position: relative; flex: 1.1 1 0; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); }
+.ob-head { display: flex; gap: 8px; justify-content: space-between; }
+.ob-head span { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ob-head span:first-child { flex: 1.3 1 0; text-align: left; }
+.ob-head span:not(:first-child) { text-align: right; }
+.ob-row.bid .ob-price { color: var(--up); }
+.ob-row.ask .ob-price { color: var(--down); }
+.ob-mid { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-raised); }
+.ob-mid .mid-price { font-size: 18px; font-weight: 700; }
+.ob-mid .mid-chg { font-size: 12px; }
+
+/* order form panel */
+.form-card { padding: 16px; min-width: 0; }
+.side-switch { display: flex; margin-bottom: 12px; background: var(--bg-raised); padding: 3px; border-radius: 6px; }
+.side-switch .btn { flex: 1; padding: 8px; font-size: 13px; }
+.otype-row { display: flex; gap: 6px; margin-bottom: 12px; font-size: 12px; }
+.otype { padding: 4px 10px; border-radius: 4px; background: transparent; color: var(--text-secondary); border: none; cursor: pointer; font-weight: 400; }
+.otype.active { background: var(--brand-soft); color: var(--brand-bright); font-weight: 600; }
+.form-field { margin-bottom: 10px; }
+.form-field .auth-input { height: 46px; font-size: 14px; }
+.pct-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.pct-btn { flex: 1; padding: 5px 0; font-size: 11px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
+.pct-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.form-summary { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+#ord-submit { padding: 12px; font-size: 15px; height: 48px; }
+
+/* bottom orders / positions tab zone — independent scroll */
+.orders-card { margin-top: 12px; padding: 0; }
+.orders-tabs { display: flex; border-bottom: 1px solid var(--border); height: 44px; }
+.orders-tabs .tab { padding: 0 18px; display: flex; align-items: center; font-size: 13px; }
+.orders-body { overflow: auto; max-height: 300px; min-height: 140px; }
+.orders-body table { width: 100%; border-collapse: collapse; min-width: 720px; }
+.orders-body .trow { cursor: pointer; }
+.cancel-btn { color: var(--down); font-size: 12px; font-weight: 600; background: none; border: none; cursor: pointer; padding: 4px 8px; }
+.cancel-btn:hover { text-decoration: underline; }
+.pos-list { padding: 8px 0; }
+.pos-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+.pos-row .pos-asset { font-weight: 600; }
+.pos-row .pos-sub { font-size: 11px; color: var(--text-muted); }
+.pos-row .pos-val { text-align: right; }
+
+/* mobile pair bar (hidden on desktop) */
+.mobile-pair-bar { display: none; }
+
+/* Shared K-line bottom drawer — chart canvas is mounted here on desktop and mobile. */
+.chart-card .chart-body { display: block; }
+.chart-header .tf-switch { display: none; }
+.kline-entry { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin: 12px 0 0 auto; padding: 0 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--brand-bright); font-size: 13px; font-weight: 600; cursor: pointer; }
+.kline-entry .ke-caret { font-size: 15px; line-height: 1; }
+.kline-drawer-mask { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .24s ease; z-index: 94; }
+.kline-drawer-mask.open { opacity: 1; pointer-events: auto; }
+.kline-drawer { display: flex; position: fixed; left: 0; right: 0; bottom: 0; height: min(520px,72vh); background: var(--bg-card); transform: translateY(101%); transition: transform .28s cubic-bezier(.2,.8,.2,1); z-index: 95; border-radius: 14px 14px 0 0; flex-direction: column; box-shadow: 0 -8px 32px rgba(0,0,0,.4); overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+.kline-drawer.open { transform: translateY(0); }
+.kline-drawer-head { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.kline-drawer-head .kd-pair { font-weight: 700; font-size: 15px; white-space: nowrap; }
+.kline-drawer-head .kd-spacer { flex: 1; }
+.kline-drawer-head .tf-switch { overflow-x: auto; }
+#kline-drawer-close { background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; width: 44px; height: 44px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+.kline-drawer-body { flex: 1; min-height: 0; }
+.kline-drawer-body #trade-chart { height: 100%; width: 100%; }
+.kline-entry:focus-visible, #kline-drawer-close:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 2px; }
+
+/* ============================================================
+   TRADE — compact desktop / tablet workspace (1025–1360px)
+   Keep orderbook and order entry side-by-side without squeezing the pair list.
+   ============================================================ */
+@media (min-width: 1025px) and (max-width: 1360px) {
+  .trade-top { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+  .pair-list-card { display: none; }
+  .chart-card { grid-column: 1 / -1; }
+  .ob-card { grid-column: 1; min-width: 0; }
+  .form-card { grid-column: 2; min-width: 0; }
+  .ob-panel { min-height: 200px; }
+}
+
+/* ============================================================
+   TRADE — mobile (≤768px)
+   Full-width order form followed by a full-width orderbook;
+   orders/positions tabs independent scroll | kline bottom drawer
+   ============================================================ */
+@media (max-width: 768px) {
+  .trade-page { padding-bottom: 48px; }
+  .pair-list-card, .chart-card { display: none !important; }
+
+  .mobile-pair-bar { display: flex !important; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px 12px; }
+  .mobile-pair-bar .mp-pair { font-weight: 700; font-size: 15px; }
+  .mobile-pair-bar .mp-price { font-size: 14px; }
+  .mobile-pair-bar .mp-spacer { flex: 1; }
+  #mobile-pair-select { background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; font-size: 13px; max-width: 130px; }
+
+  .trade-top { display: flex !important; flex-direction: column; gap: 10px; align-items: stretch; }
+  .form-card { flex: 0 0 auto; order: 1; width: 100%; padding: 14px; min-width: 0; }
+  .ob-card { flex: 0 0 auto; order: 2; width: 100%; min-width: 0; }
+
+  .form-card .auth-label { font-size: 11px; }
+  .form-card .auth-input { height: 46px; font-size: 16px; } /* 16px prevents iOS zoom */
+  .side-switch .btn { height: 48px; font-size: 14px; }
+  #ord-submit { height: 48px; font-size: 14px; padding: 0; }
+  .pct-btn { padding: 6px 0; font-size: 10px; }
+  .form-summary { font-size: 11px; margin-bottom: 8px; }
+  .otype-row { margin-bottom: 8px; }
+
+  .ob-panel { max-height: 520px; min-height: 0; flex: 1; }
+  .ob-head, .ob-row { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr); gap: 8px; }
+  .ob-head { padding: 6px 12px; font-size: 11px; }
+  .ob-head span:not(:first-child) { text-align: right; }
+  .ob-row { padding: 1px 12px; line-height: 26px; font-size: 11px; }
+  .ob-row > span { min-width: 0; }
+  .ob-mid { padding: 8px 12px; }
+  .ob-mid .mid-price { font-size: 16px; }
+  .ob-tabs .tab { font-size: 12px; padding: 10px 0; }
+
+  .orders-card { margin-top: 10px; }
+  .orders-tabs { height: 44px; overflow-x: auto; }
+  .orders-tabs .tab { padding: 0 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+  .orders-body { max-height: 220px; }
+  .pos-row { grid-template-columns: 1fr 1fr; padding: 8px 12px; font-size: 12px; }
+
+  /* kline entry bar — fixed above bottom nav */
+  .kline-entry { display: flex !important; position: fixed; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom)); height: 40px; align-items: center; justify-content: center; gap: 8px; background: var(--bg-card); border-top: 1px solid var(--border); color: var(--brand-bright); font-size: 13px; font-weight: 600; z-index: 80; cursor: pointer; border-left: none; border-right: none; border-bottom: none; }
+  .kline-entry .ke-caret { font-size: 16px; line-height: 1; }
+
+  /* kline bottom drawer — 85-92dvh */
+  .kline-drawer-mask { display: block !important; position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .28s ease; z-index: 94; }
+  .kline-drawer-mask.open { opacity: 1; pointer-events: auto; }
+  .kline-drawer { display: flex !important; position: fixed; left: 0; right: 0; bottom: 0; height: 88dvh; box-sizing: border-box; padding-bottom: env(safe-area-inset-bottom); background: var(--bg-card); transform: translateY(101%); transition: transform .3s cubic-bezier(.2,.8,.2,1); z-index: 95; border-radius: 14px 14px 0 0; flex-direction: column; box-shadow: 0 -8px 32px rgba(0,0,0,.5); }
+  .kline-drawer.open { transform: translateY(0); }
+  .kline-drawer-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .kline-drawer-head .kd-pair { font-weight: 700; font-size: 15px; }
+  .kline-drawer-head .kd-spacer { flex: 1; }
+  .kline-drawer-head .tf-switch { overflow-x: auto; }
+  #kline-drawer-close { width: 44px; height: 44px; font-size: 20px; }
+  .kline-drawer-body { flex: 1; min-height: 0; }
+  .kline-drawer-body #trade-chart { height: 100%; width: 100%; }
+}
+
+
+/* Narrow desktop/tablet content area: the fixed 224px sidebar and page gutters
+   leave too little room for a chart + two side panels below 1025px viewport width. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mobile-pair-bar { display: flex !important; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px 12px; }
+  .mobile-pair-bar .mp-spacer { flex: 1; }
+  .pair-list-card, .chart-card { display: none !important; }
+  .trade-top { display: grid !important; grid-template-columns: minmax(0,1fr); gap: 10px; align-items: stretch; }
+  .form-card, .ob-card { grid-column: 1; width: 100%; min-width: 0; }
+  .form-card { order: 1; padding: 14px; }
+  .ob-card { order: 2; }
+  .ob-panel { max-height: 520px; min-height: 200px; }
+  .kline-entry { margin: 10px 0 0 auto; min-height: 44px; }
+}
+
+/* very narrow screens (320px) — preserve full-width readability */
+@media (max-width: 340px) {
+  .form-card { padding: 12px; }
+  .ob-row { font-size: 10px; padding: 0 10px; line-height: 24px; }
+  .ob-head { font-size: 10px; padding: 4px 10px; }
+  .mobile-pair-bar { flex-wrap: wrap; }
+  .mobile-pair-bar .mp-spacer { display: none; }
+  #mobile-pair-select { margin-left: auto; }
+}
+
+/* ============================================================
+   KLINE fullscreen view
+   ============================================================ */
+.kline-full { position: fixed; inset: 0; background: var(--bg-page); z-index: 145; display: flex; flex-direction: column; }
+.kline-full .kline-head { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card); flex-wrap: wrap; }
+.kline-full .kline-back { min-width: 44px; min-height: 44px; padding: 6px 12px; font-size: 12px; flex-shrink: 0; }
+.kline-full .kline-title { font-weight: 700; font-size: 16px; white-space: nowrap; }
+.kline-full .kline-title .kline-sub { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+.kline-full #kline-tf { display: flex; gap: 2px; background: var(--bg-raised); padding: 3px; border-radius: 6px; overflow-x: auto; }
+.kline-full .ktf-btn { min-height: 40px; padding: 4px 10px; font-size: 12px; border-radius: 4px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; font-weight: 400; white-space: nowrap; }
+.kline-full .ktf-btn.active { background: var(--brand-bright); color: #0B0E11; font-weight: 600; }
+.kline-full .kline-spacer { flex: 1; }
+#kline-chart { height: calc(100vh - 52px); width: 100%; flex: 1; }
+@media (max-width: 768px) {
+  #kline-chart { height: calc(100dvh - 52px); }
+  .kline-full .kline-head { padding: 8px 10px; gap: 8px; padding-top: max(8px,env(safe-area-inset-top)); }
+  .kline-full .kline-title { font-size: 14px; }
+  .kline-full .ktf-btn { min-height: 44px; }
+  .kline-full #kline-tf { max-width: 100%; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+}
+
+/* ============================================================
+   SECONDS view
+   ============================================================ */
+.seconds-page { max-width: 1040px; margin: 0 auto; }
+.seconds-heading, .orders-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 16px; }
+.seconds-eyebrow, .orders-eyebrow { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; margin-bottom: 4px; }
+.seconds-page .page-title, .orders-page .page-title { font-size: 22px; line-height: 1.25; font-weight: 700; margin: 0; }
+.seconds-market-tag { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); background: var(--bg-card); font-size: 10px; font-weight: 600; letter-spacing: .06em; white-space: nowrap; }
+.sec-main-card { padding: 20px; margin-bottom: 16px; }
+.sec-coin-row { display: flex; gap: 8px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.sec-coin { min-height: 40px; padding: 8px 18px; border-radius: 7px; font-weight: 600; font-size: 13px; background: var(--bg-raised); color: var(--text-secondary); border: 1px solid var(--border); cursor: pointer; }
+.sec-coin.active { background: var(--brand-soft); color: var(--brand-bright); border-color: var(--brand); }
+.sec-price-bar { display: grid; grid-template-columns: minmax(170px,1fr) auto minmax(190px,.8fr); align-items: center; gap: 20px; margin-bottom: 18px; padding: 18px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 9px; }
+.sec-price-block .sec-price-label { font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
+#sec-price { font-size: clamp(25px,3vw,34px); line-height: 1.15; font-weight: 700; color: var(--text-primary); }
+.sec-dur-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.sec-dur { min-height: 40px; padding: 8px 13px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--bg-page); color: var(--text-secondary); border: 1px solid var(--border); cursor: pointer; }
+.sec-dur.active { background: var(--brand-soft); color: var(--brand-bright); border-color: var(--brand); }
+.sec-amount-block { min-width: 0; }
+.sec-amount-block .auth-input { height: 44px; font-size: 15px; }
+.sec-dir-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sec-dir-btn { padding: 18px; font-size: 15px; display: flex; flex-direction: row; gap: 10px; align-items: center; justify-content: center; min-height: 64px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; font-weight: 700; transition: filter .15s ease, transform .15s ease; }
+.sec-dir-btn .sec-dir-arrow { font-size: 17px; line-height: 1; }
+#sec-up { background: var(--brand-bright); color: #0B0E11; }
+#sec-down { background: var(--down); color: #fff; }
+.sec-dir-btn:hover { filter: brightness(1.06); }
+.sec-dir-btn:active { transform: scale(.99); }
+#sec-countdown { display: none; margin-top: 14px; text-align: center; padding: 14px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 8px; }
+#sec-countdown .cd-label { font-size: 11px; color: var(--text-muted); }
+#sec-cd-num { font-size: 34px; font-weight: 700; color: var(--warning); }
+.sec-rules { margin-top: 14px; padding: 12px 14px; background: var(--bg-raised); border-radius: 7px; font-size: 11px; color: var(--text-secondary); line-height: 1.65; }
+.sec-rules .rules-title { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 12px; }
+.sec-risk { margin-top: 9px; padding: 11px 14px; background: rgba(246,70,93,.07); border: 1px solid rgba(246,70,93,.24); border-radius: 7px; font-size: 11px; color: var(--down); line-height: 1.6; }
+.sec-risk .risk-title { font-weight: 700; margin-bottom: 3px; }
+.sec-list-card { padding: 0; }
+.sec-list-card .tab { flex: 1; text-align: center; }
+#sec-list { padding: 8px 0; overflow: auto; }
+#sec-list table { width: 100%; border-collapse: collapse; min-width: 560px; }
+
+/* ============================================================
+   ORDERS view
+   ============================================================ */
+.orders-page { max-width: 1180px; margin: 0 auto; }
+.orders-view-card { padding: 0; overflow: hidden; }
+.orders-page .orders-tabs { min-height: 48px; height: auto; padding: 0 8px; gap: 4px; }
+.orders-page .orders-tabs .tab { min-height: 48px; padding: 0 16px; white-space: nowrap; cursor: pointer; }
+.orders-page .orders-tabs .tab.active { color: var(--brand-bright); }
+.orders-page .orders-body { max-height: none; min-height: 240px; overflow: auto; }
+.orders-page .orders-body table { width: 100%; border-collapse: collapse; min-width: 760px; }
+.orders-page .orders-body th { position: sticky; top: 0; z-index: 1; background: var(--bg-card); }
+.orders-page .orders-body td, .orders-page .orders-body th { padding: 12px 14px; white-space: nowrap; }
+.orders-page .orders-body .trow { cursor: pointer; transition: background .12s ease; }
+.orders-page .orders-body .trow:hover { background: var(--bg-hover); }
+.oc-btn { min-height: 34px; padding: 5px 10px; color: var(--down); font-size: 12px; font-weight: 600; background: rgba(246,70,93,.08); border: 1px solid rgba(246,70,93,.2); border-radius: 5px; cursor: pointer; }
+.oc-btn:hover { background: rgba(246,70,93,.14); }
+.order-detail-row { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.order-detail-row .od-label { color: var(--text-secondary); }
+.order-detail-row .od-value { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.order-detail-row .od-value.num { font-family: var(--font-mono); }
+
+@media (max-width: 768px) {
+  .seconds-page, .orders-page { min-width: 0; }
+  .seconds-heading, .orders-heading { margin-bottom: 12px; }
+  .seconds-page .page-title, .orders-page .page-title { font-size: 20px; }
+  .sec-main-card { padding: 14px; }
+  .sec-price-bar { grid-template-columns: minmax(0,1fr) auto; gap: 12px; padding: 14px; }
+  .sec-price-block { grid-column: 1 / -1; }
+  .sec-dur-row { justify-content: flex-start; }
+  .sec-amount-block { grid-column: 1 / -1; }
+  .sec-amount-block .auth-input { height: 46px; font-size: 16px; }
+  .sec-dir-grid { gap: 8px; }
+  .sec-dir-btn { min-height: 62px; padding: 12px 8px; gap: 7px; font-size: 13px; }
+  #sec-price { font-size: 27px; }
+  .sec-coin { min-height: 44px; padding: 7px 12px; font-size: 13px; }
+  .sec-dur { min-height: 44px; }
+  .orders-page .orders-tabs { overflow-x: auto; padding: 0 4px; overscroll-behavior-x: contain; }
+  .orders-page .orders-tabs .tab { min-height: 48px; padding: 0 12px; flex: 0 0 auto; font-size: 12px; }
+  .orders-page .orders-body { min-height: 200px; }
+  .orders-page .orders-body td, .orders-page .orders-body th { padding: 10px 12px; }
+}
+@media (max-width: 360px) {
+  .seconds-market-tag { font-size: 9px; padding: 6px 7px; }
+  .sec-dir-btn { flex-direction: column; gap: 4px; min-height: 70px; }
+  .sec-dir-btn .sec-dir-arrow { font-size: 15px; }
+  .sec-dur-row { gap: 4px; }
+  .sec-dur { padding: 7px 9px; }
+}
+
+
+/* ============================================================
+   BTCBOX Mobile Pro Trading — specification 9.4
+   Native two-column trading workspace; orderbook LEFT, order form RIGHT.
+   ============================================================ */
+@media (max-width: 768px) {
+  .trade-page {
+    padding: 8px 8px calc(76px + env(safe-area-inset-bottom));
+    overflow-x: clip;
+    min-width: 0;
+  }
+  .trade-page > *, .trade-top > * { min-width: 0; }
+  .mobile-module-nav {
+    display: flex; align-items: center; gap: 4px; overflow-x: auto;
+    white-space: nowrap; margin: 0 0 8px; padding: 3px;
+    border: 1px solid var(--border); border-radius: 9px;
+    background: var(--bg-card); scrollbar-width: none;
+  }
+  .mobile-module-nav::-webkit-scrollbar { display: none; }
+  .mobile-module-nav a, .mobile-module-nav button {
+    flex: 1 0 auto; min-height: 38px; padding: 0 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 7px; background: transparent;
+    color: var(--text-secondary); font: inherit; font-size: 12px;
+    text-decoration: none;
+  }
+  .mobile-module-nav .active {
+    background: var(--brand-soft); color: var(--brand-bright); font-weight: 700;
+  }
+  .mobile-module-nav .is-disabled { opacity: .42; pointer-events: none; }
+  .mobile-pair-bar {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) auto;
+    grid-template-areas: "pair selector" "price selector" "change selector";
+    gap: 3px 8px; align-items: center; margin-bottom: 8px;
+    padding: 10px 12px; border-radius: 10px;
+  }
+  .mobile-pair-bar .mp-pair { grid-area: pair; font-size: 16px; font-weight: 750; }
+  .mobile-pair-bar .mp-price { grid-area: price; font-size: 21px; line-height: 1.2; font-weight: 750; }
+  .mobile-pair-bar .mp-change { grid-area: change; font-size: 11px; font-weight: 600; }
+  .mobile-pair-bar .mp-spacer { display: none; }
+  #mobile-pair-select { grid-area: selector; min-width: 100px; min-height: 42px; padding: 0 8px; font-size: 12px; }
+  .trade-top {
+    display: grid !important;
+    grid-template-columns: minmax(0,38fr) minmax(0,62fr);
+    grid-template-rows: auto;
+    grid-template-areas: "book form";
+    gap: 7px;
+    align-items: start;
+  }
+  .trade-top > .chart-card, .trade-top > .pair-list-card { display: none !important; }
+  .trade-top > .ob-card {
+    grid-area: book; display: flex; flex-direction: column;
+    width: auto; min-width: 0; max-width: 100%; order: 0;
+    overflow: hidden; align-self: stretch;
+  }
+  .trade-top > .form-card {
+    grid-area: form; width: auto; min-width: 0; max-width: 100%;
+    padding: 9px 8px; order: 0; overflow: hidden;
+  }
+  .ob-tabs { min-width: 0; }
+  .ob-tabs .tab { min-width: 0; padding: 8px 2px; font-size: 10px; white-space: nowrap; }
+  .ob-panel { min-height: 0; max-height: none; overflow: hidden; }
+  .ob-head, .ob-row {
+    display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr) minmax(0,.75fr);
+    gap: 3px; padding-left: 6px; padding-right: 6px;
+  }
+  .ob-head { font-size: 9px; padding-top: 6px; padding-bottom: 5px; }
+  .ob-row { line-height: 23px; font-size: 9px; padding-top: 0; padding-bottom: 0; }
+  .ob-row .ob-price, .ob-row .ob-amt, .ob-row .ob-total { min-width: 0; }
+  .ob-mid { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 7px 6px; }
+  .ob-mid .mid-price { font-size: clamp(11px, 3.2vw, 15px); line-height: 1.2; }
+  .ob-mid .mid-chg { font-size: 9px; }
+  .form-card .side-switch { margin-bottom: 8px; padding: 2px; }
+  .side-switch .btn { min-width: 0; min-height: 42px; height: 42px; padding: 4px 2px; font-size: 12px; }
+  .otype-row { margin: 0 0 8px; }
+  .otype { width: 100%; min-height: 38px; padding: 5px 4px; border: 1px solid var(--border); font-size: 11px; text-align: left; }
+  .form-field { margin-bottom: 8px; }
+  .form-field .auth-label { display: block; margin-bottom: 4px; font-size: 10px; }
+  .form-card .auth-input { box-sizing: border-box; width: 100%; min-width: 0; height: 43px; padding: 0 7px; font-size: 16px; }
+  .pct-row { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; margin-bottom: 8px; }
+  .pct-btn { min-width: 0; min-height: 34px; padding: 4px 0; font-size: 10px; }
+  .form-summary { display: flex; gap: 4px; justify-content: space-between; font-size: 10px; margin-bottom: 7px; }
+  .form-summary > * { min-width: 0; overflow-wrap: anywhere; }
+  #ord-submit { width: 100%; min-height: 46px; height: auto; padding: 6px 3px; font-size: 12px; white-space: normal; }
+  .orders-card { margin-top: 10px; min-width: 0; overflow: hidden; }
+  .orders-tabs { display: flex; width: 100%; height: 44px; overflow-x: auto; overscroll-behavior-x: contain; }
+  .orders-tabs .tab { flex: 0 0 auto; min-height: 44px; padding: 0 11px; font-size: 11px; white-space: nowrap; }
+  .orders-body { width: 100%; max-width: 100%; max-height: 340px; min-width: 0; overflow-x: auto; overflow-y: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+  .orders-body table { width: max-content; min-width: 700px; }
+  .pos-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .kline-entry {
+    display: inline-flex !important; position: static !important;
+    width: auto; min-height: 38px; height: 38px; margin: 0;
+    padding: 0 12px; border: 1px solid var(--border) !important;
+    border-radius: 8px; background: var(--bg-card);
+    font-size: 11px; z-index: auto;
+  }
+  .kline-drawer {
+    bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+    height: min(62dvh, calc(100dvh - 110px - env(safe-area-inset-bottom))) !important;
+    max-height: calc(100dvh - 110px - env(safe-area-inset-bottom));
+    padding-bottom: 0 !important; border-radius: 14px 14px 0 0;
+  }
+  .kline-drawer-head { flex-wrap: nowrap; gap: 6px; padding: 7px 10px; }
+  .kline-drawer-head .kd-pair { font-size: 12px; }
+  .kline-drawer-head .tf-switch { min-width: 0; flex: 1; }
+  .kline-drawer-head .tf-btn { padding: 6px 7px; font-size: 10px; }
+  .kline-drawer-body { min-height: 0; overflow: hidden; }
+  body.kline-drawer-open #mobile-nav { display: flex !important; z-index: 100 !important; }
+  .kline-drawer-mask { z-index: 94; }
+  .kline-drawer { z-index: 95; }
+}
+@media (max-width: 389px) {
+  .trade-top { grid-template-columns: minmax(0,38fr) minmax(0,62fr); gap: 5px; }
+  .form-card { padding: 8px 6px !important; }
+  .ob-row { font-size: 8.5px; }
+  .ob-head { font-size: 8px; }
+  .ob-head, .ob-row { gap: 2px; padding-left: 5px; padding-right: 5px; }
+  .ob-mid { padding-left: 5px; padding-right: 5px; }
+}
+@media (max-width: 340px) {
+  .mobile-pair-bar { padding: 8px; }
+  .mobile-pair-bar .mp-price { font-size: 18px; }
+  #mobile-pair-select { min-width: 88px; max-width: 100px; }
+  .form-card .auth-input { padding-left: 5px; padding-right: 5px; }
+  .side-switch .btn { font-size: 11px; }
+}
+@media (min-width: 430px) and (max-width: 768px) {
+  .trade-top { gap: 9px; }
+  .form-card { padding: 12px !important; }
+  .ob-row { font-size: 10px; line-height: 25px; }
+}
+
+/* Mobile header composition and order type selector sheet */
+@media (max-width: 768px) {
+  .mobile-pair-bar {
+    grid-template-areas: "pair selector" "price selector" "change chart";
+  }
+  .mobile-pair-bar #mobile-pair-select { grid-area: selector; align-self: center; }
+  .mobile-pair-bar .pair-chart-entry {
+    grid-area: chart; justify-self: end; align-self: center;
+    min-height: 34px; height: 34px; padding: 0 9px;
+    font-size: 10px; white-space: nowrap;
+  }
+  .ob-head, .ob-row { grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); }
+  .ob-head span:nth-child(3), .ob-row .ob-total { display: none !important; }
+  .otype-row { display: block; }
+  .otype-row #otype-open {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; min-height: 38px; padding: 0 9px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg-raised); color: var(--text-primary);
+  }
+  .otype-mask {
+    position: fixed; inset: 0; z-index: 109;
+    background: rgba(0,0,0,.52); opacity: 0; pointer-events: none;
+    transition: opacity .22s ease;
+  }
+  .otype-mask.open { opacity: 1; pointer-events: auto; }
+  .otype-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 110;
+    padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0; box-shadow: 0 -12px 40px rgba(0,0,0,.4);
+    transform: translateY(105%); transition: transform .24s ease;
+    pointer-events: none;
+  }
+  .otype-sheet.open { transform: translateY(0); pointer-events: auto; }
+  .otype-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 48px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+  .otype-sheet-head strong { font-size: 15px; }
+  #otype-close { width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary); font-size: 25px; }
+  .otype-option {
+    width: 100%; min-height: 66px; padding: 10px 4px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    text-align: left; border: 0; border-bottom: 1px solid var(--border);
+    background: transparent; color: var(--text-primary);
+  }
+  .otype-option strong { display: block; font-size: 14px; }
+  .otype-option small { display: block; margin-top: 4px; color: var(--text-muted); font-size: 11px; }
+  .otype-option.active .otype-check { color: var(--brand-bright); font-size: 18px; font-weight: 800; }
+}
+@media (max-width: 389px) {
+  .ob-row:nth-child(n+8):nth-child(-n+11),
+  .ob-row:nth-child(n+18) { display: none; }
+}
+@media (min-width: 390px) and (max-width: 768px) {
+  .ob-row:nth-child(n+9):nth-child(-n+11),
+  .ob-row:nth-child(n+20) { display: none; }
+}
+
+@media (max-width: 768px) {
+  .otype-note { padding: 12px 2px 6px; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+  .kline-drawer.expanded {
+    height: calc(100dvh - 64px - env(safe-area-inset-bottom)) !important;
+    max-height: calc(100dvh - 64px - env(safe-area-inset-bottom));
+  }
+  #kline-drawer-expand {
+    width: 38px; height: 38px; flex: 0 0 38px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg-raised); color: var(--text-primary); font-size: 19px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kline-drawer-handle {
+    display: flex; align-items: center; justify-content: center;
+    height: 18px; flex: 0 0 18px; cursor: grab; touch-action: pan-y;
+  }
+  .kline-drawer-handle span {
+    display: block; width: 36px; height: 4px;
+    border-radius: 999px; background: var(--border-strong);
+  }
+}
+
+@media (max-width: 768px) {
+  .otype-sheet-handle {
+    height: 18px; display: flex; align-items: center; justify-content: center;
+    cursor: grab; touch-action: pan-y;
+  }
+  .otype-sheet-handle span {
+    display: block; width: 36px; height: 4px;
+    border-radius: 999px; background: var(--border-strong);
+  }
+}
+
+.orders-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  min-height: 0; padding: 0 12px; color: var(--text-muted); font-size: 11px;
+}
+.orders-actions:has(#cancel-all-orders) { min-height: 38px; border-bottom: 1px solid var(--border); }
+#cancel-all-orders {
+  min-height: 30px; padding: 4px 10px; border: 1px solid var(--down);
+  border-radius: 6px; background: transparent; color: var(--down);
+  font: inherit; font-weight: 650; cursor: pointer;
+}
+@media (max-width: 768px) {
+  .orders-actions { padding: 0 9px; font-size: 10px; }
+  .orders-actions:has(#cancel-all-orders) { min-height: 36px; }
+  #cancel-all-orders { min-height: 30px; font-size: 10px; }
+}
+
+/* ============================================================
+   Responsive sizing & layout polish — additive, no structure change
+   ============================================================ */
+/* Module nav (Spot / Futures / Seconds / Earn): uniform spacing fixes "SecondsEarn" join */
+.mobile-module-nav{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;margin-bottom:10px}
+.mobile-module-nav a,.mobile-module-nav button{font-size:14px;font-weight:600;padding:6px 2px;color:var(--text-secondary,#848E9C);background:none;border:none;cursor:pointer}
+.mobile-module-nav a.active{color:var(--brand-bright,#0ECB81);border-bottom:2px solid var(--brand-bright,#0ECB81)}
+.mobile-module-nav .is-disabled{color:var(--text-muted,#828C9B);cursor:not-allowed}
+
+/* Mobile pair bar: 24h stats in compact horizontal row instead of stacked */
+@media (max-width:768px){
+  .mobile-pair-bar{flex-wrap:wrap;gap:6px 12px;padding:12px 14px;align-items:center}
+  .mp-stats{display:flex;flex-wrap:wrap;gap:4px 14px;width:100%;order:6;font-size:11px;color:var(--text-secondary,#848E9C);margin-top:2px}
+  .mp-stats>div{display:inline-flex;gap:6px;align-items:baseline;white-space:nowrap}
+  .mp-stats>div span{color:var(--text-muted,#828C9B)}
+  .mp-stats b{font-size:12px;font-weight:600;color:var(--text-primary,#EAECEF)}
+  .mp-pair{font-size:16px;font-weight:700}
+  .mp-price{font-size:15px;font-weight:700}
+  .mp-change{font-size:12px;font-weight:600}
+  #mobile-pair-select{max-width:120px;font-size:12px;padding:5px 8px}
+  /* force order form + orderbook to stack full-width on mobile */
+  .trade-top{display:flex!important;flex-direction:column!important;gap:10px}
+  .trade-top .form-card,.trade-top .ob-card{width:100%!important;grid-column:auto!important;min-width:0}
+  .trade-top .form-card{order:1}
+  .trade-top .ob-card{order:2}
+  /* extra bottom clearance for kline-entry bar + mobile nav */
+  .trade-page{padding-bottom:72px}
+  .seconds-page{padding-bottom:32px}
+  .orders-page{padding-bottom:24px}
+}
+@media (max-width:389px){
+  .mp-stats>div:nth-child(n+2){display:none} /* keep only 24h Change on very narrow screens */
+  .side-switch .btn{height:44px;font-size:13px}
+  #ord-submit{height:46px;font-size:13px}
+  .pct-btn{padding:5px 0;font-size:10px}
+}
+
+/* K-line bottom drawer: fully hide when closed (eliminates header peek) */
+.kline-drawer:not(.open){transform:translateY(105%)!important;visibility:hidden;opacity:0;pointer-events:none;transition:transform .3s var(--ease,ease),visibility 0s .3s,opacity .2s .15s}
+.kline-drawer.open{visibility:visible;opacity:1;pointer-events:auto;transition:transform .3s var(--ease,ease),visibility 0s,opacity .2s}
+.kline-drawer-mask:not(.open){opacity:0;pointer-events:none}
+
+/* Desktop workstation: taller chart + deeper orderbook on wide screens */
+@media (min-width:1200px){
+  #trade-chart{height:500px}
+  .ob-panel{max-height:500px}
+}
+@media (min-width:1500px){
+  #trade-chart{height:560px}
+  .ob-panel{max-height:560px}
+}
+
+/* Seconds page: UP/DOWN buttons uniform, risk warning not clipped */
+.seconds-page .sec-up,.seconds-page .sec-down,.seconds-page [class*="up-btn"],.seconds-page [class*="down-btn"]{min-height:54px;font-weight:700}
+
+/* Seconds risk warning: ensure it clears the fixed bottom nav on mobile */
+@media (max-width:768px){
+  .sec-risk{margin-bottom:32px!important}
+  .seconds-page .card{padding-bottom:14px}
+}
+
+/* ============================================================
+   Mobile Pro Trading Terminal (9.4) — dual-column workspace
+   Left: orderbook 38% | Right: order entry 62% (320-430px)
+   Overrides stacked mobile layout; additive, no JS/structure change.
+   ============================================================ */
+@media (max-width: 768px) {
+  .trade-page{padding-bottom:calc(112px + env(safe-area-inset-bottom)) !important}
+
+  /* top pair bar: compact, no duplicate price (price lives in orderbook mid) */
+  .mobile-pair-bar{gap:6px 10px;padding:10px 12px;align-items:center}
+  .mobile-pair-bar .mp-pair{font-size:15px;font-weight:700}
+  .mobile-pair-bar .mp-price{font-size:14px;font-weight:700}
+  .mobile-pair-bar .mp-change{font-size:11px;font-weight:600}
+  #mobile-pair-select{max-width:110px;font-size:11px;padding:4px 8px}
+  .mp-stats{display:none !important} /* 24h stats moved to detail; keep top clean */
+
+  /* CORE: dual-column 38/62 — orderbook LEFT, order entry RIGHT */
+  .trade-top{
+    display:grid !important;
+    grid-template-columns:38% 62% !important;
+    gap:8px !important;
+    align-items:start !important;
+    flex-direction:row !important;
+  }
+  .trade-top .ob-card{
+    grid-column:1 !important; grid-row:1 !important;
+    width:100% !important; min-width:0 !important; order:0 !important;
+    padding:0 !important; overflow:hidden; border-radius:10px;
+  }
+  .trade-top .form-card{
+    grid-column:2 !important; grid-row:1 !important;
+    width:100% !important; min-width:0 !important; order:0 !important;
+    padding:10px !important; border-radius:10px;
+  }
+
+  /* compact orderbook: asks(top,red) / mid-price / bids(bottom,green), 2 cols */
+  .ob-panel{max-height:none !important;min-height:0 !important;overflow:visible !important;padding:0}
+  .ob-head{display:none !important}
+  .ob-row{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:2px !important;
+    padding:0 6px !important;
+    line-height:19px !important;
+    font-size:10px !important;
+    position:relative !important;
+    cursor:pointer;
+  }
+  .ob-row .ob-total{display:none !important}
+  .ob-row .ob-price{
+    text-align:right !important; font-size:10px !important; font-weight:600;
+    font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+    position:relative; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .ob-row .ob-amt{
+    text-align:right !important; font-size:10px !important; color:var(--text-secondary);
+    font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+    position:relative; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .ob-depth{opacity:.10 !important}
+  .ob-mid{
+    padding:5px 6px !important; gap:4px !important;
+    display:flex !important; justify-content:space-between !important; align-items:center !important;
+    background:var(--bg-raised); border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  }
+  .ob-mid .mid-price{font-size:13px !important;font-weight:700;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  .ob-mid .mid-chg{font-size:10px !important;font-weight:600}
+
+  /* compact order entry form */
+  .side-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+  .side-switch .btn{height:38px !important;font-size:13px !important;padding:0 !important;border-radius:8px}
+  .otype-row{margin-bottom:8px !important}
+  .otype{font-size:12px !important;padding:5px 10px !important;border-radius:6px;background:var(--bg-raised);border:1px solid var(--border);color:var(--text-primary);cursor:pointer}
+  .form-field{margin-bottom:7px !important}
+  .form-card .auth-label{font-size:10px !important;margin-bottom:3px !important;color:var(--text-muted)}
+  .form-card .auth-input{height:38px !important;font-size:14px !important;padding:6px 10px !important;border-radius:8px}
+  .pct-row{display:flex;gap:4px !important;margin-bottom:8px !important}
+  .pct-btn{flex:1;padding:4px 0 !important;font-size:10px !important;border-radius:6px;background:var(--bg-raised);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer}
+  .pct-btn:active{background:var(--brand-soft);color:var(--brand-bright);border-color:var(--brand)}
+  .form-summary{display:flex;justify-content:space-between;align-items:center;font-size:11px !important;margin-bottom:4px !important;color:var(--text-secondary)}
+  .form-summary .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)}
+  #ord-submit{height:44px !important;font-size:13px !important;font-weight:700;margin-top:6px !important;border-radius:8px;width:100%}
+
+  /* orders/history area: full width below dual-column, independent horizontal scroll */
+  .orders-card{grid-column:1 / -1 !important;margin-top:10px !important;border-radius:10px}
+  .orders-tabs{height:40px !important}
+  .orders-tabs .tab{font-size:12px !important;padding:0 14px !important}
+  .orders-body{max-height:240px !important;overflow:auto !important;-webkit-overflow-scrolling:touch}
+  .orders-body table{min-width:640px !important;width:100% !important}
+  .orders-body td,.orders-body th{padding:8px 10px !important;font-size:11px !important;white-space:nowrap !important}
+
+  /* K-line entry: fixed bar above bottom nav, clear but compact */
+  .kline-entry{
+    bottom:calc(64px + env(safe-area-inset-bottom)) !important;
+    height:38px !important;font-size:12px !important;font-weight:600;
+    background:var(--bg-card);border-top:1px solid var(--border);color:var(--brand-bright);
+    z-index:80;cursor:pointer;display:flex !important;align-items:center;justify-content:center;gap:6px;
+  }
+  .kline-entry .ke-caret{font-size:14px}
+}
+
+/* 320px: tightest — reduce orderbook row height, form more compact */
+@media (max-width:359px){
+  .trade-top{grid-template-columns:36% 64% !important;gap:6px !important}
+  .ob-row{font-size:9px !important;line-height:17px !important;padding:0 4px !important}
+  .ob-mid .mid-price{font-size:12px !important}
+  .form-card{padding:8px !important}
+  .form-card .auth-input{height:36px !important;font-size:13px !important}
+  .side-switch .btn{height:36px !important;font-size:12px !important}
+  #ord-submit{height:42px !important;font-size:12px !important}
+  .pct-btn{font-size:9px !important;padding:3px 0 !important}
+}
+
+/* 390-430px: main acceptance — comfortable density */
+@media (min-width:389px) and (max-width:430px){
+  .trade-top{grid-template-columns:39% 61% !important;gap:9px !important}
+  .ob-row{font-size:10.5px !important;line-height:20px !important;padding:0 7px !important}
+  .form-card{padding:11px !important}
+}
+
+/* ≥430px tablet: slightly wider orderbook, more padding */
+@media (min-width:431px) and (max-width:768px){
+  .trade-top{grid-template-columns:40% 60% !important;gap:10px !important}
+  .ob-row{font-size:11px !important;line-height:22px !important;padding:0 8px !important}
+  .form-card{padding:12px !important}
+}
+
+/* 320px polish: prevent Available/Total text wrap */
+@media (max-width:359px){
+  .form-summary{font-size:10px !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
+  .form-summary .num{font-size:10px !important}
+  .orders-tabs .tab{padding:0 10px !important;font-size:11px !important}
+}
+
+/* K-line drawer: bottom edge must align with top of fixed bottom nav (never cover 5-tab nav) */
+.kline-drawer{bottom:calc(64px + env(safe-area-inset-bottom))!important;height:min(520px,68vh)!important}
+.kline-drawer-mask{bottom:calc(64px + env(safe-area-inset-bottom))!important}
+@media (max-width:768px){
+  .kline-drawer{height:min(calc(100dvh - 64px - env(safe-area-inset-bottom) - 12px), 520px)!important}
+}

@@ -1,0 +1,28 @@
+/* BTCBOX layouts.css — extracted from index.html, behavior unchanged */
+/* desktop sidebar hidden on mobile; bottom nav shown */
+#main-wrap{margin-left:224px}
+body.hide-nav #main-wrap{margin-left:0}
+html,body{overflow-x:hidden;max-width:100%}
+/* Keep the route display reset from erasing the desktop layout. */
+.sidebar-desk{display:flex;flex-direction:column}
+.topbar-desk{display:flex}
+@media (max-width:768px){
+  .sidebar-desk{display:none}
+  .topbar-desk{display:none}
+  body .mobile-nav{display:flex}
+  body.hide-nav .mobile-nav{display:none!important}
+  #main-wrap{margin-left:0}
+  #app{display:block}
+  #main-content{padding:12px;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  body.hide-nav #main-content{padding-bottom:12px}
+}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(64px + env(safe-area-inset-bottom));background:var(--bg-card);border-top:1px solid var(--border);z-index:90;padding-bottom:env(safe-area-inset-bottom)}
+.mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--text-secondary);cursor:pointer}
+.mob-tab.active{color:var(--brand-bright)}
+
+@media (max-width:768px){
+  input,select,textarea{font-size:16px !important}
+  #toast-root{left:12px;right:12px;max-width:none;top:calc(12px + env(safe-area-inset-top))}
+  .btn{min-height:44px}
+  .mob-tab{min-height:44px}
+}
