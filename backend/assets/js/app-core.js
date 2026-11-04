@@ -5,7 +5,7 @@
    apiAdapter — maps every data call to the original backend
    path under /api (46 contract endpoints + 5 extra admin).
    LIVE adapter: every method calls the real backend at API_BASE
-   (https://btcboxcdt.vercel.app/api) via unified apiFetch() with
+   (/api) via same-origin unified apiFetch() with
    credentials:'include'. Admin endpoints use HTTP Basic Auth.
    401 or {ok:false,need_login:true} clears the session and redirects
    to #/login. Market/kline/depth are real (Coinbase/Bybit) — never synthesized.
@@ -34,7 +34,7 @@ const fmtPrice = (n,base)=>{ const d = (base==='BTC'||base==='ETH')?2:4; return 
 const pct = n=> (n>=0?'+':'')+fmt(n,2)+'%';
 const uid = ()=> 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g,()=>((Math.random()*16)|0).toString(16)); // 32 hex chars — satisfies 16-80/100 idempotency-key length
 /* API base — production backend. For local dev change to http://localhost:8080/api */
-const API_BASE = 'https://btcboxcdt.vercel.app/api';
+const API_BASE = '/api';
 
 /* ---------- market data (filled by polling /api/market; never synthesized locally) ---------- */
 const PAIRS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','LINKUSDT','DOTUSDT','TRXUSDT','MATICUSDT','LTCUSDT','BCHUSDT','NEARUSDT','UNIUSDT','ATOMUSDT','ETCUSDT'];
