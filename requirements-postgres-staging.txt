@@ -1,2 +1,0 @@
-# Install only in the isolated staging/CI runner that executes the PostgreSQL drill.
-psycopg[binary]>=3.2,<4
