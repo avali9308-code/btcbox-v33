@@ -12,6 +12,7 @@ const audit = read('supabase/sql/0021_admin_audit_log_append_only_v1.sql');
 const manualDeposit = read('supabase/sql/0007_financial_admin_manual_deposit_v1.sql');
 const api = read('api-core.js');
 const runner = read('scripts/run_migrations.sh');
+const aggregateRunner = read('supabase-migration-runner.sql');
 
 test('0021 extends the canonical audit table created by 0002 instead of defining a parallel shape', () => {
   assert.match(base, /CREATE TABLE IF NOT EXISTS public\.financial_audit_log/i);
@@ -58,4 +59,11 @@ test('numbered runner keeps 0021 in the ordered chain after the canonical 0002 t
   assert.match(runner, /\[0-9\]\[0-9\]\[0-9\]\[0-9\]_\*\.sql/);
   assert.ok(base.indexOf('CREATE TABLE IF NOT EXISTS public.financial_audit_log') >= 0);
   assert.ok(audit.indexOf('canonical 0002 schema') >= 0);
+});
+
+
+test('stale aggregate SQL runner is explicitly deprecated and must not be executed', () => {
+  assert.match(aggregateRunner, /DEPRECATED — DO NOT EXECUTE THIS AGGREGATE FILE/i);
+  assert.match(aggregateRunner, /must NEVER\\s+be pointed at production/i);
+  assert.doesNotMatch(aggregateRunner.slice(0, 1600), /傻瓜操作步骤|点击.*Run/i);
 });
