@@ -170,6 +170,6 @@ test('withdrawal view shows binding/24h/manual-review rule hint; deposit warns s
   assert.ok(s.includes('提币地址需先绑定并通过审核'), 'withdrawal binding rule hint missing');
   assert.ok(s.includes('新绑定地址 24 小时后可提币'), 'withdrawal 24h rule hint missing');
   assert.ok(s.includes('首次提币及大额提币需人工审核'), 'withdrawal manual-review rule hint missing');
-  assert.ok(s.includes('充值地址由系统实时生成'), 'deposit system-generated address hint missing');
-  assert.ok(s.includes('请勿充值其他币种'), 'deposit wrong-coin warning missing');
+  assert.ok(s.includes('充值地址由后台配置'), 'admin-configured deposit address hint missing');
+  assert.ok(s.includes('请勿向错误地址或网络转账'), 'deposit wrong-address/network warning missing');
 });
