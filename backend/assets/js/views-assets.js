@@ -282,6 +282,7 @@ VIEWS.withdraw = function(){
             '<div><label class="auth-label">Network</label><select id="wd-network" class="auth-input" style="appearance:none"></select></div>'+
           '</div>'+
           '<div class="va-field"><label class="auth-label">Withdrawal Address</label><input id="wd-addr" class="auth-input num" placeholder="Paste destination address" required></div>'+
+          '<div class="va-info" style="margin-top:-8px;margin-bottom:14px">提币地址需先绑定并通过审核；新绑定地址 24 小时后可提币。首次提币及大额提币需人工审核。</div>'+
           '<div class="va-field"><label class="auth-label">Amount</label>'+
             '<div class="va-amt-row"><input id="wd-amount" class="auth-input num" type="number" step="any" placeholder="0.00" required><button type="button" id="wd-max" class="btn btn-ghost">MAX</button></div>'+
             '<div class="va-amt-meta"><span>Available: <span id="wd-avail" class="num">—</span> <span id="wd-coin2">USDT</span></span><span>Fee: <span id="wd-fee" class="num">—</span> <span id="wd-coin3">USDT</span></span></div>'+
