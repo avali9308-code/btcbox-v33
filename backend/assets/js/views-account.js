@@ -580,53 +580,56 @@ VIEWS.admin.afterRender = function(){
     }
     if(tab==='users'){
       if(!state.admin.users||!state.admin.users.length){$('#admin-body').innerHTML=emptyState('暂无用户数据','用户列表为空。');return;}
-      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">UID</th><th class="th">邮箱</th><th class="th">KYC</th><th class="th">状态</th><th class="th" style="text-align:right">余额 (USDT)</th><th class="th">操作</th></tr></thead><tbody>'+
+      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th class="th">UID</th><th class="th">邮箱</th><th class="th">KYC</th><th class="th">状态</th><th class="th" style="text-align:right">余额 (USDT)</th><th class="th">操作</th></tr></thead><tbody>'+
         state.admin.users.map(function(u){
           var kyc=String(u.kyc_status||'unverified');
-          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(u.uid)+'</td><td class="td">'+escapeHtml(u.email)+'</td><td class="td" style="text-transform:capitalize;color:'+(kyc==='verified'?'var(--up)':kyc==='pending'?'var(--warning)':'var(--text-muted)')+'">'+escapeHtml(kyc)+'</td><td class="td">'+(u.frozen?'<span style="color:var(--down);font-weight:600">已冻结</span>':'<span style="color:var(--up)">正常</span>')+'</td><td class="td num" style="text-align:right">'+fmt(u.total_usdt,2)+'</td><td class="td"><button class="au-freeze" data-uid="'+escapeHtml(u.uid)+'" data-f="'+(u.frozen?0:1)+'" style="color:'+(u.frozen?'var(--up)':'var(--down)')+';font-size:12px;font-weight:600;margin-right:10px;background:none;border:none;cursor:pointer">'+(u.frozen?'解冻':'冻结')+'</button></td></tr>';
-        }).join('')+'</tbody></table>';
+          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(u.uid)+'</td><td class="td">'+escapeHtml(u.email)+'</td><td class="td" style="text-transform:capitalize;color:'+(kyc==='verified'?'var(--up)':kyc==='pending'?'var(--warning)':'var(--text-muted)')+'">'+escapeHtml(kyc)+'</td><td class="td">'+(u.frozen?'<span style="color:var(--down);font-weight:600">已冻结</span>':'<span style="color:var(--up)">正常</span>')+'</td><td class="td num" style="text-align:right">'+fmt(u.total_usdt,2)+'</td><td class="td"><button class="au-account" data-uid="'+escapeHtml(u.uid)+'" style="color:var(--brand-bright);font-size:12px;font-weight:600;margin-right:10px;background:none;border:none;cursor:pointer">账户资产</button><button class="au-freeze" data-uid="'+escapeHtml(u.uid)+'" data-f="'+(u.frozen?0:1)+'" style="color:'+(u.frozen?'var(--up)':'var(--down)')+';font-size:12px;font-weight:600;background:none;border:none;cursor:pointer">'+(u.frozen?'解冻':'冻结')+'</button></td></tr>';
+        }).join('')+'</tbody></table><div id="admin-user-account-panel" style="margin:16px"></div>';
       $$('.au-freeze').forEach(function(b){b.onclick=async function(){
         var freeze=b.dataset.f==='1';
         var ok=await confirmAdminAction(freeze?'确认冻结用户':'确认解冻用户','<b>用户 UID：</b>'+escapeHtml(b.dataset.uid)+'<br><b>操作：</b>'+(freeze?'冻结账户（禁止登录与交易）':'解冻账户（恢复正常）'));
         if(!ok)return;
         await runAdminAction(b,()=>apiAdapter.adminFreeze({uid:b.dataset.uid,frozen:freeze,reason:'Admin action'}),'状态已更新');
       };});
-    } else if(tab==='deposits'){
-      $('#admin-body').innerHTML='<div class="va-card" style="margin:16px"><div class="va-card-head"><div class="va-card-title">人工充值上分</div></div><div class="va-card-body">'+
-        '<div class="va-info" style="margin-bottom:16px">用户转账后，工作人员先核对实际到账，再填写用户 UID、币种和到账金额。系统会通过财务账本入账并记录管理员审计；这里不依赖用户提交充值申请。</div>'+
-        '<form id="admin-deposit-form" autocomplete="off">'+
-          '<div class="va-form-grid">'+
-            '<div class="va-field"><label class="auth-label" for="admin-deposit-uid">用户 UID</label><input id="admin-deposit-uid" class="auth-input num" required maxlength="100" placeholder="从用户管理复制 UID"></div>'+
-            '<div class="va-field"><label class="auth-label" for="admin-deposit-coin">币种</label><select id="admin-deposit-coin" class="auth-input"><option>USDT</option><option>BTC</option><option>ETH</option><option>SOL</option></select></div>'+
-          '</div>'+
-          '<div class="va-field"><label class="auth-label" for="admin-deposit-amount">实际到账金额</label><input id="admin-deposit-amount" class="auth-input num" type="number" min="0" step="any" required placeholder="0.00"></div>'+
-          '<div class="va-field"><label class="auth-label" for="admin-deposit-reference">交易哈希 / 参考号（可选）</label><input id="admin-deposit-reference" class="auth-input num" maxlength="120" placeholder="TxID / transfer reference"></div>'+
-          '<div class="va-field"><label class="auth-label" for="admin-deposit-note">备注（可选）</label><input id="admin-deposit-note" class="auth-input" maxlength="300" placeholder="人工核对说明"></div>'+
-          '<button type="submit" class="btn btn-primary" style="padding:12px 18px">确认人工上分</button>'+
-        '</form></div></div>';
-      var depositForm=$('#admin-deposit-form');
-      if(depositForm) depositForm.onsubmit=async function(event){
-        event.preventDefault();
-        var targetUid=$('#admin-deposit-uid').value.trim();
-        var coin=$('#admin-deposit-coin').value;
-        var amountText=$('#admin-deposit-amount').value.trim();
-        var reference=$('#admin-deposit-reference').value.trim();
-        var note=$('#admin-deposit-note').value.trim();
-        if(!targetUid||!amountText||!Number.isFinite(Number(amountText))||Number(amountText)<=0){
-          toast('请填写有效的用户 UID 和实际到账金额。','err');return;
-        }
-        var requestKey=depositForm.dataset.requestId||(depositForm.dataset.requestId=uid());
-        var confirmed=await confirmAdminAction('确认人工充值上分','<b>用户 UID：</b>'+escapeHtml(targetUid)+'<br><b>币种：</b>'+escapeHtml(coin)+'<br><b>到账金额：</b>'+escapeHtml(amountText)+'<br><b>交易参考：</b>'+escapeHtml(reference||'—')+'<br><b>备注：</b>'+escapeHtml(note||'—')+'<br><br>请确认已在对应网络核实实际到账。');
-        if(!confirmed)return;
-        var button=depositForm.querySelector('button[type="submit"]');
-        await runAdminAction(button,()=>apiAdapter.adminConfirmDeposit({uid:targetUid,coin:coin,amount:amountText,reference:reference,note:note,idempotency_key:requestKey}),'已人工上分');
-        if(button.textContent==='已人工上分'){
-          depositForm.reset();
-          depositForm.dataset.requestId=uid();
-          button.disabled=false;
-          button.textContent='确认人工上分';
-        }
-      };
+      async function showAccountPanel(accountUid, account){
+        var panel=$('#admin-user-account-panel');
+        if(!panel)return;
+        var balances=account.balances&&typeof account.balances==='object'?account.balances:{};
+        var assets=['USDT','BTC','ETH','SOL'];
+        panel.innerHTML='<div class="va-card"><div class="va-card-head"><div><div class="va-card-title">用户账户资产</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+escapeHtml(account.email||'')+' · UID '+escapeHtml(accountUid)+'</div></div><button type="button" class="au-account-close" style="background:none;border:0;color:var(--text-secondary);cursor:pointer">收起</button></div><div class="va-card-body"><div class="va-info" style="margin-bottom:14px">先核实链上实际到账，再从对应币种资产行进行人工上分。用户 UID 和币种会自动绑定，无需手动填写。</div>'+
+          assets.map(function(coin){
+            var b=balances[coin]||{free:0,frozen:0};
+            var free=Number(b.free||0), frozen=Number(b.frozen||0);
+            return '<div class="va-card" style="padding:12px;margin:10px 0"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>'+coin+'</b><div style="font-size:12px;color:var(--text-muted);margin-top:4px">可用 '+fmt(free,coin==='USDT'?2:8)+' · 冻结 '+fmt(frozen,coin==='USDT'?2:8)+'</div></div><button type="button" class="au-credit-open btn btn-primary" data-coin="'+coin+'" style="padding:8px 12px">人工上分</button></div><form class="au-credit-form" data-coin="'+coin+'" style="display:none;margin-top:12px" autocomplete="off"><div class="va-field"><label class="auth-label">实际到账金额 ('+coin+')</label><input class="auth-input au-credit-amount" type="number" min="0" step="any" required placeholder="输入核实到账金额"></div><div class="va-field"><label class="auth-label">交易哈希 / 参考号（可选）</label><input class="auth-input au-credit-reference" maxlength="120" placeholder="TxID / transfer reference"></div><div class="va-field"><label class="auth-label">备注（可选）</label><input class="auth-input au-credit-note" maxlength="300" placeholder="人工核对说明"></div><button type="submit" class="btn btn-primary" style="padding:10px 16px">确认给此用户上分</button></form></div>';
+          }).join('')+'</div></div>';
+        $('.au-account-close').forEach(function(b){b.onclick=function(){panel.innerHTML='';};});
+        $('.au-credit-open').forEach(function(b){b.onclick=function(){var form=b.closest('.va-card').querySelector('.au-credit-form');if(form){form.style.display=form.style.display==='none'?'block':'none';}};});
+        $('.au-credit-form').forEach(function(form){form.onsubmit=async function(event){
+          event.preventDefault();
+          var coin=form.dataset.coin;
+          var amountText=form.querySelector('.au-credit-amount').value.trim();
+          var reference=form.querySelector('.au-credit-reference').value.trim();
+          var note=form.querySelector('.au-credit-note').value.trim();
+          if(!amountText||!Number.isFinite(Number(amountText))||Number(amountText)<=0){toast('请输入有效的实际到账金额。','err');return;}
+          var requestKey=form.dataset.requestId||(form.dataset.requestId=uid());
+          var confirmed=await confirmAdminAction('确认人工上分','<b>用户：</b>'+escapeHtml(account.email||accountUid)+'<br><b>UID：</b>'+escapeHtml(accountUid)+'<br><b>币种：</b>'+escapeHtml(coin)+'<br><b>到账金额：</b>'+escapeHtml(amountText)+'<br><b>交易参考：</b>'+escapeHtml(reference||'—')+'<br><b>备注：</b>'+escapeHtml(note||'—')+'<br><br>请确认已核实该币种、该网络的实际到账。');
+          if(!confirmed)return;
+          var button=form.querySelector('button[type="submit"]');
+          await runAdminAction(button,()=>apiAdapter.adminConfirmDeposit({uid:accountUid,coin:coin,amount:amountText,reference:reference,note:note,idempotency_key:requestKey}),'已人工上分');
+          if(button.textContent==='已人工上分'){
+            var refreshed=await apiAdapter.adminUser(accountUid);
+            if(refreshed&&refreshed.ok&&refreshed.user) await showAccountPanel(accountUid,refreshed.user);
+            apiAdapter.adminUsers().then(function(list){if(list&&list.ok&&Array.isArray(list.users)){state.admin.users=list.users;render('users',true);}});
+          }
+        };});
+      }
+      $$('.au-account').forEach(function(b){b.onclick=async function(){
+        var panel=$('#admin-user-account-panel');
+        if(panel)panel.innerHTML='<div class="va-info">正在读取该用户资产…</div>';
+        var result=await apiAdapter.adminUser(b.dataset.uid);
+        if(!result||!result.ok||!result.user){if(panel)panel.innerHTML=emptyState('账户资产暂时不可用',(result&&(result.msg||result.error))||'请检查管理员权限和财务数据连接。');return;}
+        await showAccountPanel(b.dataset.uid,result.user);
+      };});
     } else if(tab==='withdrawals'){
       var wlist=(state.admin.withdrawals||[]).filter(function(w){return w.status==='pending'||w.status==='approved';});
       if(!wlist.length){$('#admin-body').innerHTML=emptyState('暂无待处理提现','新提现申请会显示在这里；已批准的申请需要人工转账后标记完成。');return;}
