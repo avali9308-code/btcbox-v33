@@ -21,7 +21,7 @@ DECLARE
 BEGIN
   IF coalesce(p_withdrawal_id,'')='' OR length(p_withdrawal_id)>100 OR
      coalesce(p_admin_id,'')='' OR length(p_admin_id)>128 OR
-     length(coalesce(p_reference,''))>160 OR length(coalesce(p_note,''))>300 THEN
+     coalesce(btrim(p_reference),'')='' OR length(coalesce(p_reference,''))>160 OR length(coalesce(p_note,''))>300 THEN
     RAISE EXCEPTION 'invalid manual payout completion request';
   END IF;
   SELECT * INTO v_w FROM public.withdrawal_requests WHERE id=p_withdrawal_id FOR UPDATE;
