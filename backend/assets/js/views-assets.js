@@ -298,8 +298,8 @@ VIEWS.withdraw = function(){
           '<div class="section-title" style="margin-bottom:14px">Security Verification</div>'+
           '<div class="va-field"><label class="auth-label">Fund Password (6 digits)</label><input id="wd-fundpwd" class="auth-input num" type="password" maxlength="6" placeholder="******" required></div>'+
           '<div class="va-field"><label class="auth-label">2FA Code '+(state.settings.twofa?'':'(disabled — optional)')+'</label><input id="wd-2fa" class="auth-input num" maxlength="6" placeholder="000000"></div>'+
-          '<div class="va-info" style="margin-bottom:16px">Withdrawals are debited after submission and reviewed manually. Double-check the address before submitting.</div>'+
-          '<div class="va-info" style="margin-bottom:16px;border-color:var(--warning);color:var(--text-primary)"><b>提币规则：</b>提币地址需先绑定并通过审核；新绑定地址 24 小时后可提币；首次提币及大额提币需人工审核。</div>'+
+          '<div class="va-info" style="margin-bottom:16px">The requested amount and fee are reserved when you submit. Staff reviews every request; approval finalizes the debit, and staff then transfers funds manually.</div>'+
+          '<div class="va-info" style="margin-bottom:16px;border-color:var(--warning);color:var(--text-primary)"><b>提现流程：</b>每笔申请都由后台人工审核。批准后仍需工作人员手动转账，只有标记为“已完成”才代表后台已记录出款。</div>'+
           '<div class="va-nav-row"><button type="button" class="btn btn-ghost" id="wd-back3">Back</button><button type="submit" id="wd-submit" class="btn btn-primary" style="flex:2;padding:13px;font-size:15px">Submit Withdrawal</button></div>'+
         '</div></div>'+
       '</div>'+
@@ -309,7 +309,7 @@ VIEWS.withdraw = function(){
     '<div class="va-step-panel" data-wpanel="2">'+
       '<div class="section-title" style="margin-bottom:12px">Confirm Withdrawal Details</div>'+
       '<div class="va-review" id="wd-review-list"></div>'+
-      '<div class="va-risk-box"><div class="va-risk-title">Risk Warning</div>Withdrawal cannot be cancelled after broadcast. Verify the full address and network. Sending to the wrong address or network may result in permanent loss of funds. Withdrawals are subject to manual review.</div>'+
+      '<div class="va-risk-box"><div class="va-risk-title">Risk Warning</div>Verify the full address and network. Staff will transfer funds manually only after approval; a transfer sent to the wrong address or network may result in permanent loss. A request may be rejected before the manual transfer.</div>'+
       '<div class="va-nav-row"><button type="button" class="btn btn-ghost" id="wd-back2">Back</button><button type="button" class="btn btn-primary" id="wd-confirm" style="flex:2;padding:13px">Confirm &amp; Continue</button></div>'+
     '</div>'+
 
@@ -433,7 +433,7 @@ VIEWS.withdraw.afterRender = function(){
     if(r.duplicate) return {key:'submitted',title:'Already Submitted',ico:'submitted',sub:'This withdrawal request was already received. Do not submit it again.'};
     if(s.indexOf('cancel')>=0) return {key:'cancelled',title:'Cancelled',ico:'cancelled',sub:'This withdrawal was cancelled.'};
     if(s.indexOf('fail')>=0||s.indexOf('reject')>=0) return {key:'failed',title:'Failed / Rejected',ico:'failed',sub:r.msg||'Withdrawal was rejected. Please review the details and try again.'};
-    if(s.indexOf('complete')>=0||s.indexOf('sent')>=0||s.indexOf('success')>=0) return {key:'done',title:'Completed (Platform)',ico:'done',sub:'Platform review passed. Final arrival is subject to on-chain confirmation — this is not a chain-arrival confirmation.'};
+    if(s.indexOf('complete')>=0||s.indexOf('sent')>=0||s.indexOf('success')>=0) return {key:'done',title:'Completed (Manual Transfer)',ico:'done',sub:'Staff recorded the manual transfer as completed. Any transaction reference is shown in your withdrawal history.'};
     if(s.indexOf('process')>=0||s.indexOf('broadcast')>=0) return {key:'processing',title:'Processing',ico:'processing',sub:'Withdrawal is being processed / broadcast. Please wait for on-chain confirmation.'};
     if(s.indexOf('review')>=0||s.indexOf('pending')>=0||s.indexOf('audit')>=0||s.indexOf('approve')>=0) return {key:'review',title:'Under Review',ico:'review',sub:'Withdrawal submitted and awaiting manual review. It has NOT been sent on-chain yet.'};
     return {key:'submitted',title:'Submitted',ico:'submitted',sub:'Withdrawal request submitted. It will be reviewed manually before funds are sent. This is NOT a chain-arrival confirmation.'};
@@ -450,7 +450,7 @@ VIEWS.withdraw.afterRender = function(){
       '<div class="va-result-sub">'+safeSub+'</div>'+
       (wid?'<div class="va-result-id">ID: '+safeWid+'</div>':'')+
       (r&&r.ok?'<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Amount: <b class="num">'+fmt(amt,2)+' '+safeCoin+'</b></div>':'')+
-      '<div class="va-result-note">Your request is awaiting manual review. Approval is not the same as payment: staff will send the funds manually and update the status. Do not submit the same withdrawal twice.</div>'+
+      '<div class="va-result-note">'+(st.key==='done'?'Staff recorded this manual transfer as completed. Check withdrawal history for its reference.':'Your request is awaiting manual review. Approval is not the same as payment: staff will send the funds manually and update the status.')+' Do not submit the same withdrawal twice.</div>'+
       '<div class="va-nav-row" style="margin-top:16px">'+(st.key==='unknown'?'':'<button type="button" class="btn btn-ghost" id="wd-new">New Withdrawal</button>')+'<a href="#/assets" class="btn btn-primary" style="flex:2">Back to Assets</a></div>'+
     '</div>';
     $('#wd-result-box').innerHTML=html;
@@ -462,7 +462,7 @@ VIEWS.withdraw.afterRender = function(){
         '<div style="font-weight:700;font-size:15px;margin-bottom:8px;color:'+(st.ico==='failed'?'var(--down)':st.ico==='unknown'?'var(--warning)':'var(--brand-bright)')+'">'+st.title+'</div>'+
         '<div style="color:var(--text-secondary)">'+safeSub+'</div>'+
         (wid?'<div style="margin-top:10px;font-family:var(--font-mono);font-size:12px;color:var(--text-muted);word-break:break-all">ID: '+safeWid+'</div>':'')+
-        '<div style="margin-top:12px;font-size:11px;color:var(--text-muted)">'+(st.key==='unknown'?'Do not submit another withdrawal until this request is reconciled.':'Submit success ≠ on-chain arrival. Withdrawals are reviewed manually.')+'</div>'+
+        '<div style="margin-top:12px;font-size:11px;color:var(--text-muted)">'+(st.key==='unknown'?'Do not submit another withdrawal until this request is reconciled.':st.key==='done'?'Staff recorded the manual transfer as completed.':'Approval is not payment; staff will transfer funds manually after approval.')+'</div>'+
       '</div>'});
     goStep(4);
   }
