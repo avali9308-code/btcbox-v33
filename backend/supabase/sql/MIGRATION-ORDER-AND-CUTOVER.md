@@ -21,8 +21,6 @@ Apply these migrations to a dedicated staging project in dependency order. These
 12. `financial_admin_account_read_api_v1.sql`
 13. `financial_seconds_contracts_v1.sql` — creates the Seconds lifecycle RPCs and extends the financial operation type constraint.
 14. `financial_seconds_one_open_position_v1.sql` — apply after #13; adds a partial unique index for one open position per user and maps concurrent conflicts to `OPEN_POSITION_EXISTS`. It fails closed if duplicate open positions already exist.
-15. 0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql — forward migration; removes only the one-open-position partial unique index and fixes settlement request-ID/hash handling. The timestamped copy under supabase/migrations/ is the Supabase CLI migration; the numbered SQL copy keeps the existing local/docker runner in sync.
-
 The lifecycle `confirm_deposit_atomic` RPC is intentionally fail-closed and cannot credit a deposit without trusted verification. The intended deposit-credit path for the current manual-review business model is the separately audited `admin_manual_deposit_atomic` RPC; manual credits must use the separately audited `admin_manual_deposit_atomic` RPC. The `financial_deposit_chain_verification_v3.sql` is optional when the deployment does not enable automated chain verification, but it is required before enabling that automated verification path.
 
 The `financial_migration_staging_v5.sql` quarantine table and the `financial_migration_staging_reconciliation_v6.sql`, `financial_migration_reconciliation_v4.sql`, and `financial_ledger_reconciliation_v1.sql` files are staging/import or read-only reconciliation steps, not part of the ordered operational RPC sequence above. Run them only in the documented staging workflow.
@@ -35,9 +33,9 @@ Before cutover:
 - Test idempotent retries and concurrent requests for deposits, withdrawals, earn, spot trade, and seconds contracts.
 - Keep financial writes disabled until all relevant reads and writes use the same authoritative ledger and the full-cutover approval is explicit.
 
-16. `0023_withdrawal_manual_payout_completion_v1.sql` — records the external manual payout reference after an approved withdrawal; it does not send funds.
-17. `0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql` — forward migration: removes only the one-open-position partial unique index and fixes settlement request-ID/hash handling. Timestamped CLI copy is under `supabase/migrations/`.
-18. `0025_seconds_policy_snapshot_and_admin_queue_v1.sql` — policy table and RPCs; policy-driven order validation; per-position policy version/payout snapshot; admin open-position read queue; settlement uses the stored payout rate. Timestamped CLI migration is under `supabase/migrations/`.
+15. `0023_withdrawal_manual_payout_completion_v1.sql` — records the external manual payout reference after an approved withdrawal; it does not send funds.
+16. `0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql` — forward migration: removes only the one-open-position partial unique index and fixes settlement request-ID/hash handling. A timestamped mirror exists under `supabase/migrations/`, but it is not a complete CLI bootstrap path and must not be independently pushed to the hosted project.
+17. `0025_seconds_policy_snapshot_and_admin_queue_v1.sql` — policy table and RPCs; policy-driven order validation; per-position policy version/payout snapshot; admin open-position read queue; settlement uses the stored payout rate. A timestamped mirror exists under `supabase/migrations/`; it is not a complete CLI bootstrap path and must not be independently pushed to the hosted project.
 
 
 ### 0021 audit-log schema and permission reconciliation
