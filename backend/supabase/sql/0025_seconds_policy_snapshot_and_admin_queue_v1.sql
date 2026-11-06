@@ -66,7 +66,9 @@ BEGIN
       'policy_version',v_existing.policy_version,'payout_rate',v_existing.payout_rate);
   END IF;
 
-  SELECT * INTO v_policy FROM public.seconds_contract_policy WHERE singleton=true FOR SHARE;
+  SELECT * INTO v_policy FROM public.seconds_contract_policy
+  WHERE singleton = true
+  FOR SHARE;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','SECONDS_POLICY_NOT_CONFIGURED'); END IF;
   IF NOT v_policy.enabled THEN RETURN jsonb_build_object('ok',false,'code','SECONDS_TRADING_DISABLED'); END IF;
   IF NOT (p_duration_sec = ANY(v_policy.allowed_durations)) THEN
@@ -139,7 +141,7 @@ BEGIN
      OR cardinality(p_allowed_durations)<1 OR cardinality(p_allowed_durations)>20
      OR p_min_order_amount IS NULL OR p_min_order_amount<=0
      OR p_max_order_amount IS NULL OR p_max_order_amount<p_min_order_amount
-     OR p_payout_rate IS NULL OR p_payout_rate<0.85
+     OR p_payout_rate IS NULL OR p_payout_rate < 0.85
      OR coalesce(trim(p_admin_id),'')='' THEN
     RETURN jsonb_build_object('ok',false,'code','INVALID_SECONDS_POLICY');
   END IF;

@@ -292,7 +292,7 @@ VIEWS.seconds.afterRender = function(){
       const positionMatch=findSecondsPositionSnapshot(r.position,state.secondsPositions);
       if(positionMatch.status==='history'){
         const cleared=clearPendingSecondsOrder();
-        busy=!!(state.secondsPositions.open&&state.secondsPositions.open.length)||!cleared;
+        busy=!cleared;
         setSecondsEntryEnabled(!busy,busy?'An open position or saved request guard remains active.':'');
         stab='history';
         $('[data-stab]').forEach(t=>{t.classList.toggle('active',t.dataset.stab==='history');});

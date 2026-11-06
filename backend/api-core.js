@@ -1472,7 +1472,7 @@ async function handleRequest(event, context) {
   // ---------- GET /api/seconds/policy ----------
   if (path === 'seconds/policy' && method === 'GET') {
     try {
-      const base = process.env.SUPABASE_URL.replace(/\\/+$/, '');
+      const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
       const rpc = await fetch(base + '/rest/v1/rpc/read_seconds_policy_v1', {
         method: 'POST', headers: supabaseHeaders(), body: '{}'
       });
@@ -1804,7 +1804,7 @@ async function handleRequest(event, context) {
     // GET/POST /api/admin/seconds-policy — policy is persisted and enforced by PostgreSQL.
     if (sub === 'seconds-policy' && (method === 'GET' || method === 'POST')) {
       try {
-        const base = process.env.SUPABASE_URL.replace(/\\/+$/, '');
+        const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
         let rpcName = 'read_seconds_policy_v1';
         let payload = {};
         if (method === 'POST') {
@@ -1856,7 +1856,7 @@ async function handleRequest(event, context) {
       const limit = Math.min(500, Math.max(1, Number.parseInt(params.limit || '200', 10) || 200));
       const offset = Math.max(0, Number.parseInt(params.offset || '0', 10) || 0);
       try {
-        const base = process.env.SUPABASE_URL.replace(/\\/+$/, '');
+        const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
         const rpc = await fetch(base + '/rest/v1/rpc/read_admin_seconds_positions_v1', {
           method: 'POST', headers: supabaseHeaders(),
           body: JSON.stringify({ p_limit: limit, p_offset: offset })
