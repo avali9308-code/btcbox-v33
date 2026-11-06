@@ -315,6 +315,7 @@ VIEWS.withdraw = function(){
 
     /* ---- STEP 4: result ---- */
     '<div class="va-step-panel" data-wpanel="4"><div class="va-card"><div class="va-card-body" id="wd-result-box"></div></div></div>'+
+    '<div class="va-card" style="margin-top:18px"><div class="va-card-head"><div class="va-card-title">Withdrawal History</div><button type="button" class="btn btn-ghost" id="wd-history-refresh" style="padding:6px 10px;font-size:12px">Refresh</button></div><div id="wd-history" class="va-card-body"><div class="va-empty">Loading withdrawal history…</div></div></div>'+
   '</div>';
 };
 VIEWS.withdraw.afterRender = function(){
@@ -401,6 +402,30 @@ VIEWS.withdraw.afterRender = function(){
   function escapeWdText(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});
   }
+  async function refreshWithdrawalHistory(){
+    const host=$('#wd-history');
+    if(!host)return;
+    host.innerHTML='<div class="va-empty">Loading withdrawal history…</div>';
+    try{
+      const result=await apiAdapter.withdrawalHistory();
+      if(!result||!result.ok||!Array.isArray(result.withdrawals)){
+        host.innerHTML='<div class="va-empty">Withdrawal history is temporarily unavailable. Please refresh later.</div>';
+        return;
+      }
+      const rows=result.withdrawals;
+      if(!rows.length){host.innerHTML='<div class="va-empty">No withdrawal requests yet.</div>';return;}
+      const statusLabel={pending:'待审核',approved:'已批准 · 等待人工转账',rejected:'已拒绝 · 预留金额已退回',completed:'已完成 · 人工转账已记录',broadcast:'转账处理中',failed:'失败'};
+      host.innerHTML='<div class="va-table-wrap scroll"><table class="va-table" style="min-width:620px"><thead><tr><th>币种 / 网络</th><th>申请金额</th><th>状态</th><th>时间</th><th>转账参考号</th></tr></thead><tbody>'+
+        rows.map(function(w){
+          const status=String(w.status||'');
+          const timeValue=w.paid_at||w.time||'';
+          const timeText=timeValue?new Date(timeValue).toLocaleString():'—';
+          return '<tr><td>'+escapeWdText(w.coin)+' / '+escapeWdText(w.network)+'</td><td class="num">'+escapeWdText(w.amount)+' <span style="color:var(--text-muted)">Fee '+escapeWdText(w.fee)+'</span></td><td>'+escapeWdText(statusLabel[status]||status)+'</td><td class="num">'+escapeWdText(timeText)+'</td><td class="num" style="font-size:11px;word-break:break-all">'+escapeWdText(w.payout_reference||w.txid||'—')+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }catch(_){
+      host.innerHTML='<div class="va-empty">Withdrawal history is temporarily unavailable. Please refresh later.</div>';
+    }
+  }
   function wdResultState(r){
     if(isWdOutcomeUnknown(r)) return {key:'unknown',title:'Status Unconfirmed',ico:'unknown',sub:'We could not confirm whether this withdrawal request was recorded. Do not submit it again until its status has been checked.'};
     if(!r||!r.ok) return {key:'failed',title:'Request Not Confirmed',ico:'failed',sub:(r&&(r.msg||r.message))||'The withdrawal request was rejected. Please review the details and try again.'};
@@ -450,6 +475,8 @@ VIEWS.withdraw.afterRender = function(){
     $('#wd-amount').value=String(maxAmount);calcReceive();
   };
   refresh();
+  refreshWithdrawalHistory();
+  if($('#wd-history-refresh')) $('#wd-history-refresh').onclick=refreshWithdrawalHistory;
   if(withdrawalOutcomeUnknown){
     const blockedBtn=$('#wd-submit');
     if(blockedBtn){blockedBtn.disabled=true;blockedBtn.textContent='Status Unconfirmed';}
@@ -546,6 +573,7 @@ VIEWS.withdraw.afterRender = function(){
       const okCoin=coin, okAmt=amt;
       $('#wd-form').reset();refresh();
       showResult(r, okCoin, okAmt);
+      refreshWithdrawalHistory();
     }else{
       showResult(r, coin, amt);
     }
