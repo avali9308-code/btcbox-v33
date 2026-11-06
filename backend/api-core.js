@@ -239,7 +239,7 @@ async function readAdminAccountBalances(userIds) {
       // This UI currently supports only these ledger assets. Reject unexpected
       // asset keys rather than silently passing malformed/unsupported balances
       // into valuation and admin controls.
-      if (!['USDT', 'BTC', 'ETH', 'SOL'].includes(asset)) throw new Error('Admin account balance response invalid');
+      if (!['USDT', 'BTC', 'ETH', 'SOL', 'BNB', 'USDC'].includes(asset)) throw new Error('Admin account balance response invalid');
       const b = assets[asset];
       if (!b || !Number.isFinite(b.free) || !Number.isFinite(b.frozen) || b.free < 0 || b.frozen < 0) throw new Error('Admin account balance response invalid');
     }
@@ -580,7 +580,7 @@ function safeDepositAddresses(addresses) {
   const source = addresses && typeof addresses === 'object' && !Array.isArray(addresses) ? addresses : {};
   const result = {};
   const legacyKeys = { 'BTC-BTC': 'BTC-Bitcoin', 'SOL-SOL': 'SOL-Solana' };
-  for (const key of ['USDT-TRC20', 'USDT-ERC20', 'USDT-BEP20', 'BTC-BTC', 'ETH-ERC20', 'SOL-SOL']) {
+  for (const key of ['USDT-TRC20', 'USDT-ERC20', 'USDT-BEP20', 'BTC-BTC', 'ETH-ERC20', 'SOL-SOL', 'BNB-BEP20', 'USDC-ERC20']) {
     const legacyKey = legacyKeys[key];
     let raw = source[key];
     if ((typeof raw !== 'string' || !raw.trim()) && legacyKey) raw = source[legacyKey];
@@ -1990,7 +1990,7 @@ async function handleRequest(event, context) {
       const idempotencyKey = String(body.idempotency_key || '').trim();
       const u = db.users[uid];
       if (!u) return json({ ok: false, msg: 'User not found.' }, 404);
-      if (!['USDT', 'BTC', 'ETH', 'SOL'].includes(coin)) return json({ ok: false, msg: 'Coin not supported.' }, 400);
+      if (!['USDT', 'BTC', 'ETH', 'SOL', 'BNB', 'USDC'].includes(coin)) return json({ ok: false, msg: 'Coin not supported.' }, 400);
       if (!Number.isFinite(amount) || amount <= 0 || amount > 1e12 || !/^\d+(?:\.\d{1,12})?$/.test(String(body.amount || '').trim())) {
         return json({ ok: false, msg: 'Invalid deposit amount. Must be a valid number greater than 0.' }, 400);
       }
@@ -2215,7 +2215,7 @@ async function handleRequest(event, context) {
         for (const key of Object.keys(updates)) {
           if (!Object.prototype.hasOwnProperty.call(allowedDepositKeys, key)) return json({ ok: false, msg: 'Unsupported deposit network configuration found.' }, 400);
           const value = typeof updates[key] === 'string' ? updates[key].trim() : '';
-          if (!value || /PLACEHOLDER|TPLACEHOLDER/i.test(value) || !allowedDepositKeys[key](value)) {
+          if (value && (/PLACEHOLDER|TPLACEHOLDER/i.test(value) || !allowedDepositKeys[key](value))) {
             return json({ ok: false, msg: 'Invalid deposit address format: ' + key }, 400);
           }
           changedKeys.push(key);
