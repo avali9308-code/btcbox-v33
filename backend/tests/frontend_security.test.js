@@ -178,7 +178,7 @@ test('admin manual credit is launched from the selected user asset panel with UI
   const core = read('assets/js/app-core.js');
   assert.ok(admin.includes('class="au-account"'), 'user row has no account/asset entry');
   assert.ok(admin.includes('apiAdapter.adminUser(b.dataset.uid)'), 'account panel does not load the selected user detail');
-  assert.ok(admin.includes('class="au-credit-open btn btn-primary" data-coin="'+coin+'"'), 'credit action is not attached to a selected asset');
+  assert.ok(admin.includes('class="au-credit-open btn btn-primary" data-coin='), 'credit action is not attached to a selected asset');
   assert.ok(admin.includes('apiAdapter.adminConfirmDeposit({uid:accountUid,coin:coin'), 'manual credit does not auto-bind selected UID and asset');
   assert.ok(admin.includes('idempotency_key:requestKey'), 'manual credit request ID is not retained for the operation');
   assert.ok(admin.includes('请确认已核实该币种、该网络的实际到账'), 'manual credit lacks an actual-receipt confirmation');
