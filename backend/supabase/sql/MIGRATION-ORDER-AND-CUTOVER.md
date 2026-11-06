@@ -36,3 +36,12 @@ Before cutover:
 16. `0023_withdrawal_manual_payout_completion_v1.sql` — records the external manual payout reference after an approved withdrawal; it does not send funds.
 17. `0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql` — forward migration: removes only the one-open-position partial unique index and fixes settlement request-ID/hash handling. Timestamped CLI copy is under `supabase/migrations/`.
 18. `0025_seconds_policy_snapshot_and_admin_queue_v1.sql` — policy table and RPCs; policy-driven order validation; per-position policy version/payout snapshot; admin open-position read queue; settlement uses the stored payout rate. Timestamped CLI migration is under `supabase/migrations/`.
+
+
+### 0021 audit-log schema and permission reconciliation
+
+- `0002_financial_ledger_v1.sql` is the canonical creator of `public.financial_audit_log` with columns `actor_id, subject_user_id, action, object_type, object_id, reason, metadata, created_at`.
+- `0021_admin_audit_log_append_only_v1.sql` extends that table; it must not create a different `uid/by/detail/meta` shape or index a nonexistent `uid` column.
+- The existing Node `auditAdmin()` request shape (`p_action, p_uid, p_by, p_detail`) is mapped to the canonical audit columns.
+- The append RPC uses `SECURITY INVOKER`, an empty fixed `search_path`, explicit revocation from `PUBLIC, anon, authenticated`, and EXECUTE grant only to `service_role`. The table remains RLS-enabled and service_role is restricted to SELECT/INSERT; UPDATE/DELETE/TRUNCATE are revoked and guarded by append-only triggers.
+- This is source-level reconciliation. Full PostgreSQL runtime validation remains required before cutover.
