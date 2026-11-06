@@ -971,3 +971,16 @@ The earlier open item saying 1号 must confirm a Home route is superseded by sou
 - Latest source commit after these corrections: `c8bdce2003bc34e3218f2401846a6df6c3020646`. Latest test file blob: `a8e54d8adaa6efb293eb6e038bfa943fb02de067`.
 - CI for latest corrected SHA has not yet been observed. The Vercel status remains a free-plan build-rate-limit failure, separate from GitHub Actions.
 - No auth backend, API, SQL, Supabase config or production user/session data changed. Browser OAuth and live 2FA NOT RUN.
+
+
+## AI 3 — Issue #2: simple manual deposit configuration and credit flow
+
+- Status: COORDINATION CONTRACT RECORDED / IMPLEMENTATION NOT STARTED.
+- User's approved workflow: configure address/network in admin; user transfers; staff verifies receipt manually; select user + asset row and enter actual received amount for audited atomic credit.
+- Keep UID and coin auto-bound. Do not ask staff to re-enter either.
+- Do not add pending deposit orders, automated chain verification, auto-credit, or extra approval stages.
+- Source gaps confirmed: active Admin Console has no deposit-address configuration UI although GET/POST /admin/config exist; deposit UI supports 6 assets while admin credit UI/API and safeDepositAddresses cover only 4/6.
+- Issue: https://github.com/avali9308-code/btcbox-v33/issues/2
+- Required implementation: compact address-config tab using existing API; align supported asset set (USDT/BTC/ETH/SOL/BNB/USDC) across deposit addresses, admin account asset rows, and manual-credit API. Keep format validation, fail-closed missing addresses, atomic RPC/idempotency/audit, and financial cutover gate.
+- Owner handoff: AI 1 implementation owner for active Admin Console view and API source changes; AI 2 independent QA on exact SHA; AI 3 maintains contract and integration gate.
+- No code, SQL, database, environment, merge or deployment changes in this coordination batch. Tests/runtime/browser: NOT RUN.
