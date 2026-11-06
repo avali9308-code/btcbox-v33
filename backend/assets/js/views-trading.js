@@ -14,7 +14,7 @@ VIEWS.seconds = function(){
       '<div class="sec-coin-row">'+SEC_COINS.map((c,i)=>'<button class="sec-coin'+(i===0?' active':'')+'" data-coin="'+c+'">'+c+'/USDT</button>').join('')+'</div>'+
       '<div class="sec-price-bar">'+
         '<div class="sec-price-block"><div class="sec-price-label">Current Price</div><div class="num" id="sec-price">—</div></div>'+
-        '<div class="sec-dur-row">'+SEC_DUR.map((d,i)=>'<button class="sec-dur'+(i===0?' active':'')+'" data-sec="'+d.sec+'">'+d.label+'</button>').join('')+'</div>'+
+        '<div class="sec-dur-row" id="sec-dur-row">'+SEC_DUR.map((d,i)=>'<button class="sec-dur'+(i===0?' active':'')+'" data-sec="'+d.sec+'">'+d.label+'</button>').join('')+'</div>'+
         '<div class="sec-amount-block"><label class="auth-label">Amount (USDT)</label><input id="sec-amount" class="auth-input num" type="number" value="100" min="1"></div>'+
       '</div>'+
       '<div class="sec-dir-grid">'+
@@ -22,7 +22,7 @@ VIEWS.seconds = function(){
         '<button id="sec-down" class="sec-dir-btn"><span class="sec-dir-arrow">&#9660;</span>DOWN (Price falls)</button>'+
       '</div>'+
       '<div id="sec-countdown"><div class="cd-label">Position open — settling in</div><div id="sec-cd-num" class="num">30s</div></div>'+
-      '<div class="sec-rules"><div class="rules-title">Rules</div>· At expiry the position settles against the reference price from Coinbase/Bybit.<br>· Correct direction: payout = amount × 85%. Wrong direction: full amount lost. Tie: principal refunded.<br>· Only one open position per account at a time; wait for settlement before opening another.</div>'+
+      '<div class="sec-rules"><div class="rules-title">Rules</div>· At expiry the position settles against the reference price from Coinbase/Bybit.<br>· Correct direction: payout = amount × configured rate (minimum 85%). Wrong direction: full amount lost. Tie: principal refunded.<br>· Multiple open positions are allowed; each position settles independently.</div>'+
       '<div class="sec-risk"><div class="risk-title">Risk Warning</div>Seconds contracts are high-risk derivatives. You may lose the entire invested amount. This is not investment advice. Only use funds you can afford to lose and manage your risk.</div>'+
     '</div>'+
     '<div class="card sec-list-card"><div style="display:flex;border-bottom:1px solid var(--border)"><div class="tab active" data-stab="open">Open Positions</div><div class="tab" data-stab="history">History</div></div><div id="sec-list" class="scroll"></div></div>'+
@@ -30,7 +30,7 @@ VIEWS.seconds = function(){
 };
 VIEWS.seconds.afterRender = function(){
   const secondsUserKey=state.user&&String(state.user.uid||state.user.email||'')||'';
-  let coin='BTC', dur=30, positionsReady=false, positionsLoadFailed=false;
+  let coin='BTC', dur=30, positionsReady=false, positionsLoadFailed=false, policyReady=false, secondsPolicy=null;
   let positionsUnavailableMessage='The latest contract status could not be confirmed. Refresh before opening a new position.';
   const secondsPendingStorageKey=secondsUserKey?'btcbox.seconds.pending.v1.'+encodeURIComponent(secondsUserKey):'';
   function readPendingSecondsOrder(){
@@ -42,7 +42,7 @@ VIEWS.seconds.afterRender = function(){
       try{item=JSON.parse(raw);}catch(_){return {version:1,invalid:true};}
       if(!item||item.version!==1||!/^[-A-Za-z0-9_]{16,100}$/.test(String(item.request_id||''))||
         !/^(BTC|ETH|SOL|BNB)$/.test(String(item.symbol||''))||!/^(UP|DOWN)$/.test(String(item.direction||''))||
-        ![30,60,300,900].includes(Number(item.duration_sec))||!Number.isFinite(Number(item.amount))||
+        (!Number.isSafeInteger(Number(item.duration_sec))||Number(item.duration_sec)<1||Number(item.duration_sec)>2147483647)||!Number.isFinite(Number(item.amount))||
         Number(item.amount)<=0||!Number.isFinite(Number(item.created_at)))return {version:1,invalid:true};
       return {version:1,request_id:String(item.request_id),symbol:String(item.symbol),direction:String(item.direction),
         duration_sec:Number(item.duration_sec),amount:String(item.amount),created_at:Number(item.created_at)};
@@ -61,11 +61,14 @@ VIEWS.seconds.afterRender = function(){
   }
   let secondsPendingIntent=readPendingSecondsOrder();
   if(secondsPendingIntent&&secondsUserKey)state._secondsOrderUnknownUserKey=secondsUserKey;
-  let busy=!!secondsUserKey||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey), settling=false;
+  let busy=!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
+  const settlingPositionIds=new Set(), autoSettlementAttempted=new Set();
   function setSecondsEntryEnabled(enabled,reason){
     ['#sec-up','#sec-down'].forEach(function(selector){
       const button=$(selector);
       if(!button)return;
+      if(state.user&&!policyReady){enabled=false;reason='Contract policy is unavailable. Refresh before opening a position.';}
+      if(secondsPolicy&&secondsPolicy.enabled===false){enabled=false;reason='Seconds contracts are currently paused by the administrator.';}
       button.disabled=!enabled;
       button.setAttribute('aria-disabled',String(!enabled));
       if(!enabled&&reason)button.title=reason;
@@ -98,7 +101,46 @@ VIEWS.seconds.afterRender = function(){
   function updPrice(){const el=$('#sec-price');if(!el){clearInterval(iv);return;}const p=market[coin+'USDT'];el.textContent=p&&Number(p.price)>0?fmtPrice(p.price,coin):'—';}
   updPrice(); const iv=setInterval(updPrice,1500);
   $$('.sec-coin').forEach(b=>b.onclick=()=>{coin=b.dataset.coin;$$('.sec-coin').forEach(x=>x.classList.remove('active'));b.classList.add('active');updPrice();});
-  $$('.sec-dur').forEach(b=>b.onclick=()=>{dur=parseInt(b.dataset.sec);$$('.sec-dur').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+  function durationLabel(seconds){
+    if(seconds%86400===0)return (seconds/86400)+'d';
+    if(seconds%3600===0)return (seconds/3600)+'h';
+    if(seconds%60===0)return (seconds/60)+'m';
+    return seconds+'s';
+  }
+  function secondsRemainingLabel(settleAt){
+    const left=Math.max(0,Math.ceil((Number(settleAt)*1000-Date.now())/1000));
+    if(left<=0)return 'Settling…';
+    const minutes=Math.floor(left/60),seconds=left%60;
+    return minutes>0?(minutes+'m '+seconds+'s'):(seconds+'s');
+  }
+  function applySecondsPolicy(policy){
+    if(!policy||!Array.isArray(policy.allowed_durations)||!policy.allowed_durations.length)return;
+    secondsPolicy=policy;
+    policyReady=true;
+    const row=$('#sec-dur-row');
+    const durations=policy.allowed_durations.map(Number).filter(function(v){return Number.isSafeInteger(v)&&v>=1&&v<=2147483647;});
+    if(!durations.length)return;
+    if(!durations.includes(dur))dur=durations[0];
+    if(row){
+      row.innerHTML=durations.map(function(v){return '<button class="sec-dur'+(v===dur?' active':'')+'" data-sec="'+v+'">'+durationLabel(v)+'</button>';}).join('');
+      row.querySelectorAll('.sec-dur').forEach(function(button){
+        button.onclick=function(){dur=Number(button.dataset.sec);row.querySelectorAll('.sec-dur').forEach(function(x){x.classList.toggle('active',x===button);});};
+      });
+    }
+    const amountInput=$('#sec-amount');
+    if(amountInput){
+      amountInput.min=String(policy.min_order_amount);
+      amountInput.max=String(policy.max_order_amount);
+      amountInput.placeholder='Min '+policy.min_order_amount+' · Max '+policy.max_order_amount;
+      const current=Number(amountInput.value);
+      if(!Number.isFinite(current)||current<Number(policy.min_order_amount)||current>Number(policy.max_order_amount)){
+        amountInput.value=String(policy.min_order_amount);
+      }
+    }
+    if(policy.enabled===false){setSecondsEntryEnabled(false,'Seconds contracts are currently paused by the administrator.');}
+    else setSecondsEntryEnabled(positionsReady&&!busy,'');
+  }
+  $('.sec-dur').forEach(b=>b.onclick=()=>{dur=parseInt(b.dataset.sec);$('.sec-dur').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
   function renderList(tab){
     const box=$('#sec-list');
     if(!box) return;
@@ -129,18 +171,22 @@ VIEWS.seconds.afterRender = function(){
     }
     const list=tab==='open'?openPositions:historyPositions;
     if(!list.length){box.innerHTML=emptyState('No '+tab+' positions','Open a UP/DOWN position to see it here.');return;}
-    box.innerHTML='<table><thead><tr><th class="th">Position</th><th class="th">Direction</th><th class="th num">Amount</th><th class="th num">Open Price</th><th class="th num">Settle Price</th><th class="th">Result</th><th class="th">Action</th></tr></thead><tbody>'+
-      list.map(p=>{const isOpen=tab==='open'||p.status==='open';return '<tr class="trow"><td class="td" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">'+escapeHtml(String(p.position_id||'—').slice(0,12))+'</td><td class="td" style="color:'+(p.direction==='UP'?'var(--up)':'var(--down)')+';font-weight:600">'+escapeHtml(p.direction)+'</td><td class="td num">'+fmt(p.amount,2)+' USDT</td><td class="td num">'+fmtPrice(p.open_price,p.symbol)+'</td><td class="td num">'+(p.settle_price?fmtPrice(p.settle_price,p.symbol):'—')+'</td><td class="td">'+(isOpen?'<span style="color:var(--warning)">Pending</span>':p.tie?'<span style="color:var(--text-secondary);font-weight:600">TIE · Refunded</span>':p.win?'<span style="color:var(--up);font-weight:600">WIN +'+fmt(p.pnl,2)+'</span>':'<span style="color:var(--down);font-weight:600">LOSE '+fmt(p.pnl,2)+'</span>')+'</td><td class="td">'+(isOpen&&Number(p.settle_at)*1000<=Date.now()?'<button type="button" class="sec-settle-btn" data-position-id="'+escapeHtml(p.position_id)+'" data-symbol="'+escapeHtml(p.symbol)+'">Settle</button>':isOpen?'<span style="color:var(--text-muted)">Pending</span>':'—')+'</td></tr>';}).join('')+'</tbody></table>';
+    box.innerHTML='<table><thead><tr><th class="th">Position</th><th class="th">Direction</th><th class="th num">Amount</th><th class="th num">Open Price</th><th class="th num">Settle Price</th><th class="th">Result</th><th class="th">Countdown</th><th class="th">Action</th></tr></thead><tbody>'+
+      list.map(p=>{const isOpen=tab==='open'||p.status==='open';return '<tr class="trow"><td class="td" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">'+escapeHtml(String(p.position_id||'—').slice(0,12))+'</td><td class="td" style="color:'+(p.direction==='UP'?'var(--up)':'var(--down)')+';font-weight:600">'+escapeHtml(p.direction)+'</td><td class="td num">'+fmt(p.amount,2)+' USDT</td><td class="td num">'+fmtPrice(p.open_price,p.symbol)+'</td><td class="td num">'+(p.settle_price?fmtPrice(p.settle_price,p.symbol):'—')+'</td><td class="td">'+(isOpen?'<span style="color:var(--warning)">Pending</span>':p.tie?'<span style="color:var(--text-secondary);font-weight:600">TIE · Refunded</span>':p.win?'<span style="color:var(--up);font-weight:600">WIN +'+fmt(p.pnl,2)+'</span>':'<span style="color:var(--down);font-weight:600">LOSE '+fmt(p.pnl,2)+'</span>')+'</td><td class="td"><span data-sec-countdown="'+escapeHtml(p.position_id)+'">'+(isOpen?secondsRemainingLabel(p.settle_at):'—')+'</span></td><td class="td">'+(isOpen&&Number(p.settle_at)*1000<=Date.now()?'<button type="button" class="sec-settle-btn" data-position-id="'+escapeHtml(p.position_id)+'" data-symbol="'+escapeHtml(p.symbol)+'">Settle</button>':isOpen?'<span style="color:var(--text-muted)">Pending</span>':'—')+'</td></tr>';}).join('')+'</tbody></table>';
     $$('.sec-settle-btn').forEach(b=>b.onclick=()=>settlePosition(b.dataset.positionId,b.dataset.symbol));
   }
   let stab='open';
+  apiAdapter.secondsPolicyGet().then(function(result){
+    if(result&&result.ok&&result.policy)applySecondsPolicy(result.policy);
+    else setSecondsEntryEnabled(false,'Contract policy is unavailable. Refresh before opening a position.');
+  }).catch(function(){setSecondsEntryEnabled(false,'Contract policy is unavailable. Refresh before opening a position.');});
   if(state.user){
-    busy=true;
+    busy=!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
     setSecondsEntryEnabled(false,'Checking the latest contract position status.');
     apiAdapter.secondsPositionsGet().then(function(result){
       if(result&&result.ok&&!result.cutover_incomplete){
         positionsReady=true;positionsLoadFailed=false;
-        busy=state.secondsPositions.open.length>0||!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
+        busy=!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
         setSecondsEntryEnabled(!busy,busy?'An open position or unresolved order must be reconciled first.':'');
       }else{
         positionsReady=false;positionsLoadFailed=true;busy=true;
@@ -155,31 +201,33 @@ VIEWS.seconds.afterRender = function(){
     });
   }
   async function settlePosition(positionId,symbol){
-    if(settling) return;
-    settling=true;
+    if(settlingPositionIds.has(positionId)) return;
+    settlingPositionIds.add(positionId);
     let result;
     try {
       result=await apiAdapter.secondsSettle({position_id:positionId,request_id:uid(),symbol:symbol});
     } catch (_) {
       result={ok:false,msg:'Settlement could not be confirmed. The position remains pending.'};
     }
-    settling=false;
+    settlingPositionIds.delete(positionId);
     if(!result.ok){
-      busy=true;
+      autoSettlementAttempted.add(positionId);
+      busy=!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
+      setSecondsEntryEnabled(!busy,busy?'An unresolved order request must be reconciled first.':'');
       toast(result.msg||'Settlement could not be confirmed. The position remains pending.','err');
       renderList(stab);
       return false;
     }
     if(result.settled===false){
-      busy=true;
+      autoSettlementAttempted.add(positionId);
+      busy=!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
+      setSecondsEntryEnabled(!busy,busy?'An unresolved order request must be reconciled first.':'');
       toast('The position has not reached maturity yet. It remains open.','warn');
       renderList(stab);
       return false;
     }
-    busy=state.secondsPositions.open.length>0;
-    setSecondsEntryEnabled(!busy,busy?'An open position is still active.':'');
-    const countdown=$('#sec-countdown');
-    if(countdown) countdown.style.display='none';
+    busy=!!secondsPendingIntent||!!(secondsUserKey&&state._secondsOrderUnknownUserKey===secondsUserKey);
+    setSecondsEntryEnabled(!busy,busy?'An unresolved order request must be reconciled first.':'');
     renderList(stab);
     if(result.tie) toast('Settled: tie — principal refunded.','ok');
     else if(result.win) toast('Settled: WIN +'+fmt(result.pnl,2)+' USDT','ok');
@@ -187,14 +235,46 @@ VIEWS.seconds.afterRender = function(){
     return true;
   }
   renderList(stab);
-  $$('[data-stab]').forEach(t=>t.onclick=()=>{stab=t.dataset.stab;$$('[data-stab]').forEach(x=>x.classList.remove('active'));t.classList.add('active');renderList(stab);});
+  function updateSecondsCountdowns(){
+    const open=Array.isArray(state.secondsPositions&&state.secondsPositions.open)?state.secondsPositions.open:[];
+    if(!state._secLatestPositionId&&open.length)state._secLatestPositionId=open[0].position_id;
+    const nodes=document.querySelectorAll('[data-sec-countdown]');
+    nodes.forEach(function(node){
+      const position=open.find(function(p){return String(p.position_id)===String(node.dataset.secCountdown);});
+      if(position)node.textContent=secondsRemainingLabel(position.settle_at);
+    });
+    const latest=open.find(function(p){return String(p.position_id)===String(state._secLatestPositionId);})||open[0];
+    const countdown=$('#sec-countdown');
+    if(latest&&countdown){
+      countdown.style.display='block';
+      const cdn=$('#sec-cd-num');if(cdn)cdn.textContent=secondsRemainingLabel(latest.settle_at);
+    }else if(countdown)countdown.style.display='none';
+    open.forEach(function(position){
+      const id=String(position.position_id||'');
+      if(id&&Number(position.settle_at)*1000<=Date.now()&&!autoSettlementAttempted.has(id)&&!settlingPositionIds.has(id)){
+        autoSettlementAttempted.add(id);
+        settlePosition(id,position.symbol);
+      }
+    });
+  }
+  const oldCountdown=state._secCd;if(oldCountdown)clearInterval(oldCountdown);
+  state._secCd=setInterval(updateSecondsCountdowns,250);
+  updateSecondsCountdowns();
+  $('[data-stab]').forEach(t=>t.onclick=()=>{stab=t.dataset.stab;$$('[data-stab]').forEach(x=>x.classList.remove('active'));t.classList.add('active');renderList(stab);});
   async function open(dir){
     if(!state.user){window.BTCBoxRequireLogin(location.hash);return;}
+    if(!policyReady){toast('Contract policy is unavailable. Refresh before opening a position.','warn');return;}
     if(!positionsReady){toast('Contract positions are not confirmed yet. Refresh before opening a new position.','warn');return;}
-    if(busy){toast('A position or an unconfirmed order is still active. Check Open Positions and do not submit again until its status is verified.','warn');return;}
+    if(secondsPolicy&&secondsPolicy.enabled===false){toast('Seconds contracts are currently paused by the administrator.','warn');return;}
+    if(busy){toast('A previous order request is still being reconciled. Do not repeat that request.','warn');return;}
     if(secondsPendingIntent){toast('A previous order is still unconfirmed. Do not submit another position until support reconciles it.','warn');return;}
-    const amt=parseFloat($('#sec-amount').value); if(!amt||amt<1){toast('Enter a valid amount (min 1 USDT).','err');return;}
-    const orderIntent={version:1,request_id:uid(),symbol:coin,direction:dir,duration_sec:dur,amount:String(amt),created_at:Date.now()};
+    const amountText=String($('#sec-amount').value||'').trim();
+    const amt=Number(amountText);
+    const minAmount=secondsPolicy?Number(secondsPolicy.min_order_amount):1;
+    const maxAmount=secondsPolicy?Number(secondsPolicy.max_order_amount):1e12;
+    if(!/^(?:0|[1-9][0-9]{0,19})(?:[.][0-9]{1,18})?$/.test(amountText)||!Number.isFinite(amt)||amt<minAmount||amt>maxAmount){toast('Enter an amount within the current administrator limits.','err');return;}
+    if(secondsPolicy&&secondsPolicy.enabled===false){toast('Seconds contracts are currently paused by the administrator.','warn');return;}
+    const orderIntent={version:1,request_id:uid(),symbol:coin,direction:dir,duration_sec:dur,amount:amountText,created_at:Date.now()};
     if(!persistPendingSecondsOrder(orderIntent)){
       toast('This browser cannot safely retain the order request ID. No order was sent. Enable site storage and try again.','err');
       return;
@@ -204,7 +284,7 @@ VIEWS.seconds.afterRender = function(){
     setSecondsEntryEnabled(false,'Order submission is being confirmed.');
     let r;
     try{
-      r=await apiAdapter.secondsOrder({symbol:orderIntent.symbol,direction:orderIntent.direction,duration_sec:orderIntent.duration_sec,amount:amt,request_id:orderIntent.request_id});
+      r=await apiAdapter.secondsOrder({symbol:orderIntent.symbol,direction:orderIntent.direction,duration_sec:orderIntent.duration_sec,amount:orderIntent.amount,request_id:orderIntent.request_id});
     }catch(_){
       r={ok:false,status:0,code:'NETWORK_ERROR',msg:'The order response was interrupted.'};
     }
@@ -251,23 +331,13 @@ VIEWS.seconds.afterRender = function(){
     }
     const clearedPending=clearPendingSecondsOrder();
     if(!clearedPending&&secondsUserKey)state._secondsOrderUnknownUserKey=secondsUserKey;
+    busy=!clearedPending;
+    setSecondsEntryEnabled(!busy,busy?'The saved request guard could not be cleared.':'');
     if(!state.secondsPositions||!Array.isArray(state.secondsPositions.open))state.secondsPositions={open:[],history:[]};
     if(r.position&&!state.secondsPositions.open.some(function(p){return p.position_id===r.position.position_id;}))state.secondsPositions.open.unshift(r.position);
+    state._secLatestPositionId=r.position.position_id;
     toast('Position opened: '+dir+' '+fmt(amt,2)+' USDT','ok'); renderList('open');
-    $('#sec-countdown').style.display='block';
-    const settleAt=Number(r.position.settle_at)*1000, posId=r.position.position_id;
-    state._secCd=setInterval(()=>{
-      const left=settleAt-Date.now();
-      if(left<=0){
-        if(state._secCd){clearInterval(state._secCd);state._secCd=null;}
-        const cdel=$('#sec-countdown');
-        if(cdel){cdel.style.display='block';cdel.innerHTML='<div class="cd-label">Settlement in progress</div><div class="cd-label" id="sec-settle-status">Waiting for server confirmation…</div>';}
-        settlePosition(posId,coin);
-      } else {
-        const cdn=$('#sec-cd-num');
-        if(cdn) cdn.textContent=Math.ceil(left/1000)+'s';
-      }
-    },250);
+    updateSecondsCountdowns();
   }
   $('#sec-up').onclick=()=>open('UP');
   $('#sec-down').onclick=()=>open('DOWN');

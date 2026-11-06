@@ -32,3 +32,5 @@ Before cutover:
 - Import/restore historical state into staging, reconcile balances and histories, and verify rollback.
 - Test idempotent retries and concurrent requests for deposits, withdrawals, earn, spot trade, and seconds contracts.
 - Keep financial writes disabled until all relevant reads and writes use the same authoritative ledger and the full-cutover approval is explicit.
+
+16. 0025_seconds_policy_snapshot_and_admin_queue_v1.sql — policy table and RPCs; policy-driven order validation; per-position policy version/payout snapshot; admin open-position read queue; settlement uses the stored payout rate. Timestamped CLI migration is under supabase/migrations/.

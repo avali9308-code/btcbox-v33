@@ -484,7 +484,7 @@ VIEWS.admin = function(){
     '<div id="admin-err" style="display:none" class="va-banner va-banner-err"></div>'+
     '<div class="card" style="padding:0;margin-bottom:16px">'+
       '<div style="display:flex;border-bottom:1px solid var(--border);overflow-x:auto" class="no-scrollbar">'+
-        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div>'+
+        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div><div class="tab" data-atab="seconds">秒合约</div>'+
       '</div>'+
       '<div id="admin-body" style="overflow-x:auto" class="scroll">'+skeleton(5,4)+'</div>'+
     '</div>'+
@@ -560,6 +560,65 @@ VIEWS.admin.afterRender = function(){
         render('withdrawals',true);
       }).catch(function(){
         $('#admin-body').innerHTML=emptyState('提现列表暂时不可用','网络错误。请刷新后再试。');
+      });
+      return;
+    }
+    if(tab==='seconds' && !loaded){
+      $('#admin-body').innerHTML=skeleton(6,3);
+      Promise.all([apiAdapter.adminSecondsPolicy(),apiAdapter.adminSecondsPositions({limit:200,offset:0})]).then(function(results){
+        const policyResult=results[0], positionsResult=results[1];
+        if(!policyResult||!policyResult.ok||!policyResult.policy){
+          $('#admin-body').innerHTML=emptyState('秒合约策略暂不可用','数据库策略表尚未完成迁移或管理员接口暂不可用。');
+          return;
+        }
+        const p=policyResult.policy;
+        let positions=positionsResult&&positionsResult.ok&&Array.isArray(positionsResult.positions)?positionsResult.positions:[];
+        const positionsAvailable=!!(positionsResult&&positionsResult.ok&&Array.isArray(positionsResult.positions));
+        const totalPositions=Number(positionsResult&&positionsResult.total||0);
+        const durationText=(p.allowed_durations||[]).join(', ');
+        const rowHtml=function(x){
+          return '<tr class="trow"><td class="td">'+escapeHtml(x.email||x.user_id)+'</td><td class="td num">'+escapeHtml(x.position_id)+'</td><td class="td">'+escapeHtml(x.symbol)+'/USDT</td><td class="td">'+escapeHtml(x.direction)+'</td><td class="td num">'+escapeHtml(x.amount)+'</td><td class="td">'+escapeHtml(x.duration_sec)+'s</td><td class="td num">'+escapeHtml((Number(x.payout_rate)*100).toFixed(2))+'%</td><td class="td">'+escapeHtml(x.settle_at?new Date(Number(x.settle_at)*1000).toLocaleString():'—')+'</td></tr>';
+        };
+        const queueMarkup=!positionsAvailable
+          ? '<div style="padding:16px;color:var(--warning)">未完成仓位列表加载失败。请检查数据库迁移状态与管理员接口；这里不会把加载失败显示成“没有订单”。</div>'
+          : positions.length
+            ? '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px"><thead><tr><th class="th">用户</th><th class="th">仓位 ID</th><th class="th">标的</th><th class="th">方向</th><th class="th num">金额</th><th class="th">周期</th><th class="th num">盈利比例</th><th class="th">结算时间</th></tr></thead><tbody id="admin-sec-rows">'+positions.map(rowHtml).join('')+'</tbody></table></div><div id="admin-sec-more-wrap" style="padding:12px;text-align:center"><button id="admin-sec-load-more" class="btn btn-ghost">加载更多</button></div>'
+            : '<div style="padding:20px;color:var(--text-muted)">当前没有未完成秒合约仓位。</div>';
+        $('#admin-body').innerHTML=
+          '<div style="padding:16px;border-bottom:1px solid var(--border)">'+
+            '<h3 style="margin:0 0 14px">秒合约规则设置</h3>'+
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">'+
+              '<label class="auth-label" style="display:flex;align-items:center;gap:8px"><input id="admin-sec-enabled" type="checkbox" '+(p.enabled?'checked':'')+'> 开放秒合约下单</label>'+
+              '<div><label class="auth-label">可选周期（秒，逗号分隔）</label><input id="admin-sec-durations" class="auth-input" value="'+escapeHtml(durationText)+'" placeholder="30,60,300,900"></div>'+
+              '<div><label class="auth-label">最低金额（USDT）</label><input id="admin-sec-min" class="auth-input num" type="number" min="0.00000001" step="any" value="'+escapeHtml(p.min_order_amount)+'"></div>'+
+              '<div><label class="auth-label">最高金额（USDT）</label><input id="admin-sec-max" class="auth-input num" type="number" min="0.00000001" step="any" value="'+escapeHtml(p.max_order_amount)+'"></div>'+
+              '<div><label class="auth-label">盈利比例（%，最低 85）</label><input id="admin-sec-payout" class="auth-input num" type="number" min="85" step="0.01" value="'+escapeHtml((Number(p.payout_rate)*100).toFixed(2))+'"></div>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap"><button id="admin-sec-save" class="btn btn-primary">保存秒合约规则</button><span style="font-size:12px;color:var(--text-muted)">当前规则版本：'+escapeHtml(p.policy_version)+'</span><span style="font-size:12px;color:var(--text-muted)">新规则只影响新开仓位。</span></div>'+
+          '</div>'+
+          '<div style="padding:16px"><h3 style="margin:0 0 12px">全部未完成仓位（'+escapeHtml(totalPositions)+'）</h3>'+queueMarkup+'</div>';
+        const more=$('#admin-sec-load-more');
+        if(more)more.onclick=async function(){
+          more.disabled=true;more.textContent='加载中…';
+          const next=await apiAdapter.adminSecondsPositions({limit:200,offset:positions.length});
+          if(!next||!next.ok||!Array.isArray(next.positions)){more.disabled=false;more.textContent='加载更多';toast('更多未完成仓位暂时无法加载。','err');return;}
+          positions=positions.concat(next.positions);
+          const tbody=$('#admin-sec-rows');if(tbody)tbody.innerHTML=positions.map(rowHtml).join('');
+          if(positions.length>=totalPositions){const wrap=$('#admin-sec-more-wrap');if(wrap)wrap.remove();}
+          else{more.disabled=false;more.textContent='加载更多';}
+        };
+        const save=$('#admin-sec-save');
+        if(save)save.onclick=async function(){
+          const durations=String($('#admin-sec-durations').value||'').split(',').map(function(v){return Number(v.trim());}).filter(function(v){return Number.isFinite(v);});
+          const payout=Number($('#admin-sec-payout').value);
+          const payload={enabled:$('#admin-sec-enabled').checked,allowed_durations:durations,
+            min_order_amount:$('#admin-sec-min').value,max_order_amount:$('#admin-sec-max').value,payout_rate:payout/100};
+          await runAdminAction(save,()=>apiAdapter.adminSecondsPolicyUpdate(payload),'规则已保存');
+          const latest=await apiAdapter.adminSecondsPolicy();
+          if(latest&&latest.ok&&latest.policy)render('seconds',false);
+        };
+      }).catch(function(){
+        $('#admin-body').innerHTML=emptyState('秒合约数据暂不可用','请检查管理员权限和数据库连接，稍后刷新重试。');
       });
       return;
     }

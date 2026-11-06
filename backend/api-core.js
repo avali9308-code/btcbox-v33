@@ -181,7 +181,6 @@ async function matchingRpc(name, payload) {
 // price itself from the same trusted feeds as /api/market; client-supplied
 // prices are never trusted for balance-affecting operations.
 const SECONDS_ALLOWED_SYMBOLS = new Set(['BTC', 'ETH', 'SOL', 'BNB']);
-const SECONDS_ALLOWED_DURATIONS = new Set([30, 60, 300, 900]);
 async function fetchSecondsReferencePrice(symbol) {
   if (!SECONDS_ALLOWED_SYMBOLS.has(symbol)) throw new Error('symbol unsupported');
   const fetchJson = async url => {
@@ -1470,6 +1469,26 @@ async function handleRequest(event, context) {
   // The client never mutates BTCBOX.account.balances directly; it refreshes
   // from /api/account after each confirmed operation.
 
+  // ---------- GET /api/seconds/policy ----------
+  if (path === 'seconds/policy' && method === 'GET') {
+    try {
+      const base = process.env.SUPABASE_URL.replace(/\\/+$/, '');
+      const rpc = await fetch(base + '/rest/v1/rpc/read_seconds_policy_v1', {
+        method: 'POST', headers: supabaseHeaders(), body: '{}'
+      });
+      const result = await rpc.json().catch(() => null);
+      if (!rpc.ok || !result || result.ok !== true) {
+        return json({ ok: false, code: 'SECONDS_POLICY_UNAVAILABLE', msg: 'Contract policy is temporarily unavailable.' }, 503);
+      }
+      const publicPolicy = Object.assign({}, result.policy, {
+        enabled: result.policy.enabled === true && financialWritesEnabled()
+      });
+      return json({ ok: true, policy: publicPolicy });
+    } catch (_) {
+      return json({ ok: false, code: 'SECONDS_POLICY_UNAVAILABLE', msg: 'Contract policy is temporarily unavailable.' }, 503);
+    }
+  }
+
   // ---------- POST /api/seconds/order ----------
   if (path === 'seconds/order' && method === 'POST') {
     if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true }, 401);
@@ -1482,24 +1501,38 @@ async function handleRequest(event, context) {
     const symbol = String(body.symbol || 'BTC').toUpperCase();
     const direction = String(body.direction || 'up').toLowerCase();
     const durationSec = Number(body.duration_sec || body.duration || 30);
-    const amount = parseMoneyInput(body.amount);
+    const amountText = typeof body.amount === 'string' ? body.amount.trim() : '';
+    const amount = Number(amountText);
     const requestId = String(body.request_id || '').trim();
     if (!SECONDS_ALLOWED_SYMBOLS.has(symbol)) return json({ ok: false, msg: 'This trading pair is not supported for short-term contracts.' }, 400);
     if (!['up', 'down'].includes(direction)) return json({ ok: false, msg: 'Invalid trade direction.' }, 400);
-    if (!SECONDS_ALLOWED_DURATIONS.has(durationSec)) return json({ ok: false, msg: 'Invalid contract duration.' }, 400);
-    if (amount === null || amount <= 0 || amount > 1e12) return json({ ok: false, msg: 'Invalid investment amount.' }, 400);
+    if (!Number.isSafeInteger(durationSec) || durationSec < 1 || durationSec > 2147483647) return json({ ok: false, msg: 'Invalid contract duration.' }, 400);
+    if (!/^(?:0|[1-9][0-9]{0,19})(?:[.][0-9]{1,18})?$/.test(amountText) || !Number.isFinite(amount) || amount <= 0) return json({ ok: false, msg: 'Invalid investment amount.' }, 400);
     if (!/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) return json({ ok: false, code: 'IDEMPOTENCY_KEY_REQUIRED', msg: 'A valid request ID (16-100 characters) is required.' }, 400);
     let ref;
     try { ref = await fetchSecondsReferencePrice(symbol); }
     catch (_) { return json({ ok: false, code: 'REFERENCE_PRICE_UNAVAILABLE', msg: 'The reference price is currently unavailable. No order was created.' }, 503); }
     const positionId = 'SC' + crypto.createHash('sha256').update(String(user.uid) + '|' + requestId).digest('hex').slice(0, 30);
-    const requestHash = crypto.createHash('sha256').update(JSON.stringify({ user_id: String(user.uid), symbol, direction, amount: String(amount), duration_sec: durationSec, request_id: requestId })).digest('hex');
+    const requestHash = crypto.createHash('sha256').update(JSON.stringify({ user_id: String(user.uid), symbol, direction, amount: amountText, duration_sec: durationSec, request_id: requestId })).digest('hex');
     const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
     try {
-      const rpc = await fetch(base + '/rest/v1/rpc/submit_seconds_order_v1', { method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_position_id: positionId, p_user_id: String(user.uid), p_symbol: symbol, p_direction: direction, p_amount: String(amount), p_duration_sec: durationSec, p_open_price: String(ref.price), p_request_id: requestId, p_request_hash: requestHash }) });
+      const rpc = await fetch(base + '/rest/v1/rpc/submit_seconds_order_v1', { method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_position_id: positionId, p_user_id: String(user.uid), p_symbol: symbol, p_direction: direction, p_amount: amountText, p_duration_sec: durationSec, p_open_price: String(ref.price), p_request_id: requestId, p_request_hash: requestHash }) });
       const result = await rpc.json().catch(() => null);
-      if (!rpc.ok || !result || result.ok !== true || !result.position_id) return json({ ok: false, code: 'FINANCIAL_RPC_FAILED', msg: 'The database did not confirm the contract order. Funds were not changed; verify the order status before retrying.', duplicate: !!(result && result.duplicate) }, rpc.status === 400 ? 400 : 503);
-      return json({ ok: true, server_now: Date.now(), duplicate: !!result.duplicate, position_id: result.position_id, symbol: symbol, direction: direction, amount: amount, duration_sec: durationSec, open_price: ref.price, open_price_source: ref.source, settle_at: result.settle_at, msg: result.duplicate ? 'This order request has already been processed. Do not submit it again.' : 'Position opened successfully. Funds have been reserved.' });
+      if (!rpc.ok || !result || result.ok !== true || !result.position_id) {
+        const code = result && result.code ? String(result.code) : 'FINANCIAL_RPC_FAILED';
+        const known = {
+          INVALID_ARGUMENT: [400, 'The contract order parameters are invalid.'],
+          IDEMPOTENCY_CONFLICT: [409, 'This request ID was already used with different order parameters.'],
+          SECONDS_POLICY_NOT_CONFIGURED: [503, 'Contract policy is not configured.'],
+          SECONDS_TRADING_DISABLED: [403, 'Seconds contracts are currently paused by the administrator.'],
+          INVALID_DURATION: [400, 'This contract duration is not currently available.'],
+          AMOUNT_OUT_OF_POLICY_RANGE: [400, 'The amount is outside the current administrator limits.'],
+          INSUFFICIENT_BALANCE: [409, 'Insufficient available USDT balance.']
+        };
+        const failure = known[code] || [rpc.status === 400 ? 400 : 503, 'The database did not confirm the contract order. Verify order status before retrying.'];
+        return json({ ok: false, code: code, msg: failure[1], duplicate: !!(result && result.duplicate) }, failure[0]);
+      }
+      return json({ ok: true, server_now: Date.now(), duplicate: !!result.duplicate, position_id: result.position_id, symbol: symbol, direction: direction, amount: amountText, duration_sec: durationSec, open_price: ref.price, open_price_source: ref.source, settle_at: result.settle_at, policy_version: result.policy_version, payout_rate: result.payout_rate, msg: result.duplicate ? 'This order request has already been processed. Do not submit it again.' : 'Position opened successfully. Funds have been reserved.' });
     } catch (e) { return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'The financial database is unavailable. The order is unconfirmed and funds were not changed.' }, 503); }
   }
 
@@ -1765,6 +1798,81 @@ async function handleRequest(event, context) {
             body: JSON.stringify({ p_action: String(action), p_uid: String(uid || ''), p_by: 'admin', p_detail: String(detail || '').slice(0, 300) })
           }).catch(function (e) { console.warn('[audit-log] PG append failed (JSON blob fallback):', e.message); });
         }
+      }
+    }
+
+    // GET/POST /api/admin/seconds-policy — policy is persisted and enforced by PostgreSQL.
+    if (sub === 'seconds-policy' && (method === 'GET' || method === 'POST')) {
+      try {
+        const base = process.env.SUPABASE_URL.replace(/\\/+$/, '');
+        let rpcName = 'read_seconds_policy_v1';
+        let payload = {};
+        if (method === 'POST') {
+          const durations = Array.isArray(body.allowed_durations) ? body.allowed_durations.map(Number) : [];
+          const minAmountText = typeof body.min_order_amount === 'string' ? body.min_order_amount.trim() : '';
+          const maxAmountText = typeof body.max_order_amount === 'string' ? body.max_order_amount.trim() : '';
+          const minAmount = Number(minAmountText);
+          const maxAmount = Number(maxAmountText);
+          const payoutRate = Number(body.payout_rate);
+          const validMoneyText = /^(?:0|[1-9][0-9]{0,19})(?:[.][0-9]{1,18})?$/;
+          if (typeof body.enabled !== 'boolean' || !durations.length || durations.length > 20 ||
+              durations.some(function (v) { return !Number.isSafeInteger(v) || v < 1 || v > 2147483647; }) ||
+              new Set(durations).size !== durations.length ||
+              !validMoneyText.test(minAmountText) || !Number.isFinite(minAmount) || minAmount <= 0 ||
+              !validMoneyText.test(maxAmountText) || !Number.isFinite(maxAmount) || maxAmount <= 0 ||
+              !Number.isFinite(payoutRate) || payoutRate < 0.85) {
+            return json({ ok: false, code: 'INVALID_SECONDS_POLICY', msg: 'Check enabled state, unique positive integer durations, amount range, and payout rate (minimum 85%).' }, 400);
+          }
+          rpcName = 'update_seconds_policy_v1';
+          payload = {
+            p_enabled: body.enabled,
+            p_allowed_durations: durations,
+            p_min_order_amount: minAmountText,
+            p_max_order_amount: maxAmountText,
+            p_payout_rate: String(payoutRate),
+            p_admin_id: String(process.env.ADMIN_USER || 'admin')
+          };
+        }
+        const rpc = await fetch(base + '/rest/v1/rpc/' + rpcName, {
+          method: 'POST', headers: supabaseHeaders(), body: JSON.stringify(payload)
+        });
+        const result = await rpc.json().catch(() => null);
+        if (!rpc.ok || !result || result.ok !== true) {
+          const code = (result && result.code) || 'SECONDS_POLICY_RPC_FAILED';
+          const status = code === 'INVALID_SECONDS_POLICY' ? 400 : (rpc.status === 400 ? 400 : 503);
+          return json({ ok: false, code: code,
+            msg: status === 400 ? 'The seconds policy values are invalid.' : 'Seconds policy could not be confirmed by the database. No policy change is confirmed.' }, status);
+        }
+        if (method === 'POST') auditAdmin('seconds_policy_update', '', JSON.stringify(result.policy));
+        return json({ ok: true, policy: result.policy });
+      } catch (_) {
+        return json({ ok: false, code: 'SECONDS_POLICY_RPC_UNAVAILABLE', msg: 'Seconds policy database is unavailable.' }, 503);
+      }
+    }
+
+    // GET /api/admin/seconds-positions — paginated read-only queue of every open position.
+    if (sub === 'seconds-positions' && method === 'GET') {
+      const params = event.queryStringParameters || {};
+      const limit = Math.min(500, Math.max(1, Number.parseInt(params.limit || '200', 10) || 200));
+      const offset = Math.max(0, Number.parseInt(params.offset || '0', 10) || 0);
+      try {
+        const base = process.env.SUPABASE_URL.replace(/\\/+$/, '');
+        const rpc = await fetch(base + '/rest/v1/rpc/read_admin_seconds_positions_v1', {
+          method: 'POST', headers: supabaseHeaders(),
+          body: JSON.stringify({ p_limit: limit, p_offset: offset })
+        });
+        const result = await rpc.json().catch(() => null);
+        if (!rpc.ok || !result || result.ok !== true || !Array.isArray(result.positions)) {
+          return json({ ok: false, code: 'SECONDS_POSITION_QUEUE_UNAVAILABLE', msg: 'Open contract positions could not be loaded.' }, 503);
+        }
+        const usersById = new Map(Object.values(db.users).map(function (u) { return [String(u.uid), u]; }));
+        const positions = result.positions.map(function (p) {
+          const owner = usersById.get(String(p.user_id));
+          return Object.assign({}, p, { email: owner ? (owner.email || '') : '' });
+        });
+        return json({ ok: true, positions: positions, total: Number(result.total || 0), limit: limit, offset: offset });
+      } catch (_) {
+        return json({ ok: false, code: 'SECONDS_POSITION_QUEUE_UNAVAILABLE', msg: 'Open contract positions could not be loaded.' }, 503);
       }
     }
 
