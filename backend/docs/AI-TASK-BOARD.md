@@ -984,3 +984,14 @@ The earlier open item saying 1号 must confirm a Home route is superseded by sou
 - Required implementation: compact address-config tab using existing API; align supported asset set (USDT/BTC/ETH/SOL/BNB/USDC) across deposit addresses, admin account asset rows, and manual-credit API. Keep format validation, fail-closed missing addresses, atomic RPC/idempotency/audit, and financial cutover gate.
 - Owner handoff: AI 1 implementation owner for active Admin Console view and API source changes; AI 2 independent QA on exact SHA; AI 3 maintains contract and integration gate.
 - No code, SQL, database, environment, merge or deployment changes in this coordination batch. Tests/runtime/browser: NOT RUN.
+
+
+## AI 3 batch — manual deposit configuration implementation — 2026-11-06
+
+- IMPLEMENTED IN SOURCE on `fix/manual-withdrawal-rpc-compat-20261106`: added the Admin Console `充值地址` tab using the existing authenticated `GET/POST /api/admin/config` adapter. It loads saved addresses, edits all eight supported coin/network keys, saves, reports loading/error/success, and allows a blank value to explicitly deactivate a network address.
+- IMPLEMENTED IN SOURCE: aligned safe address projection, admin account-balance asset validation, and manual-credit API whitelist with the six supported assets USDT/BTC/ETH/SOL/BNB/USDC. User admin account panel now renders all six asset rows; UID and asset remain auto-bound and amount is the only required manual-credit field.
+- PRESERVED: user deposit page selects exact coin/network and reads configured address; unset addresses remain unavailable; manual credit remains gated by `financialWritesEnabled()`, uses `admin_manual_deposit_atomic`, idempotency and audit. No pending deposit orders, chain watcher, automatic credit, extra approval tier, or withdrawal/Seconds/V211 changes were added in this batch.
+- Regression file added: `backend/tests/manual-deposit-config.test.js` (5 tests). A source-level integration audit performed after the final commit passed 10/10 targeted assertions across API/UI/network keys/asset sets/adapter/financial gate.
+- Latest source HEAD: `c82c07acad6df6e3bdc83de9f8be2b29bbade790`. Feature branch is 41 commits ahead / 0 behind main baseline `18a354a9e8e1d0365e240c7c44eda4a18d62ce07`.
+- NOT RUN: Node test suite, build, browser verification, isolated PostgreSQL behavior. GitHub Actions lookup for this exact SHA returned zero workflow runs and combined commit status had no contexts. Static assertions are not a substitute for these tests.
+- NO production DB writes, migrations, financial flag changes, merge, or deployment were performed. Issue #2 remains open pending actual test/QA evidence.
