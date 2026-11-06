@@ -48,8 +48,8 @@
 
 ## Supabase 集成步骤
 1. 创建 Supabase 项目，记录 URL / service_role / publishable key。
-2. 按 `supabase/sql/` 编号顺序（0001→0022）应用迁移（可用 `scripts/run_migrations.sh`，本地用 `docker-compose.yml` 演练）。
-3. 用 `scripts/check_migration_status.py` 确认全部迁移已应用。
+2. 数据库迁移尚未完成隔离 PostgreSQL 全链验证前，不得应用到托管项目。当前完整业务 SQL 在 `supabase/sql/`；`scripts/run_migrations.sh` 仅用于本地/隔离测试，且会跳过 0017–0020 暂存/诊断文件。旧 `supabase-migration-runner.sql` 已废弃，禁止执行。
+3. `supabase/migrations/` 目前只有 0024/0025 的时间戳镜像，不是空数据库初始化路径；不要把它们单独通过 Supabase CLI 推送。先解决 hosted migration history drift 并取得明确审批。
 4. 用 `scripts/reconcile_balances.py` 做余额=账本轧差校验。
 5. 在 Supabase Auth 启用 Google Provider（`/api/auth-health` 会探测）。
 6. 轮换旧 service_role key（旧密钥在 Supabase 端停用）。
