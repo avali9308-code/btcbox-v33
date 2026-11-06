@@ -166,6 +166,13 @@ test('all six admin sensitive actions require confirmAdminAction before executio
 
 /* ---------- withdrawal / deposit UI hints ---------- */
 
+test('admin users tab loads the API list and renders its normalized response fields', () => {
+  const admin = read('assets/js/views-account.js');
+  assert.ok(admin.includes("apiAdapter.adminUsers().then"), 'admin users list is not loaded from the API');
+  assert.ok(admin.includes("u.kyc_status||'unverified'"), 'admin KYC status does not match the API response');
+  assert.ok(admin.includes('fmt(u.total_usdt,2)'), 'admin balance display does not match the API response');
+});
+
 test('admin deposits tab provides direct audited manual-credit form without a user claim queue', () => {
   const admin = read('assets/js/views-account.js');
   assert.ok(admin.includes('id="admin-deposit-form"'), 'manual credit form missing');
