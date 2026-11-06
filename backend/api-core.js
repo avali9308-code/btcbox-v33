@@ -1010,7 +1010,7 @@ async function handleRequest(event, context) {
     if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true }, 401);
     if (!financialPostgresReadsEnabled()) return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
     try {
-      const response = await fetch(process.env.SUPABASE_URL.replace(/\\/+$/, '') + '/rest/v1/rpc/read_withdrawal_history_v1', {
+      const response = await fetch(process.env.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/read_withdrawal_history_v1', {
         method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_user_id: String(user.uid) })
       });
       const result = await response.json().catch(() => null);
@@ -2111,7 +2111,7 @@ async function handleRequest(event, context) {
       const adminId = String(process.env.ADMIN_USER || '').trim();
       if (!adminId) return json({ ok: false, code: 'ADMIN_ACTOR_NOT_CONFIGURED', msg: 'Administrator audit identity not configured. Payout status was not changed.' }, 503);
       try {
-        const rpc = await fetch(process.env.SUPABASE_URL.replace(/\\/+$/, '') + '/rest/v1/rpc/mark_withdrawal_paid_atomic', {
+        const rpc = await fetch(process.env.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/mark_withdrawal_paid_atomic', {
           method: 'POST', headers: supabaseHeaders(),
           body: JSON.stringify({ p_withdrawal_id: wdId, p_admin_id: adminId, p_reference: reference, p_note: note })
         });
