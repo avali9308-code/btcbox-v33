@@ -1,6 +1,6 @@
 # Financial SQL migration order and cutover gates
 
-> **编号约定（phase2）**: 本目录下迁移已统一重命名为 `0001_xxx.sql` … `0024_xxx.sql`，按编号升序应用即可。`0001_btcbox_state_cas.sql` 为基础，`0002–0015` 为有序业务 RPC，`0016` 为可选自动化链上验证，`0017–0020` 为 staging/对账，`0021` 为管理员审计日志 append-only 表，`0022` 为提现人工审核状态扩展。用 `scripts/check_migration_status.py` 校验编号连续性与已应用状态。
+> **编号约定（phase2）**: 本目录下编号 SQL 由 `scripts/run_migrations.sh` 按升序执行。`0001` 为基础，`0002–0021` 建立账本、业务 RPC 与审计结构；`0022` 是提现生命周期兼容检查点，不再创建第二套表或 RPC；`0023` 增加人工转账完成记录；`0024–0025` 是秒合约后续迁移。此顺序必须先在隔离 PostgreSQL 环境完整验证，不能据此重放到已存在的托管数据库。
 
 
 Apply these migrations to a dedicated staging project in dependency order. These files are migrations, not read-only reports; audit scripts and staging drill outputs are not migrations. Complete the checks before production cutover.
@@ -33,4 +33,6 @@ Before cutover:
 - Test idempotent retries and concurrent requests for deposits, withdrawals, earn, spot trade, and seconds contracts.
 - Keep financial writes disabled until all relevant reads and writes use the same authoritative ledger and the full-cutover approval is explicit.
 
-16. 0025_seconds_policy_snapshot_and_admin_queue_v1.sql — policy table and RPCs; policy-driven order validation; per-position policy version/payout snapshot; admin open-position read queue; settlement uses the stored payout rate. Timestamped CLI migration is under supabase/migrations/.
+16. `0023_withdrawal_manual_payout_completion_v1.sql` — records the external manual payout reference after an approved withdrawal; it does not send funds.
+17. `0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql` — forward migration: removes only the one-open-position partial unique index and fixes settlement request-ID/hash handling. Timestamped CLI copy is under `supabase/migrations/`.
+18. `0025_seconds_policy_snapshot_and_admin_queue_v1.sql` — policy table and RPCs; policy-driven order validation; per-position policy version/payout snapshot; admin open-position read queue; settlement uses the stored payout rate. Timestamped CLI migration is under `supabase/migrations/`.
