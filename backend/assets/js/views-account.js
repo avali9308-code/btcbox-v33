@@ -497,7 +497,7 @@ VIEWS.admin.afterRender = function(){
       $('#admin-stats').innerHTML='';
       return;
     }
-    var cards=[['总用户数',r.total_users,'var(--brand-bright)'],['待审批提币',r.pending_withdrawals,'var(--warning)'],['待审核 KYC',r.pending_kyc,'var(--down)'],['充值地址数',r.deposit_addresses,'var(--text-secondary)']];
+    var cards=[['总用户数',r.total_users,'var(--brand-bright)'],['待处理提现',r.pending_withdrawals,'var(--warning)'],['待审核 KYC',r.pending_kyc,'var(--down)'],['充值地址数',r.deposit_addresses,'var(--text-secondary)']];
     $('#admin-stats').innerHTML=cards.map(function(c){
       return '<div class="card va-stat"><div class="va-stat-label">'+c[0]+'</div><div class="va-stat-val" style="color:'+c[2]+'">'+fmt(c[1],0)+'</div></div>';
     }).join('');
@@ -547,7 +547,22 @@ VIEWS.admin.afterRender = function(){
         ]});
     });
   }
-  function render(tab){
+  function render(tab, loaded){
+    if(tab==='withdrawals' && !loaded){
+      $('#admin-body').innerHTML=skeleton(6,3);
+      apiAdapter.adminWithdrawals().then(function(r){
+        if(!r||!r.ok||!Array.isArray(r.withdrawals)){
+          $('#admin-body').innerHTML=emptyState('提现列表暂时不可用','请检查管理员权限和财务数据库连接，稍后刷新重试。');
+          return;
+        }
+        if(!state.admin) state.admin={};
+        state.admin.withdrawals=r.withdrawals;
+        render('withdrawals',true);
+      }).catch(function(){
+        $('#admin-body').innerHTML=emptyState('提现列表暂时不可用','网络错误。请刷新后再试。');
+      });
+      return;
+    }
     if(tab==='users'){
       if(!state.admin.users||!state.admin.users.length){$('#admin-body').innerHTML=emptyState('暂无用户数据','用户列表为空。');return;}
       $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">UID</th><th class="th">邮箱</th><th class="th">KYC</th><th class="th">状态</th><th class="th" style="text-align:right">余额 (USDT)</th><th class="th">操作</th></tr></thead><tbody>'+
@@ -575,14 +590,45 @@ VIEWS.admin.afterRender = function(){
         await runAdminAction(b,()=>apiAdapter.adminConfirmDeposit({id:d.id,uid:d.uid,coin:d.coin,amount:d.amount,reference:d.reference,note:'manual',idempotency_key:uid()}),'充值已确认');
       };});
     } else if(tab==='withdrawals'){
-      var wlist=(state.admin.withdrawals||[]).filter(function(w){return w.status==='pending';});
-      if(!wlist.length){$('#admin-body').innerHTML=emptyState('暂无待审批提币','所有提币均已处理。');return;}
-      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">ID</th><th class="th">用户</th><th class="th">币种</th><th class="th" style="text-align:right">数量</th><th class="th">地址</th><th class="th">操作</th></tr></thead><tbody>'+
+      var wlist=(state.admin.withdrawals||[]).filter(function(w){return w.status==='pending'||w.status==='approved';});
+      if(!wlist.length){$('#admin-body').innerHTML=emptyState('暂无待处理提现','新提现申请会显示在这里；已批准的申请需要人工转账后标记完成。');return;}
+      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:900px"><thead><tr><th class="th">ID</th><th class="th">用户</th><th class="th">币种</th><th class="th" style="text-align:right">数量</th><th class="th">网络</th><th class="th">收款地址</th><th class="th">状态</th><th class="th">操作</th></tr></thead><tbody>'+
         wlist.map(function(w){
-          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(w.id)+'</td><td class="td">'+escapeHtml(w.uid)+'</td><td class="td">'+escapeHtml(w.coin)+'</td><td class="td num" style="text-align:right">'+fmt(w.amount,w.coin==='USDT'?2:6)+'</td><td class="td num" style="font-size:11px;color:var(--text-secondary)">'+escapeHtml(w.address)+'</td><td class="td"><button class="aw-approve" data-id="'+escapeHtml(w.id)+'" style="color:var(--up);font-weight:600;font-size:12px;margin-right:10px;background:none;border:none;cursor:pointer">批准</button><button class="aw-reject" data-id="'+escapeHtml(w.id)+'" style="color:var(--down);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer">驳回</button></td></tr>';
+          var pending=w.status==='pending';
+          var action=pending
+            ? '<button class="aw-approve" data-id="'+escapeHtml(w.id)+'" style="color:var(--up);font-weight:600;font-size:12px;margin-right:10px;background:none;border:none;cursor:pointer">批准</button><button class="aw-reject" data-id="'+escapeHtml(w.id)+'" style="color:var(--down);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer">驳回</button>'
+            : '<button class="aw-paid" data-id="'+escapeHtml(w.id)+'" style="color:var(--brand-bright);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer">标记已转账</button>';
+          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(w.id)+'</td><td class="td">'+escapeHtml(w.uid)+'</td><td class="td">'+escapeHtml(w.coin)+'</td><td class="td num" style="text-align:right">'+fmt(w.amount,w.coin==='USDT'?2:6)+'<div style="font-size:10px;color:var(--text-muted)">Fee '+fmt(w.fee,w.coin==='USDT'?2:6)+'</div></td><td class="td">'+escapeHtml(w.network)+'</td><td class="td num" style="font-size:11px;color:var(--text-secondary);word-break:break-all;max-width:220px">'+escapeHtml(w.address)+'</td><td class="td">'+(pending?'<span style="color:var(--warning)">待审核</span>':'<span style="color:var(--brand-bright)">已批准·待人工转账</span>')+'</td><td class="td">'+action+'</td></tr>';
         }).join('')+'</tbody></table>';
-      $('.aw-approve').forEach(function(b){b.onclick=async function(){var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};var ok=await confirmAdminAction('批准提币','<b>提币 ID：</b>'+escapeHtml(b.dataset.id)+'<br><b>用户 UID：</b>'+escapeHtml(w.uid||'—')+'<br><b>币种/数量：</b>'+escapeHtml(w.coin||'—')+' '+escapeHtml(w.amount||'—')+'<br><b>目标地址：</b>'+escapeHtml(w.address||'—'));if(!ok)return;await runAdminAction(b,()=>apiAdapter.adminApproveWithdraw(b.dataset.id),'提币审批已提交');};});
-      $('.aw-reject').forEach(function(b){b.onclick=async function(){var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};var ok=await confirmAdminAction('驳回提币','<b>提币 ID：</b>'+escapeHtml(b.dataset.id)+'<br><b>用户 UID：</b>'+escapeHtml(w.uid||'—')+'<br><b>币种/数量：</b>'+escapeHtml(w.coin||'—')+' '+escapeHtml(w.amount||'—')+'<br><b>目标地址：</b>'+escapeHtml(w.address||'—')+'<br><b>驳回原因：</b>地址不匹配 (Address mismatch)');if(!ok)return;await runAdminAction(b,()=>apiAdapter.adminRejectWithdraw({id:b.dataset.id,reason:'Address mismatch'}),'提币驳回已提交');};});
+      $('.aw-approve').forEach(function(b){b.onclick=async function(){
+        var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};
+        var ok=await confirmAdminAction('批准提现','<b>提现 ID：</b>'+escapeHtml(b.dataset.id)+'<br><b>用户 UID：</b>'+escapeHtml(w.uid||'—')+'<br><b>币种/数量：</b>'+escapeHtml(w.coin||'—')+' '+escapeHtml(w.amount||'—')+'<br><b>网络：</b>'+escapeHtml(w.network||'—')+'<br><b>目标地址：</b>'+escapeHtml(w.address||'—')+'<br><b>批准后：</b>金额完成账本扣除，但仍需工作人员手动转账。');
+        if(!ok)return;
+        await runAdminAction(b,()=>apiAdapter.adminApproveWithdraw(b.dataset.id),'提现已批准');
+        render('withdrawals');
+      };});
+      $('.aw-reject').forEach(function(b){b.onclick=async function(){
+        var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};
+        var ok=await confirmAdminAction('驳回提现','<b>提现 ID：</b>'+escapeHtml(b.dataset.id)+'<br><b>用户 UID：</b>'+escapeHtml(w.uid||'—')+'<br><b>币种/数量：</b>'+escapeHtml(w.coin||'—')+' '+escapeHtml(w.amount||'—')+'<br><b>目标地址：</b>'+escapeHtml(w.address||'—')+'<br><b>驳回后：</b>系统会退回预留金额。');
+        if(!ok)return;
+        await runAdminAction(b,()=>apiAdapter.adminRejectWithdraw({id:b.dataset.id,reason:'Rejected by administrator'}),'提现已驳回');
+        render('withdrawals');
+      };});
+      $('.aw-paid').forEach(function(b){b.onclick=async function(){
+        var w=(state.admin.withdrawals||[]).find(function(x){return String(x.id)===String(b.dataset.id);})||{};
+        var reference=await new Promise(function(resolve){
+          if(!(window.BTCBox&&BTCBox.modal)){resolve(null);return;}
+          BTCBox.modal({title:'记录人工转账完成',width:'md',closable:true,
+            content:'<div style="font-size:13px;line-height:1.7;margin-bottom:12px">请先确认工作人员已向用户提供的地址实际转账。此操作只记录已完成，不会再次扣款。</div><div class="va-field"><label class="auth-label">TxID / 转账参考号（可选）</label><input id="admin-payout-reference" class="auth-input num" maxlength="160" placeholder="输入交易哈希或转账参考号"></div>',
+            buttons:[
+              {text:'取消',variant:'ghost',onClick:function(close){close();resolve(null);}},
+              {text:'确认已转账',variant:'primary',onClick:function(close){var input=document.getElementById('admin-payout-reference');var value=input?input.value.trim():'';close();resolve(value);}}
+            ]});
+        });
+        if(reference===null)return;
+        await runAdminAction(b,()=>apiAdapter.adminMarkWithdrawPaid({id:b.dataset.id,reference:reference,note:'Staff manually transferred funds.'}),'已记录转账完成');
+        render('withdrawals');
+      };});
     } else {
       var klist=(state.admin.kycs||[]).filter(function(k){return k.status==='pending';});
       if(!klist.length){$('#admin-body').innerHTML=emptyState('暂无待审核 KYC','所有 KYC 申请均已审核。');return;}
