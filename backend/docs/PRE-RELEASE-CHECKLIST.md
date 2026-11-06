@@ -18,7 +18,7 @@
 ## C. 测试通过
 - [ ] `npm install && npm test` 全部通过（原有 60 + 新增后端测试）
 - [ ] `scripts/check_migration_status.py --offline` 迁移编号连续无断档
-- [ ] 本地 `docker-compose up` + `scripts/run_migrations.sh` 迁移全部应用成功
+- [ ] 本地 `docker-compose up` + `scripts/run_migrations.sh` operational migrations 全部应用成功；0017–0020 暂存/诊断 SQL 已由 runner 跳过并单独按 staging 流程执行
 - [ ] `scripts/reconcile_balances.py` 对账通过（ staging 环境）
 - [ ] 提现白名单拒绝、新地址冷却、首次/大额人工审核、资金密码锁定、管理员登录锁定均在 staging 验证
 

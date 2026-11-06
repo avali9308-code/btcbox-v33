@@ -181,7 +181,6 @@ async function matchingRpc(name, payload) {
 // price itself from the same trusted feeds as /api/market; client-supplied
 // prices are never trusted for balance-affecting operations.
 const SECONDS_ALLOWED_SYMBOLS = new Set(['BTC', 'ETH', 'SOL', 'BNB']);
-const SECONDS_ALLOWED_DURATIONS = new Set([30, 60, 300, 900]);
 async function fetchSecondsReferencePrice(symbol) {
   if (!SECONDS_ALLOWED_SYMBOLS.has(symbol)) throw new Error('symbol unsupported');
   const fetchJson = async url => {
@@ -240,7 +239,7 @@ async function readAdminAccountBalances(userIds) {
       // This UI currently supports only these ledger assets. Reject unexpected
       // asset keys rather than silently passing malformed/unsupported balances
       // into valuation and admin controls.
-      if (!['USDT', 'BTC', 'ETH', 'SOL'].includes(asset)) throw new Error('Admin account balance response invalid');
+      if (!['USDT', 'BTC', 'ETH', 'SOL', 'BNB', 'USDC'].includes(asset)) throw new Error('Admin account balance response invalid');
       const b = assets[asset];
       if (!b || !Number.isFinite(b.free) || !Number.isFinite(b.frozen) || b.free < 0 || b.frozen < 0) throw new Error('Admin account balance response invalid');
     }
@@ -471,6 +470,27 @@ function secCounterRecordFailure(counters, key, maxFailures, lockMs, now) {
 }
 function secCounterReset(counters, key) { if (counters && counters[key]) delete counters[key]; }
 
+// Normalize database settlement business errors without hiding idempotency conflicts.
+function secondsSettlementError(result, rpcStatus) {
+  const code = result && typeof result.code === 'string' ? result.code : 'FINANCIAL_RPC_FAILED';
+  const known = {
+    INVALID_ARGUMENT: { status: 400, msg: 'Settlement request is invalid.' },
+    POSITION_NOT_FOUND: { status: 404, msg: 'This position was not found.' },
+    SYMBOL_MISMATCH: { status: 409, msg: 'The position symbol does not match.' },
+    IDEMPOTENCY_CONFLICT: { status: 409, msg: 'This settlement request ID was already used with different parameters.' },
+    POSITION_ALREADY_SETTLED: { status: 409, msg: 'This position has already been settled by a different request. Refresh your positions.' },
+    SETTLEMENT_PRICE_BEFORE_MATURITY: { status: 409, msg: 'The settlement price timestamp is before position maturity.' },
+    FROZEN_BALANCE_INVARIANT: { status: 503, msg: 'Settlement could not be completed because the reserved balance is inconsistent.' }
+  };
+  const mapped = known[code];
+  if (mapped) return { code: code, status: mapped.status, msg: mapped.msg };
+  return {
+    code: code,
+    status: rpcStatus === 400 ? 400 : 503,
+    msg: 'The database did not confirm settlement. Please try again later.'
+  };
+}
+
 // ===== 提现白名单+冷却校验（纯函数）=====
 // ①提现地址必须在用户已绑定地址列表内（未绑定→拒绝）；②新绑定地址冷却期内禁止提现。
 // bound_at 取地址记录的 created_at（格式 'YYYY-MM-DD HH:MM:SS'）。
@@ -560,7 +580,7 @@ function safeDepositAddresses(addresses) {
   const source = addresses && typeof addresses === 'object' && !Array.isArray(addresses) ? addresses : {};
   const result = {};
   const legacyKeys = { 'BTC-BTC': 'BTC-Bitcoin', 'SOL-SOL': 'SOL-Solana' };
-  for (const key of ['USDT-TRC20', 'USDT-ERC20', 'USDT-BEP20', 'BTC-BTC', 'ETH-ERC20', 'SOL-SOL']) {
+  for (const key of ['USDT-TRC20', 'USDT-ERC20', 'USDT-BEP20', 'BTC-BTC', 'ETH-ERC20', 'SOL-SOL', 'BNB-BEP20', 'USDC-ERC20']) {
     const legacyKey = legacyKeys[key];
     let raw = source[key];
     if ((typeof raw !== 'string' || !raw.trim()) && legacyKey) raw = source[legacyKey];
@@ -1005,6 +1025,24 @@ async function handleRequest(event, context) {
     return json({ ok: true, msg: 'Two-factor authentication disabled.' });
   }
 
+  // ---------- GET /api/withdrawals — authoritative withdrawal status/history ----------
+  if (path === 'withdrawals' && method === 'GET') {
+    if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true }, 401);
+    if (!financialPostgresReadsEnabled()) return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
+    try {
+      const response = await fetch(process.env.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/read_withdrawal_history_v1', {
+        method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_user_id: String(user.uid) })
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result || result.ok !== true || !Array.isArray(result.withdrawals)) {
+        return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
+      }
+      return json({ ok: true, withdrawals: result.withdrawals });
+    } catch (e) {
+      return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
+    }
+  }
+
   // ---------- GET /api/account ----------
   if (path === 'account' && method === 'GET') {
     if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true });
@@ -1157,7 +1195,7 @@ async function handleRequest(event, context) {
       return json({ ok: true, address: addr, msg: 'Deposit address.' });
     }
     // Fail closed: user-supplied requests must never credit balances without verified chain data.
-    return json({ ok: false, msg: 'Operation failed: deposits are credited only after on-chain confirmation.' }, 403);
+    return json({ ok: false, msg: 'Deposits are credited after staff manually verifies receipt and confirms the credit.' }, 403);
   }
 
   // ---------- POST /api/withdraw ----------
@@ -1196,10 +1234,7 @@ async function handleRequest(event, context) {
     const fee = supportedFees[coin];
     const totalDebit = amount + fee;
     if (!Number.isFinite(totalDebit) || totalDebit <= 0) return json({ ok: false, msg: 'Invalid amount.' }, 400);
-    // 首次提现 / 大额提现（USDT 等值超阈值，价格不可用时保守视为大额）→ 强制人工审核 pending_admin_review。
-    const thresholdUsdt = Number(process.env.WITHDRAWAL_LARGE_THRESHOLD_USDT) || 1000;
-    const usdtValue = estimateUsdtValue(coin, amount, livePriceCache.prices);
-    const requireAdminReview = withdrawalRequiresAdminReview(user, coin, amount, usdtValue === null ? Infinity : usdtValue, thresholdUsdt);
+    // BTCBOX uses a simple semi-manual workflow: every withdrawal waits for admin review.
     // 资金密码校验（≥8 位含字母+数字）+ 持久化错误计数锁定（5 次错误锁 15 分钟，计数存 btcbox_state）。
     const fundPassword = String(body.fund_password || '');
     const fpValid = validateFundPassword(fundPassword);
@@ -1232,14 +1267,14 @@ async function handleRequest(event, context) {
           method: 'POST', headers: supabaseHeaders(),
           body: JSON.stringify({ p_withdrawal_id: withdrawalId, p_user_id: String(user.uid), p_asset: coin,
             p_network: network, p_amount: String(amount), p_fee: String(fee), p_destination: addr,
-            p_request_id: requestId, p_request_hash: requestHash, p_require_admin_review: requireAdminReview })
+            p_request_id: requestId, p_request_hash: requestHash })
         });
         const result = await rpc.json().catch(() => null);
         if (!rpc.ok || !result || result.ok !== true || !result.withdrawal_id) {
           const insufficient = rpc.status === 400 && /insufficient funds/i.test(JSON.stringify(result));
           return json({ ok: false, code: insufficient ? 'INSUFFICIENT_FUNDS' : 'FINANCIAL_RPC_FAILED', msg: insufficient ? 'Insufficient available balance (including fees).' : 'Withdrawal request was not confirmed by the database. Please check your operation history before retrying.' }, insufficient ? 400 : 503);
         }
-        return json({ ok: true, duplicate: !!result.duplicate, withdrawal_id: result.withdrawal_id, status: result.status, require_admin_review: requireAdminReview, msg: result.duplicate ? 'This withdrawal request has already been received. Do not submit it again.' : (requireAdminReview ? 'Withdrawal request submitted and flagged for admin review.' : 'Withdrawal request submitted. Funds will be sent after review.') });
+        return json({ ok: true, duplicate: !!result.duplicate, withdrawal_id: result.withdrawal_id, status: result.status, require_admin_review: true, msg: result.duplicate ? 'This withdrawal request has already been received. Do not submit it again.' : 'Withdrawal request submitted for manual review. Staff will transfer funds manually after approval.' });
       } catch (e) {
         return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'Financial database temporarily unavailable. Withdrawal is unconfirmed. Please check your operation history before retrying.' }, 503);
       }
@@ -1434,6 +1469,26 @@ async function handleRequest(event, context) {
   // The client never mutates BTCBOX.account.balances directly; it refreshes
   // from /api/account after each confirmed operation.
 
+  // ---------- GET /api/seconds/policy ----------
+  if (path === 'seconds/policy' && method === 'GET') {
+    try {
+      const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
+      const rpc = await fetch(base + '/rest/v1/rpc/read_seconds_policy_v1', {
+        method: 'POST', headers: supabaseHeaders(), body: '{}'
+      });
+      const result = await rpc.json().catch(() => null);
+      if (!rpc.ok || !result || result.ok !== true) {
+        return json({ ok: false, code: 'SECONDS_POLICY_UNAVAILABLE', msg: 'Contract policy is temporarily unavailable.' }, 503);
+      }
+      const publicPolicy = Object.assign({}, result.policy, {
+        enabled: result.policy.enabled === true && financialWritesEnabled()
+      });
+      return json({ ok: true, policy: publicPolicy });
+    } catch (_) {
+      return json({ ok: false, code: 'SECONDS_POLICY_UNAVAILABLE', msg: 'Contract policy is temporarily unavailable.' }, 503);
+    }
+  }
+
   // ---------- POST /api/seconds/order ----------
   if (path === 'seconds/order' && method === 'POST') {
     if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true }, 401);
@@ -1446,24 +1501,38 @@ async function handleRequest(event, context) {
     const symbol = String(body.symbol || 'BTC').toUpperCase();
     const direction = String(body.direction || 'up').toLowerCase();
     const durationSec = Number(body.duration_sec || body.duration || 30);
-    const amount = parseMoneyInput(body.amount);
+    const amountText = typeof body.amount === 'string' ? body.amount.trim() : '';
+    const amount = Number(amountText);
     const requestId = String(body.request_id || '').trim();
     if (!SECONDS_ALLOWED_SYMBOLS.has(symbol)) return json({ ok: false, msg: 'This trading pair is not supported for short-term contracts.' }, 400);
     if (!['up', 'down'].includes(direction)) return json({ ok: false, msg: 'Invalid trade direction.' }, 400);
-    if (!SECONDS_ALLOWED_DURATIONS.has(durationSec)) return json({ ok: false, msg: 'Invalid contract duration.' }, 400);
-    if (amount === null || amount <= 0 || amount > 1e12) return json({ ok: false, msg: 'Invalid investment amount.' }, 400);
+    if (!Number.isSafeInteger(durationSec) || durationSec < 1 || durationSec > 2147483647) return json({ ok: false, msg: 'Invalid contract duration.' }, 400);
+    if (!/^(?:0|[1-9][0-9]{0,19})(?:[.][0-9]{1,18})?$/.test(amountText) || !Number.isFinite(amount) || amount <= 0) return json({ ok: false, msg: 'Invalid investment amount.' }, 400);
     if (!/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) return json({ ok: false, code: 'IDEMPOTENCY_KEY_REQUIRED', msg: 'A valid request ID (16-100 characters) is required.' }, 400);
     let ref;
     try { ref = await fetchSecondsReferencePrice(symbol); }
     catch (_) { return json({ ok: false, code: 'REFERENCE_PRICE_UNAVAILABLE', msg: 'The reference price is currently unavailable. No order was created.' }, 503); }
     const positionId = 'SC' + crypto.createHash('sha256').update(String(user.uid) + '|' + requestId).digest('hex').slice(0, 30);
-    const requestHash = crypto.createHash('sha256').update(JSON.stringify({ user_id: String(user.uid), symbol, direction, amount: String(amount), duration_sec: durationSec, request_id: requestId })).digest('hex');
+    const requestHash = crypto.createHash('sha256').update(JSON.stringify({ user_id: String(user.uid), symbol, direction, amount: amountText, duration_sec: durationSec, request_id: requestId })).digest('hex');
     const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
     try {
-      const rpc = await fetch(base + '/rest/v1/rpc/submit_seconds_order_v1', { method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_position_id: positionId, p_user_id: String(user.uid), p_symbol: symbol, p_direction: direction, p_amount: String(amount), p_duration_sec: durationSec, p_open_price: String(ref.price), p_request_id: requestId, p_request_hash: requestHash }) });
+      const rpc = await fetch(base + '/rest/v1/rpc/submit_seconds_order_v1', { method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_position_id: positionId, p_user_id: String(user.uid), p_symbol: symbol, p_direction: direction, p_amount: amountText, p_duration_sec: durationSec, p_open_price: String(ref.price), p_request_id: requestId, p_request_hash: requestHash }) });
       const result = await rpc.json().catch(() => null);
-      if (!rpc.ok || !result || result.ok !== true || !result.position_id) return json({ ok: false, code: 'FINANCIAL_RPC_FAILED', msg: 'The database did not confirm the contract order. Funds were not changed; verify the order status before retrying.', duplicate: !!(result && result.duplicate) }, rpc.status === 400 ? 400 : 503);
-      return json({ ok: true, server_now: Date.now(), duplicate: !!result.duplicate, position_id: result.position_id, symbol: symbol, direction: direction, amount: amount, duration_sec: durationSec, open_price: ref.price, open_price_source: ref.source, settle_at: Math.floor(Date.now() / 1000) + durationSec, msg: result.duplicate ? 'This order request has already been processed. Do not submit it again.' : 'Position opened successfully. Funds have been reserved.' });
+      if (!rpc.ok || !result || result.ok !== true || !result.position_id) {
+        const code = result && result.code ? String(result.code) : 'FINANCIAL_RPC_FAILED';
+        const known = {
+          INVALID_ARGUMENT: [400, 'The contract order parameters are invalid.'],
+          IDEMPOTENCY_CONFLICT: [409, 'This request ID was already used with different order parameters.'],
+          SECONDS_POLICY_NOT_CONFIGURED: [503, 'Contract policy is not configured.'],
+          SECONDS_TRADING_DISABLED: [403, 'Seconds contracts are currently paused by the administrator.'],
+          INVALID_DURATION: [400, 'This contract duration is not currently available.'],
+          AMOUNT_OUT_OF_POLICY_RANGE: [400, 'The amount is outside the current administrator limits.'],
+          INSUFFICIENT_BALANCE: [409, 'Insufficient available USDT balance.']
+        };
+        const failure = known[code] || [rpc.status === 400 ? 400 : 503, 'The database did not confirm the contract order. Verify order status before retrying.'];
+        return json({ ok: false, code: code, msg: failure[1], duplicate: !!(result && result.duplicate) }, failure[0]);
+      }
+      return json({ ok: true, server_now: Date.now(), duplicate: !!result.duplicate, position_id: result.position_id, symbol: symbol, direction: direction, amount: amountText, duration_sec: durationSec, open_price: ref.price, open_price_source: ref.source, settle_at: result.settle_at, policy_version: result.policy_version, payout_rate: result.payout_rate, msg: result.duplicate ? 'This order request has already been processed. Do not submit it again.' : 'Position opened successfully. Funds have been reserved.' });
     } catch (e) { return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'The financial database is unavailable. The order is unconfirmed and funds were not changed.' }, 503); }
   }
 
@@ -1493,7 +1562,10 @@ async function handleRequest(event, context) {
     try {
       const rpc = await fetch(base + '/rest/v1/rpc/settle_seconds_position_v1', { method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_position_id: positionId, p_user_id: String(user.uid), p_request_id: requestId, p_request_hash: requestHash, p_symbol: symbol, p_settle_price: String(settleRef.price), p_settle_price_source: settleRef.source, p_settle_price_ts: new Date().toISOString() }) });
       const result = await rpc.json().catch(() => null);
-      if (!rpc.ok || !result || result.ok !== true) return json({ ok: false, code: 'FINANCIAL_RPC_FAILED', msg: result && result.msg ? result.msg : 'The database did not confirm settlement. Please try again later.', duplicate: !!(result && result.duplicate), settled: !!(result && result.settled) }, rpc.status === 400 ? 400 : 503);
+      if (!rpc.ok || !result || result.ok !== true) {
+        const failure = secondsSettlementError(result, rpc.status);
+        return json({ ok: false, code: failure.code, msg: failure.msg, duplicate: false, settled: false }, failure.status);
+      }
       return json({ ok: true, duplicate: !!result.duplicate, position_id: positionId, settled: result.settled !== false, win: result.win, tie: result.tie, pnl: result.pnl, settle_price: result.settle_price, msg: result.duplicate ? 'This settlement request has already been processed.' : (result.settled === false ? 'This position has not reached maturity and cannot be settled yet.' : 'Settlement completed.') });
     } catch (e) { return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'The financial database is unavailable. Settlement remains unconfirmed.' }, 503); }
   }
@@ -1729,6 +1801,81 @@ async function handleRequest(event, context) {
       }
     }
 
+    // GET/POST /api/admin/seconds-policy — policy is persisted and enforced by PostgreSQL.
+    if (sub === 'seconds-policy' && (method === 'GET' || method === 'POST')) {
+      try {
+        const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
+        let rpcName = 'read_seconds_policy_v1';
+        let payload = {};
+        if (method === 'POST') {
+          const durations = Array.isArray(body.allowed_durations) ? body.allowed_durations.map(Number) : [];
+          const minAmountText = typeof body.min_order_amount === 'string' ? body.min_order_amount.trim() : '';
+          const maxAmountText = typeof body.max_order_amount === 'string' ? body.max_order_amount.trim() : '';
+          const minAmount = Number(minAmountText);
+          const maxAmount = Number(maxAmountText);
+          const payoutRate = Number(body.payout_rate);
+          const validMoneyText = /^(?:0|[1-9][0-9]{0,19})(?:[.][0-9]{1,18})?$/;
+          if (typeof body.enabled !== 'boolean' || !durations.length || durations.length > 20 ||
+              durations.some(function (v) { return !Number.isSafeInteger(v) || v < 1 || v > 2147483647; }) ||
+              new Set(durations).size !== durations.length ||
+              !validMoneyText.test(minAmountText) || !Number.isFinite(minAmount) || minAmount <= 0 ||
+              !validMoneyText.test(maxAmountText) || !Number.isFinite(maxAmount) || maxAmount <= 0 ||
+              !Number.isFinite(payoutRate) || payoutRate < 0.85) {
+            return json({ ok: false, code: 'INVALID_SECONDS_POLICY', msg: 'Check enabled state, unique positive integer durations, amount range, and payout rate (minimum 85%).' }, 400);
+          }
+          rpcName = 'update_seconds_policy_v1';
+          payload = {
+            p_enabled: body.enabled,
+            p_allowed_durations: durations,
+            p_min_order_amount: minAmountText,
+            p_max_order_amount: maxAmountText,
+            p_payout_rate: String(payoutRate),
+            p_admin_id: String(process.env.ADMIN_USER || 'admin')
+          };
+        }
+        const rpc = await fetch(base + '/rest/v1/rpc/' + rpcName, {
+          method: 'POST', headers: supabaseHeaders(), body: JSON.stringify(payload)
+        });
+        const result = await rpc.json().catch(() => null);
+        if (!rpc.ok || !result || result.ok !== true) {
+          const code = (result && result.code) || 'SECONDS_POLICY_RPC_FAILED';
+          const status = code === 'INVALID_SECONDS_POLICY' ? 400 : (rpc.status === 400 ? 400 : 503);
+          return json({ ok: false, code: code,
+            msg: status === 400 ? 'The seconds policy values are invalid.' : 'Seconds policy could not be confirmed by the database. No policy change is confirmed.' }, status);
+        }
+        if (method === 'POST') auditAdmin('seconds_policy_update', '', JSON.stringify(result.policy));
+        return json({ ok: true, policy: result.policy });
+      } catch (_) {
+        return json({ ok: false, code: 'SECONDS_POLICY_RPC_UNAVAILABLE', msg: 'Seconds policy database is unavailable.' }, 503);
+      }
+    }
+
+    // GET /api/admin/seconds-positions — paginated read-only queue of every open position.
+    if (sub === 'seconds-positions' && method === 'GET') {
+      const params = event.queryStringParameters || {};
+      const limit = Math.min(500, Math.max(1, Number.parseInt(params.limit || '200', 10) || 200));
+      const offset = Math.max(0, Number.parseInt(params.offset || '0', 10) || 0);
+      try {
+        const base = process.env.SUPABASE_URL.replace(/\/+$/, '');
+        const rpc = await fetch(base + '/rest/v1/rpc/read_admin_seconds_positions_v1', {
+          method: 'POST', headers: supabaseHeaders(),
+          body: JSON.stringify({ p_limit: limit, p_offset: offset })
+        });
+        const result = await rpc.json().catch(() => null);
+        if (!rpc.ok || !result || result.ok !== true || !Array.isArray(result.positions)) {
+          return json({ ok: false, code: 'SECONDS_POSITION_QUEUE_UNAVAILABLE', msg: 'Open contract positions could not be loaded.' }, 503);
+        }
+        const usersById = new Map(Object.values(db.users).map(function (u) { return [String(u.uid), u]; }));
+        const positions = result.positions.map(function (p) {
+          const owner = usersById.get(String(p.user_id));
+          return Object.assign({}, p, { email: owner ? (owner.email || '') : '' });
+        });
+        return json({ ok: true, positions: positions, total: Number(result.total || 0), limit: limit, offset: offset });
+      } catch (_) {
+        return json({ ok: false, code: 'SECONDS_POSITION_QUEUE_UNAVAILABLE', msg: 'Open contract positions could not be loaded.' }, 503);
+      }
+    }
+
     // POST /api/admin/user/balance 调整余额
     if (sub === 'user/balance' && method === 'POST') {
       if (!financialWritesEnabled()) return json({ ok: false, code: 'FINANCIAL_CUTOVER_INCOMPLETE', msg: 'Financial ledger cutover is incomplete. Balance was unchanged.' }, 503);
@@ -1843,7 +1990,7 @@ async function handleRequest(event, context) {
       const idempotencyKey = String(body.idempotency_key || '').trim();
       const u = db.users[uid];
       if (!u) return json({ ok: false, msg: 'User not found.' }, 404);
-      if (!['USDT', 'BTC', 'ETH', 'SOL'].includes(coin)) return json({ ok: false, msg: 'Coin not supported.' }, 400);
+      if (!['USDT', 'BTC', 'ETH', 'SOL', 'BNB', 'USDC'].includes(coin)) return json({ ok: false, msg: 'Coin not supported.' }, 400);
       if (!Number.isFinite(amount) || amount <= 0 || amount > 1e12 || !/^\d+(?:\.\d{1,12})?$/.test(String(body.amount || '').trim())) {
         return json({ ok: false, msg: 'Invalid deposit amount. Must be a valid number greater than 0.' }, 400);
       }
@@ -2068,7 +2215,7 @@ async function handleRequest(event, context) {
         for (const key of Object.keys(updates)) {
           if (!Object.prototype.hasOwnProperty.call(allowedDepositKeys, key)) return json({ ok: false, msg: 'Unsupported deposit network configuration found.' }, 400);
           const value = typeof updates[key] === 'string' ? updates[key].trim() : '';
-          if (!value || /PLACEHOLDER|TPLACEHOLDER/i.test(value) || !allowedDepositKeys[key](value)) {
+          if (value && (/PLACEHOLDER|TPLACEHOLDER/i.test(value) || !allowedDepositKeys[key](value))) {
             return json({ ok: false, msg: 'Invalid deposit address format: ' + key }, 400);
           }
           changedKeys.push(key);
@@ -2084,6 +2231,34 @@ async function handleRequest(event, context) {
       return json({ ok: true, msg: 'Configuration updated.', deposit_addresses: safeDepositAddresses(db.deposit_addresses), announcement: db.announcement });
     }
 
+
+    // POST /api/admin/withdraw/mark-paid — staff has already sent the funds manually.
+    if (sub === 'withdraw/mark-paid' && method === 'POST') {
+      if (!financialWritesEnabled()) return json({ ok: false, code: 'FINANCIAL_CUTOVER_INCOMPLETE', msg: 'Financial ledger cutover is incomplete. Payout status was not changed.' }, 503);
+      const wdId = String(body.id || '').trim();
+      const reference = String(body.reference || '').trim();
+      const note = String(body.note || '').trim();
+      if (!wdId || wdId.length > 100) return json({ ok: false, msg: 'Withdrawal record ID is invalid.' }, 400);
+      if (!reference) return json({ ok: false, code: 'PAYOUT_REFERENCE_REQUIRED', msg: 'TxID / payout reference is required.' }, 400);
+      if (reference.length > 160 || note.length > 300) return json({ ok: false, msg: 'Payout reference or note is too long.' }, 400);
+      const adminId = String(process.env.ADMIN_USER || '').trim();
+      if (!adminId) return json({ ok: false, code: 'ADMIN_ACTOR_NOT_CONFIGURED', msg: 'Administrator audit identity not configured. Payout status was not changed.' }, 503);
+      try {
+        const rpc = await fetch(process.env.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/mark_withdrawal_paid_atomic', {
+          method: 'POST', headers: supabaseHeaders(),
+          body: JSON.stringify({ p_withdrawal_id: wdId, p_admin_id: adminId, p_reference: reference, p_note: note })
+        });
+        const result = await rpc.json().catch(() => null);
+        if (!rpc.ok || !result || result.ok !== true || result.status !== 'completed') {
+          return json({ ok: false, code: 'FINANCIAL_RPC_FAILED', msg: 'Manual payout completion was not confirmed. Check the withdrawal record before retrying.' }, rpc.status === 400 ? 400 : 503);
+        }
+        return json({ ok: true, duplicate: !!result.duplicate, withdrawal_id: result.withdrawal_id, status: result.status,
+          payout_reference: result.payout_reference || '', paid_at: result.paid_at || null,
+          msg: result.duplicate ? 'This withdrawal was already marked as paid.' : 'Manual payout completion recorded.' });
+      } catch (e) {
+        return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'Financial database temporarily unavailable. Payout status is unconfirmed; check the withdrawal record before retrying.' }, 503);
+      }
+    }
 
     // GET /api/admin/withdrawals 待审核提现列表
     if (sub === 'withdrawals' && method === 'GET') {
@@ -2190,6 +2365,7 @@ exports._test = {
   parseMoneyInput: parseMoneyInput,
   withdrawalAddressCheck: withdrawalAddressCheck,
   withdrawalRequiresAdminReview: withdrawalRequiresAdminReview,
+  secondsSettlementError: secondsSettlementError,
   estimateUsdtValue: estimateUsdtValue,
   secCounterIsLocked: secCounterIsLocked,
   secCounterRecordFailure: secCounterRecordFailure,

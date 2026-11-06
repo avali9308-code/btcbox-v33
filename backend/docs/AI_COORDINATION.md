@@ -1069,3 +1069,87 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - AI 3 may take over integration follow-through. Keep #28 draft until the Earn product-contract mismatch is resolved and a clean exact-SHA run is available; do not weaken assertions or restore unverified offers.
 - Independent QA must remain independent. AI3-authored fixes need 1号 or another reviewer to verify the exact new SHA.
 - This inventory is a handoff checkpoint, not PR acceptance or release approval.
+
+
+## AI 3 — simple manual-deposit configuration and credit handoff (2026-11-06)
+
+- Created issue #2: https://github.com/avali9308-code/btcbox-v33/issues/2
+- User-confirmed flow: admin configures the receiving address/network; user transfers; staff verifies receipt manually; staff selects the user and the matching asset row, enters the actual received amount, and credits via the existing audited atomic manual-credit RPC.
+- Explicitly out of scope: user-created pending deposit orders, chain watcher/automation, automatic on-chain credit, extra approval tiers, manual UID/coin re-entry.
+- SOURCE OBSERVED on `fix/manual-withdrawal-rpc-compat-20261106`:
+  - Deposit page already tells users that staff manually verifies and credits the account.
+  - Admin user-account panel already binds UID and asset automatically; staff enters the actual amount. This is the desired simple direct-credit workflow.
+  - Backend `GET/POST /api/admin/config` already supports validated deposit-address configuration, but the active Admin Console currently has no address-configuration tab/form.
+  - Deposit UI supports USDT, BTC, ETH, SOL, BNB, USDC. The manual-credit account panel and API whitelist only USDT, BTC, ETH, SOL. `safeDepositAddresses()` also omits BNB-BEP20 and USDC-ERC20 although config validation/defaults include them.
+  - SQL `admin_manual_deposit_atomic` accepts generic asset symbols; no extra deposit-order SQL is needed for this chosen manual model.
+- AI 3 scope: preserve the business contract, create/track issue and prevent UI/API asset-list drift. Active Admin Console view implementation and API file changes must be assigned to their implementation owners; independent QA verifies the exact resulting SHA.
+- Financial cutover flags remain unchanged. The manual credit API remains unavailable until the existing complete financial cutover gate is legitimately verified; do not bypass it or use a legacy balance fallback.
+- No source app files, SQL, database, environment flags, merge, or deployment were changed in this coordination batch. Runtime/build/browser verification not run.
+
+
+## AI 3 batch — manual deposit configuration implementation — 2026-11-06
+
+- IMPLEMENTED IN SOURCE on `fix/manual-withdrawal-rpc-compat-20261106`: added the Admin Console `充值地址` tab using the existing authenticated `GET/POST /api/admin/config` adapter. It loads saved addresses, edits all eight supported coin/network keys, saves, reports loading/error/success, and allows a blank value to explicitly deactivate a network address.
+- IMPLEMENTED IN SOURCE: aligned safe address projection, admin account-balance asset validation, and manual-credit API whitelist with the six supported assets USDT/BTC/ETH/SOL/BNB/USDC. User admin account panel now renders all six asset rows; UID and asset remain auto-bound and amount is the only required manual-credit field.
+- PRESERVED: user deposit page selects exact coin/network and reads configured address; unset addresses remain unavailable; manual credit remains gated by `financialWritesEnabled()`, uses `admin_manual_deposit_atomic`, idempotency and audit. No pending deposit orders, chain watcher, automatic credit, extra approval tier, or withdrawal/Seconds/V211 changes were added in this batch.
+- Regression file added: `backend/tests/manual-deposit-config.test.js` (5 tests). A source-level integration audit performed after the final commit passed 10/10 targeted assertions across API/UI/network keys/asset sets/adapter/financial gate.
+- Latest source HEAD: `c82c07acad6df6e3bdc83de9f8be2b29bbade790`. Feature branch is 41 commits ahead / 0 behind main baseline `18a354a9e8e1d0365e240c7c44eda4a18d62ce07`.
+- NOT RUN: Node test suite, build, browser verification, isolated PostgreSQL behavior. GitHub Actions lookup for this exact SHA returned zero workflow runs and combined commit status had no contexts. Static assertions are not a substitute for these tests.
+- NO production DB writes, migrations, financial flag changes, merge, or deployment were performed. Issue #2 remains open pending actual test/QA evidence.
+
+
+## AI 3 follow-up — withdrawal migration 0022 schema mismatch — 2026-11-06
+
+- SOURCE OBSERVED: `backend/scripts/run_migrations.sh` executes numbered SQL files in order. 0002 creates `public.withdrawal_requests`; 0003 withdrawal lifecycle RPCs use the same table; 0022 instead references `public.withdrawals` and a different column contract; 0023 again uses `public.withdrawal_requests`.
+- Issue #3 opened: https://github.com/avali9308-code/btcbox-v33/issues/3. This is a source-level contract finding only; PostgreSQL runtime failure is NOT REPRODUCED. Do not skip/renumber migration files or apply to production. Require an isolated PostgreSQL migration-chain run before any cutover.
+
+
+## AI 3 batch — reconcile withdrawal migration 0022 — 2026-11-06
+
+- Provenance: Git path history shows 0022 first appeared in archive-extraction commit `05da31097802d012aa79b2976386ddce5f92757c`; it did not exist in parent `64a2fcd8861ce56a8439e23f13888ab12a21898e`. No earlier migration provenance exists in this repository.
+- Canonical contract: 0002 creates `public.withdrawal_requests`; 0003 creates the nine-argument `create_withdrawal_atomic` and the `pending -> approved/rejected` review flow; API invokes that nine-argument RPC and all withdrawals are manually reviewed; 0023 adds post-approval manual payout completion to the same table.
+- IMPLEMENTED IN SOURCE: 0022 is now an explicit compatibility checkpoint that verifies the canonical table/status column exist. It no longer creates a parallel table reference, function overload, or extra review state. The numbered sequence still includes 0022 then 0023; no file skipped or renumbered.
+- Added `backend/tests/withdrawal-migration-contract.test.js` with five regression tests. Migration order guide updated. Post-change source audit passed 12/12 assertions.
+- NOT RUN: Node tests/build, PostgreSQL runtime or full numbered migration chain. Runtime remains unverified; no hosted DB writes, migration application, financial flag changes, merge or deployment. Issue #3 remains open pending runtime proof.
+- Latest code/doc branch head at this record: `9f0da9443eb443bc7e25c28d4aed7b0e45dfbdc6`.
+
+
+## AI 3 batch — migration 0021 audit-log schema and privilege reconciliation — 2026-11-06
+
+- Current source branch: `fix/manual-withdrawal-rpc-compat-20261106`.
+- Issue #4 records a source-observed mismatch: 0002 creates `financial_audit_log` using canonical actor/subject/object/reason/metadata columns; old 0021 assumed a separate uid/by/detail/meta shape and indexed the nonexistent uid column.
+- Old 0021 also defined the append RPC as SECURITY DEFINER without revoking EXECUTE from PUBLIC. This was inconsistent with the service-role-only contract.
+- Source correction: 0021 now verifies the 0002 table, retains the canonical schema, maps the current Node auditAdmin RPC arguments to canonical columns, uses SECURITY INVOKER with empty search_path, revokes PUBLIC/anon/authenticated and grants service_role only. Append-only triggers cover UPDATE/DELETE/TRUNCATE and service_role retains SELECT/INSERT only.
+- Regression source-contract test added: `backend/tests/audit-log-migration-contract.test.js` (six tests authored; not yet executed).
+- Classification: SOURCE OBSERVED and IMPLEMENTED IN SOURCE only. Node suite/build/full PostgreSQL chain and live DB behavior NOT VERIFIED. No hosted DB writes, migration apply, financial flags, merge or deployment.
+- Issue #4: https://github.com/avali9308-code/btcbox-v33/issues/4
+
+
+## AI 3 follow-up — simplify audit migration source — 2026-11-06
+
+- SOURCE OBSERVED: `backend/supabase/sql/0002_financial_ledger_v1.sql` is the single canonical creator of `public.financial_audit_log`; `0003`, `0004`, `0005`, `0006`, `0007`, and `0016` write using that canonical column contract.
+- SOURCE OBSERVED: `0021_admin_audit_log_append_only_v1.sql` now validates the canonical table and applies RLS, service-role append-only grants, mutation-blocking triggers, and the existing `append_admin_audit_log` RPC contract. No second audit table is needed.
+- FIXED IN SOURCE: marked `backend/supabase-migration-runner.sql` as deprecated/historical and explicitly prohibited execution. Its old instructions contradicted the current fail-closed financial flags and its aggregate SQL predates current numbered migration fixes.
+- Canonical SQL source remains `backend/supabase/sql/NNNN_*.sql`; the numbered local/test runner is `backend/scripts/run_migrations.sh` and must only use an isolated local/test `DATABASE_URL`.
+- NOT VERIFIED: PostgreSQL syntax/runtime, trigger behavior, role grants, complete numbered migration chain, Node tests/build. No hosted DB operation was performed.
+- NO production table drop/recreate, production write, financial flag change, merge, or deployment. Preserve production schema and records.
+
+
+## Migration channel audit — 2026-11-06
+
+- SOURCE OBSERVED: the complete operational schema is in `backend/supabase/sql/NNNN_*.sql`; the local/test runner is `backend/scripts/run_migrations.sh`.
+- SOURCE OBSERVED: `backend/supabase/migrations/` currently contains only timestamped 0024 and 0025 mirrors. Both files are byte-for-byte identical to numbered 0024 and 0025; they do not contain the base ledger, account, deposit, withdrawal, or audit schema and are NOT a complete empty-database bootstrap.
+- SOURCE OBSERVED (read-only hosted migration-history query): the connected Supabase project reports versions `20261102133555` (`revoke_public_execute_rls_auto_enable`) and `20261103062716` (`create_private_btcbox_test_cleanup_backup`). Their matching timestamped migration files are absent from the current feature branch. This is migration-history drift; it is not permission to repair or replay history.
+- DECISION: do not mix the numbered runner and Supabase CLI timestamped path. Do not run `db push`, `migration repair`, `db reset`, or apply SQL to the hosted project. Resolve one canonical bootstrap strategy and map the two hosted history entries before any hosted change.
+- Supabase CLI v3 changed database commands to local-by-default and requires explicit remote targeting/confirmation for hosted changes; scripts must be reviewed before use.
+- NOT VERIFIED: complete isolated PostgreSQL bootstrap, hosted schema equivalence, whether the two recorded hosted migrations have side effects beyond their names, and any safe repair sequence.
+- No hosted database writes, migration apply/repair, reset, financial flag changes, merge, or deployment were performed.
+
+
+## Operational migration runner boundary — 2026-11-06
+
+- SOURCE OBSERVED: `0017_financial_migration_staging_v5.sql` creates a legacy quarantine table explicitly intended only for a dedicated staging project. `0018`–`0020` are read-only staging/ledger reconciliation diagnostics, not operational schema migrations.
+- FIXED IN SOURCE: `backend/scripts/run_migrations.sh` now explicitly skips files 0017–0020 and applies only operational numbered migrations. The SQL files remain in the repository for the separate staging workflow; none were deleted.
+- Updated the migration-order guide, Vercel deployment instructions, and pre-release checklist so the staging-only scripts are not represented as routine operational migrations.
+- Added `backend/tests/migration-runner-boundaries.test.js` to guard the skip boundary and ensure the diagnostic scripts remain read-only.
+- NOT VERIFIED: shell execution against PostgreSQL, full operational migration chain, staging import/reconciliation, Node tests/build. No production DB write, migration repair/apply, financial flag change, merge, or deployment.

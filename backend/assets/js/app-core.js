@@ -300,6 +300,8 @@ const apiAdapter = {
   async supabaseLogin(supabase_access_token){ return apiFetch('/supabase-login',{method:'POST',body:{supabase_access_token:supabase_access_token},skipAuthRedirect:true}); },
   // ACCOUNT -> GET /api/account
   async account(){ const r=await apiFetch('/account'); if(r.ok) applyAccount(r); return r; },
+  // ACCOUNT -> GET /api/withdrawals (authoritative status, payout reference and paid time)
+  async withdrawalHistory(){ return apiFetch('/withdrawals'); },
   // ACCOUNT -> GET /api/addresses (address book, masked)
   async addresses(coin){ return apiFetch('/addresses'); },
   // ACCOUNT -> GET /api/addresses/select?id= (full address)
@@ -347,7 +349,7 @@ const apiAdapter = {
   async captcha(){ try{ const r=await apiFetch('/captcha',{method:'POST',body:{},skipAuthRedirect:true}); return r; }catch(e){ return {ok:false, code:'VERIFICATION_UNAVAILABLE', msg:'Captcha unavailable — treated as optional'}; } },
   // SECONDS -> POST /api/seconds/order {symbol(bare base e.g. BTC/ETH/SOL/BNB),direction,duration_sec,amount,request_id(16+)}
   async secondsOrder(o){
-    const r=await apiFetch('/seconds/order',{method:'POST',body:{symbol:o.symbol, direction:o.direction, duration_sec:o.duration_sec||o.duration, amount:o.amount, request_id:o.request_id||uid()}});
+    const r=await apiFetch('/seconds/order',{method:'POST',body:{symbol:o.symbol, direction:o.direction, duration_sec:o.duration_sec||o.duration, amount:String(o.amount), request_id:o.request_id||uid()}});
     if(r.ok){
       r.position={position_id:r.position_id, symbol:r.symbol, direction:r.direction, amount:r.amount, duration_sec:r.duration_sec, open_price:r.open_price, settle_at:r.settle_at, status:'open'};
       await this.secondsPositionsGet();
@@ -439,6 +441,8 @@ const apiAdapter = {
   async adminConfirmDeposit(p){ return adminFetch('/admin/deposit/confirm',{method:'POST',body:{uid:p.uid, coin:p.coin, amount:p.amount, reference:p.reference, note:p.note, idempotency_key:p.idempotency_key||uid()}}); },
   // ADMIN -> POST /api/admin/withdraw/approve {id}
   async adminApproveWithdraw(id){ return adminFetch('/admin/withdraw/approve',{method:'POST',body:{id:id}}); },
+  // ADMIN -> POST /api/admin/withdraw/mark-paid {id,reference?,note?}
+  async adminMarkWithdrawPaid(p){ return adminFetch('/admin/withdraw/mark-paid',{method:'POST',body:{id:p.id,reference:p.reference||'',note:p.note||''}}); },
   // ADMIN -> POST /api/admin/withdraw/reject {id,reason?} (extra)
   async adminRejectWithdraw(p){ return adminFetch('/admin/withdraw/reject',{method:'POST',body:{id:p.id, reason:p.reason}}); },
   // ADMIN -> POST /api/admin/kyc/approve {uid,admin_override?,reason?} (extra)
@@ -459,6 +463,10 @@ const apiAdapter = {
   async adminSupportMessages(){ return adminFetch('/admin/support/messages'); },
   // ADMIN -> POST /api/admin/config (body) / GET (no body) (extra)
   async adminConfig(p){ if(p && typeof p==='object' && !(p instanceof Event)) return adminFetch('/admin/config',{method:'POST',body:p}); return adminFetch('/admin/config'); },
+  async secondsPolicyGet(){ return apiFetch('/seconds/policy'); },
+  async adminSecondsPolicy(){ return adminFetch('/admin/seconds-policy'); },
+  async adminSecondsPolicyUpdate(p){ return adminFetch('/admin/seconds-policy',{method:'POST',body:p}); },
+  async adminSecondsPositions(p){ const q=p||{};return adminFetch('/admin/seconds-positions?limit='+encodeURIComponent(q.limit||200)+'&offset='+encodeURIComponent(q.offset||0)); },
 };
 
 

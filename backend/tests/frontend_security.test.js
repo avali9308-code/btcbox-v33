@@ -56,17 +56,18 @@ test('admin users table wraps uid/email/kyc in escapeHtml', () => {
   const s = read('assets/js/views-account.js');
   assert.ok(s.includes("escapeHtml(u.uid)"), 'u.uid not escaped in users table');
   assert.ok(s.includes("escapeHtml(u.email)"), 'u.email not escaped (critical sink)');
-  assert.ok(s.includes("escapeHtml(u.kyc)"), 'u.kyc not escaped');
+  assert.ok(s.includes("escapeHtml(kyc)"), 'normalized KYC status not escaped');
   assert.ok(s.includes('data-uid="\'+escapeHtml(u.uid)+\'"'), 'data-uid attribute not escaped');
 });
 
-test('admin deposits table wraps reference/uid/coin/network/id in escapeHtml', () => {
+test('admin account asset panel escapes user identity and selected-asset credit fields', () => {
   const s = read('assets/js/views-account.js');
-  assert.ok(s.includes("escapeHtml(d.reference)"), 'd.reference not escaped (critical sink)');
-  assert.ok(s.includes("escapeHtml(d.uid)"), 'd.uid not escaped');
-  assert.ok(s.includes("escapeHtml(d.coin)"), 'd.coin not escaped');
-  assert.ok(s.includes("escapeHtml(d.network)"), 'd.network not escaped');
-  assert.ok(s.includes("escapeHtml(d.id)"), 'd.id not escaped');
+  assert.ok(s.includes('escapeHtml(account.email||accountUid)'), 'account identity is not escaped');
+  assert.ok(s.includes('escapeHtml(accountUid)'), 'selected user UID is not escaped');
+  assert.ok(s.includes('escapeHtml(coin)'), 'selected asset is not escaped in confirmation');
+  assert.ok(s.includes('escapeHtml(amountText)'), 'credit amount is not escaped in confirmation');
+  assert.ok(s.includes("escapeHtml(reference||'—')"), 'credit reference is not escaped');
+  assert.ok(s.includes("escapeHtml(note||'—')"), 'credit note is not escaped');
 });
 
 test('admin withdrawals table wraps address/uid/coin/id in escapeHtml', () => {
@@ -165,11 +166,47 @@ test('all six admin sensitive actions require confirmAdminAction before executio
 });
 
 /* ---------- withdrawal / deposit UI hints ---------- */
+
+test('admin users tab loads the API list and renders its normalized response fields', () => {
+  const admin = read('assets/js/views-account.js');
+  assert.ok(admin.includes("apiAdapter.adminUsers().then"), 'admin users list is not loaded from the API');
+  assert.ok(admin.includes("u.kyc_status||'unverified'"), 'admin KYC status does not match the API response');
+  assert.ok(admin.includes('fmt(u.total_usdt,2)'), 'admin balance display does not match the API response');
+});
+
+test('admin manual credit is launched from the selected user asset panel with UID and coin auto-bound', () => {
+  const admin = read('assets/js/views-account.js');
+  const core = read('assets/js/app-core.js');
+  assert.ok(admin.includes('class="au-account"'), 'user row has no account/asset entry');
+  assert.ok(admin.includes('apiAdapter.adminUser(b.dataset.uid)'), 'account panel does not load the selected user detail');
+  assert.ok(admin.includes('class="au-credit-open btn btn-primary" data-coin='), 'credit action is not attached to a selected asset');
+  assert.ok(admin.includes('apiAdapter.adminConfirmDeposit({uid:accountUid,coin:coin'), 'manual credit does not auto-bind selected UID and asset');
+  assert.ok(admin.includes('idempotency_key:requestKey'), 'manual credit request ID is not retained for the operation');
+  assert.ok(admin.includes('请确认已核实该币种、该网络的实际到账'), 'manual credit lacks an actual-receipt confirmation');
+  assert.ok(!admin.includes('id="admin-deposit-uid"') && !admin.includes('id="admin-deposit-form"'), 'standalone manual UID form must be removed');
+  assert.ok(core.includes("async adminUser(id){ return adminFetch('/admin/user?uid='"), 'admin user detail API adapter missing');
+});
+
 test('withdrawal view shows binding/24h/manual-review rule hint; deposit warns system-generated address', () => {
   const s = read('assets/js/views-assets.js');
   assert.ok(s.includes('提币地址需先绑定并通过审核'), 'withdrawal binding rule hint missing');
   assert.ok(s.includes('新绑定地址 24 小时后可提币'), 'withdrawal 24h rule hint missing');
   assert.ok(s.includes('首次提币及大额提币需人工审核'), 'withdrawal manual-review rule hint missing');
-  assert.ok(s.includes('充值地址由系统实时生成'), 'deposit system-generated address hint missing');
-  assert.ok(s.includes('请勿充值其他币种'), 'deposit wrong-coin warning missing');
+  assert.ok(s.includes('充值地址由后台配置'), 'admin-configured deposit address hint missing');
+  assert.ok(s.includes('请勿向错误地址或网络转账'), 'deposit wrong-address/network warning missing');
+});
+
+
+/* ---------- seconds-contract authoritative maturity timestamp ---------- */
+test('seconds order API forwards the exact settle_at returned by the database RPC', () => {
+  const core = read('api-core.js');
+  const sql = read('supabase/sql/0014_financial_seconds_contracts_v1.sql');
+  const orderStart = core.indexOf("if (path === 'seconds/order' && method === 'POST')");
+  const settleStart = core.indexOf("// ---------- POST /api/seconds/settle ----------", orderStart);
+  assert.ok(orderStart >= 0 && settleStart > orderStart, 'seconds order handler not found');
+  const handler = core.slice(orderStart, settleStart);
+  assert.ok(handler.includes('settle_at: result.settle_at'), 'API must forward the database maturity timestamp');
+  assert.ok(!handler.includes('Date.now() / 1000 + durationSec'), 'API must not recalculate maturity from its own clock');
+  assert.match(sql, /'duplicate',true,'position_id',v_existing\.position_id,[\s\S]*?'settle_at',extract\(epoch from v_existing\.settle_at\)::bigint/);
+  assert.match(sql, /'duplicate',false,'position_id',p_position_id,[\s\S]*?'settle_at',extract\(epoch from \(v_now\+make_interval\(secs=>p_duration_sec\)\)\)::bigint/);
 });

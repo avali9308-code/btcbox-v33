@@ -164,14 +164,14 @@ VIEWS.deposit = function(){
         '<div style="margin-top:12px;text-align:left"><label class="auth-label">Deposit Address</label>'+
         '<div class="va-addr-row"><input id="dep-addr" class="auth-input num" readonly style="flex:1;font-size:12px"><button type="button" id="dep-copy" class="btn btn-ghost">Copy</button></div></div>'+
       '</div>'+
-      '<div class="va-info">Minimum deposit: <b style="color:var(--text-primary)">10 USDT equivalent</b>. Deposits below the minimum will not be credited. Requires on-chain confirmation + manual review (usually 5–30 min).</div>'+
+      '<div class="va-info">Send funds only to the exact address configured by BTCBOX for this coin and network. After staff manually verifies receipt, staff will credit your account balance.</div>'+
       '<div class="va-warn">'+
         '<div class="va-warn-title">Important</div>'+
-        '<ul><li>充值地址由系统实时生成，仅用于接收所选币种与网络，<b>请勿充值其他币种</b>，否则可能永久丢失。</li><li>Send only <b id="dep-coin-warn">USDT</b> on the selected network. Sending other coins may result in permanent loss.</li><li>Do NOT deposit from a smart contract address.</li><li>Deposits are credited after <b>manual review</b> and on-chain confirmation.</li></ul>'+
+        '<ul><li>充值地址由后台配置，请核对币种和网络，<b>请勿向错误地址或网络转账</b>。</li><li>Send only <b id="dep-coin-warn">USDT</b> on the selected network. Sending other coins or using another network may result in permanent loss.</li><li>After staff verifies the transfer manually, your balance is credited manually. Displaying an address does not mean a deposit has been credited.</li></ul>'+
       '</div>'+
     '</div></div>'+
     '<div class="va-card"><div class="va-card-head"><div class="va-card-title">Deposit Records</div></div>'+
-      '<div class="va-empty">Deposit history is not available via the current API yet. After you send an on-chain transaction it will be credited after confirmation + review.</div>'+
+      '<div class="va-empty">This page displays the receiving address configured by BTCBOX. After you transfer funds, staff will verify receipt and manually credit your balance.</div>'+
     '</div>'+
   '</div>';
 };
@@ -282,6 +282,7 @@ VIEWS.withdraw = function(){
             '<div><label class="auth-label">Network</label><select id="wd-network" class="auth-input" style="appearance:none"></select></div>'+
           '</div>'+
           '<div class="va-field"><label class="auth-label">Withdrawal Address</label><input id="wd-addr" class="auth-input num" placeholder="Paste destination address" required></div>'+
+          '<div class="va-info" style="margin-top:-8px;margin-bottom:14px">提币地址需先绑定并通过审核；新绑定地址 24 小时后可提币。首次提币及大额提币需人工审核。</div>'+
           '<div class="va-field"><label class="auth-label">Amount</label>'+
             '<div class="va-amt-row"><input id="wd-amount" class="auth-input num" type="number" step="any" placeholder="0.00" required><button type="button" id="wd-max" class="btn btn-ghost">MAX</button></div>'+
             '<div class="va-amt-meta"><span>Available: <span id="wd-avail" class="num">—</span> <span id="wd-coin2">USDT</span></span><span>Fee: <span id="wd-fee" class="num">—</span> <span id="wd-coin3">USDT</span></span></div>'+
@@ -298,8 +299,8 @@ VIEWS.withdraw = function(){
           '<div class="section-title" style="margin-bottom:14px">Security Verification</div>'+
           '<div class="va-field"><label class="auth-label">Fund Password (6 digits)</label><input id="wd-fundpwd" class="auth-input num" type="password" maxlength="6" placeholder="******" required></div>'+
           '<div class="va-field"><label class="auth-label">2FA Code '+(state.settings.twofa?'':'(disabled — optional)')+'</label><input id="wd-2fa" class="auth-input num" maxlength="6" placeholder="000000"></div>'+
-          '<div class="va-info" style="margin-bottom:16px">Withdrawals are debited after submission and reviewed manually. Double-check the address before submitting.</div>'+
-          '<div class="va-info" style="margin-bottom:16px;border-color:var(--warning);color:var(--text-primary)"><b>提币规则：</b>提币地址需先绑定并通过审核；新绑定地址 24 小时后可提币；首次提币及大额提币需人工审核。</div>'+
+          '<div class="va-info" style="margin-bottom:16px">The requested amount and fee are reserved when you submit. Staff reviews every request; approval finalizes the debit, and staff then transfers funds manually.</div>'+
+          '<div class="va-info" style="margin-bottom:16px;border-color:var(--warning);color:var(--text-primary)"><b>提现流程：</b>每笔申请都由后台人工审核。批准后仍需工作人员手动转账，只有标记为“已完成”才代表后台已记录出款。</div>'+
           '<div class="va-nav-row"><button type="button" class="btn btn-ghost" id="wd-back3">Back</button><button type="submit" id="wd-submit" class="btn btn-primary" style="flex:2;padding:13px;font-size:15px">Submit Withdrawal</button></div>'+
         '</div></div>'+
       '</div>'+
@@ -309,12 +310,13 @@ VIEWS.withdraw = function(){
     '<div class="va-step-panel" data-wpanel="2">'+
       '<div class="section-title" style="margin-bottom:12px">Confirm Withdrawal Details</div>'+
       '<div class="va-review" id="wd-review-list"></div>'+
-      '<div class="va-risk-box"><div class="va-risk-title">Risk Warning</div>Withdrawal cannot be cancelled after broadcast. Verify the full address and network. Sending to the wrong address or network may result in permanent loss of funds. Withdrawals are subject to manual review.</div>'+
+      '<div class="va-risk-box"><div class="va-risk-title">Risk Warning</div>Verify the full address and network. Staff will transfer funds manually only after approval; a transfer sent to the wrong address or network may result in permanent loss. A request may be rejected before the manual transfer.</div>'+
       '<div class="va-nav-row"><button type="button" class="btn btn-ghost" id="wd-back2">Back</button><button type="button" class="btn btn-primary" id="wd-confirm" style="flex:2;padding:13px">Confirm &amp; Continue</button></div>'+
     '</div>'+
 
     /* ---- STEP 4: result ---- */
     '<div class="va-step-panel" data-wpanel="4"><div class="va-card"><div class="va-card-body" id="wd-result-box"></div></div></div>'+
+    '<div class="va-card" style="margin-top:18px"><div class="va-card-head"><div class="va-card-title">Withdrawal History</div><button type="button" class="btn btn-ghost" id="wd-history-refresh" style="padding:6px 10px;font-size:12px">Refresh</button></div><div id="wd-history" class="va-card-body"><div class="va-empty">Loading withdrawal history…</div></div></div>'+
   '</div>';
 };
 VIEWS.withdraw.afterRender = function(){
@@ -401,6 +403,30 @@ VIEWS.withdraw.afterRender = function(){
   function escapeWdText(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});
   }
+  async function refreshWithdrawalHistory(){
+    const host=$('#wd-history');
+    if(!host)return;
+    host.innerHTML='<div class="va-empty">Loading withdrawal history…</div>';
+    try{
+      const result=await apiAdapter.withdrawalHistory();
+      if(!result||!result.ok||!Array.isArray(result.withdrawals)){
+        host.innerHTML='<div class="va-empty">Withdrawal history is temporarily unavailable. Please refresh later.</div>';
+        return;
+      }
+      const rows=result.withdrawals;
+      if(!rows.length){host.innerHTML='<div class="va-empty">No withdrawal requests yet.</div>';return;}
+      const statusLabel={pending:'待审核',approved:'已批准 · 等待人工转账',rejected:'已拒绝 · 预留金额已退回',completed:'已完成 · 人工转账已记录',broadcast:'转账处理中',failed:'失败'};
+      host.innerHTML='<div class="va-table-wrap scroll"><table class="va-table" style="min-width:620px"><thead><tr><th>币种 / 网络</th><th>申请金额</th><th>状态</th><th>时间</th><th>转账参考号</th></tr></thead><tbody>'+
+        rows.map(function(w){
+          const status=String(w.status||'');
+          const timeValue=w.paid_at||w.time||'';
+          const timeText=timeValue?new Date(timeValue).toLocaleString():'—';
+          return '<tr><td>'+escapeWdText(w.coin)+' / '+escapeWdText(w.network)+'</td><td class="num">'+escapeWdText(w.amount)+' <span style="color:var(--text-muted)">Fee '+escapeWdText(w.fee)+'</span></td><td>'+escapeWdText(statusLabel[status]||status)+'</td><td class="num">'+escapeWdText(timeText)+'</td><td class="num" style="font-size:11px;word-break:break-all">'+escapeWdText(w.payout_reference||w.txid||'—')+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }catch(_){
+      host.innerHTML='<div class="va-empty">Withdrawal history is temporarily unavailable. Please refresh later.</div>';
+    }
+  }
   function wdResultState(r){
     if(isWdOutcomeUnknown(r)) return {key:'unknown',title:'Status Unconfirmed',ico:'unknown',sub:'We could not confirm whether this withdrawal request was recorded. Do not submit it again until its status has been checked.'};
     if(!r||!r.ok) return {key:'failed',title:'Request Not Confirmed',ico:'failed',sub:(r&&(r.msg||r.message))||'The withdrawal request was rejected. Please review the details and try again.'};
@@ -408,7 +434,7 @@ VIEWS.withdraw.afterRender = function(){
     if(r.duplicate) return {key:'submitted',title:'Already Submitted',ico:'submitted',sub:'This withdrawal request was already received. Do not submit it again.'};
     if(s.indexOf('cancel')>=0) return {key:'cancelled',title:'Cancelled',ico:'cancelled',sub:'This withdrawal was cancelled.'};
     if(s.indexOf('fail')>=0||s.indexOf('reject')>=0) return {key:'failed',title:'Failed / Rejected',ico:'failed',sub:r.msg||'Withdrawal was rejected. Please review the details and try again.'};
-    if(s.indexOf('complete')>=0||s.indexOf('sent')>=0||s.indexOf('success')>=0) return {key:'done',title:'Completed (Platform)',ico:'done',sub:'Platform review passed. Final arrival is subject to on-chain confirmation — this is not a chain-arrival confirmation.'};
+    if(s.indexOf('complete')>=0||s.indexOf('sent')>=0||s.indexOf('success')>=0) return {key:'done',title:'Completed (Manual Transfer)',ico:'done',sub:'Staff recorded the manual transfer as completed. Any transaction reference is shown in your withdrawal history.'};
     if(s.indexOf('process')>=0||s.indexOf('broadcast')>=0) return {key:'processing',title:'Processing',ico:'processing',sub:'Withdrawal is being processed / broadcast. Please wait for on-chain confirmation.'};
     if(s.indexOf('review')>=0||s.indexOf('pending')>=0||s.indexOf('audit')>=0||s.indexOf('approve')>=0) return {key:'review',title:'Under Review',ico:'review',sub:'Withdrawal submitted and awaiting manual review. It has NOT been sent on-chain yet.'};
     return {key:'submitted',title:'Submitted',ico:'submitted',sub:'Withdrawal request submitted. It will be reviewed manually before funds are sent. This is NOT a chain-arrival confirmation.'};
@@ -425,7 +451,7 @@ VIEWS.withdraw.afterRender = function(){
       '<div class="va-result-sub">'+safeSub+'</div>'+
       (wid?'<div class="va-result-id">ID: '+safeWid+'</div>':'')+
       (r&&r.ok?'<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Amount: <b class="num">'+fmt(amt,2)+' '+safeCoin+'</b></div>':'')+
-      '<div class="va-result-note">Submit success ≠ on-chain arrival. Funds are sent only after manual review and on-chain confirmation. Do not submit the same withdrawal twice.</div>'+
+      '<div class="va-result-note">'+(st.key==='done'?'Staff recorded this manual transfer as completed. Check withdrawal history for its reference.':'Your request is awaiting manual review. Approval is not the same as payment: staff will send the funds manually and update the status.')+' Do not submit the same withdrawal twice.</div>'+
       '<div class="va-nav-row" style="margin-top:16px">'+(st.key==='unknown'?'':'<button type="button" class="btn btn-ghost" id="wd-new">New Withdrawal</button>')+'<a href="#/assets" class="btn btn-primary" style="flex:2">Back to Assets</a></div>'+
     '</div>';
     $('#wd-result-box').innerHTML=html;
@@ -437,7 +463,7 @@ VIEWS.withdraw.afterRender = function(){
         '<div style="font-weight:700;font-size:15px;margin-bottom:8px;color:'+(st.ico==='failed'?'var(--down)':st.ico==='unknown'?'var(--warning)':'var(--brand-bright)')+'">'+st.title+'</div>'+
         '<div style="color:var(--text-secondary)">'+safeSub+'</div>'+
         (wid?'<div style="margin-top:10px;font-family:var(--font-mono);font-size:12px;color:var(--text-muted);word-break:break-all">ID: '+safeWid+'</div>':'')+
-        '<div style="margin-top:12px;font-size:11px;color:var(--text-muted)">'+(st.key==='unknown'?'Do not submit another withdrawal until this request is reconciled.':'Submit success ≠ on-chain arrival. Withdrawals are reviewed manually.')+'</div>'+
+        '<div style="margin-top:12px;font-size:11px;color:var(--text-muted)">'+(st.key==='unknown'?'Do not submit another withdrawal until this request is reconciled.':st.key==='done'?'Staff recorded the manual transfer as completed.':'Approval is not payment; staff will transfer funds manually after approval.')+'</div>'+
       '</div>'});
     goStep(4);
   }
@@ -450,6 +476,8 @@ VIEWS.withdraw.afterRender = function(){
     $('#wd-amount').value=String(maxAmount);calcReceive();
   };
   refresh();
+  refreshWithdrawalHistory();
+  if($('#wd-history-refresh')) $('#wd-history-refresh').onclick=refreshWithdrawalHistory;
   if(withdrawalOutcomeUnknown){
     const blockedBtn=$('#wd-submit');
     if(blockedBtn){blockedBtn.disabled=true;blockedBtn.textContent='Status Unconfirmed';}
@@ -546,6 +574,7 @@ VIEWS.withdraw.afterRender = function(){
       const okCoin=coin, okAmt=amt;
       $('#wd-form').reset();refresh();
       showResult(r, okCoin, okAmt);
+      refreshWithdrawalHistory();
     }else{
       showResult(r, coin, amt);
     }

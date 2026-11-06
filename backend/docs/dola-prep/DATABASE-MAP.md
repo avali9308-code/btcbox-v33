@@ -1,7 +1,8 @@
 # BTCBOX 数据库结构盘点（DATABASE-MAP）
 
 > 只读技术分析产出。生成日期：2026-11-02。Supabase 项目 ref：zlozsutefnmgwwzrlipt。
-> 数据来源：(A) `work/sb_openapi.json`（服务端高权限角色 拉取的 PostgREST OpenAPI 快照，含 14 张 REST 暴露表 + 20 个 RPC）；(B) `repo/supabase-migration-runner.sql`（2133 行全量迁移，权威）；(C) `repo/supabase/sql/*.sql`（19 个分模块迁移 + 1 个顺序说明）。
+> 数据来源：(A) `work/sb_openapi.json`（历史 PostgREST OpenAPI 快照）；(B) `repo/supabase/sql/*.sql`（当前按编号执行的分模块迁移，权威）；(C) `repo/supabase-migration-runner.sql`（2026-11-06 起标记为 DEPRECATED 的历史聚合快照，不可执行、不可作为权威结构来源）。
+> 本文其余基于旧 runner 的行号/统计仅作 2026-11-02 历史盘点线索；涉及当前结构时必须以当前编号迁移文件及 PostgreSQL 实测为准。
 > 凡 OpenAPI 与 SQL 不一致处，以 SQL 为准并标注。凡无法核实处标注「未核实」。
 
 ---
