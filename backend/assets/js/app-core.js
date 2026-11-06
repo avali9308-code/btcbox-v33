@@ -300,6 +300,8 @@ const apiAdapter = {
   async supabaseLogin(supabase_access_token){ return apiFetch('/supabase-login',{method:'POST',body:{supabase_access_token:supabase_access_token},skipAuthRedirect:true}); },
   // ACCOUNT -> GET /api/account
   async account(){ const r=await apiFetch('/account'); if(r.ok) applyAccount(r); return r; },
+  // ACCOUNT -> GET /api/withdrawals (authoritative status, payout reference and paid time)
+  async withdrawalHistory(){ return apiFetch('/withdrawals'); },
   // ACCOUNT -> GET /api/addresses (address book, masked)
   async addresses(coin){ return apiFetch('/addresses'); },
   // ACCOUNT -> GET /api/addresses/select?id= (full address)
@@ -439,6 +441,8 @@ const apiAdapter = {
   async adminConfirmDeposit(p){ return adminFetch('/admin/deposit/confirm',{method:'POST',body:{uid:p.uid, coin:p.coin, amount:p.amount, reference:p.reference, note:p.note, idempotency_key:p.idempotency_key||uid()}}); },
   // ADMIN -> POST /api/admin/withdraw/approve {id}
   async adminApproveWithdraw(id){ return adminFetch('/admin/withdraw/approve',{method:'POST',body:{id:id}}); },
+  // ADMIN -> POST /api/admin/withdraw/mark-paid {id,reference?,note?}
+  async adminMarkWithdrawPaid(p){ return adminFetch('/admin/withdraw/mark-paid',{method:'POST',body:{id:p.id,reference:p.reference||'',note:p.note||''}}); },
   // ADMIN -> POST /api/admin/withdraw/reject {id,reason?} (extra)
   async adminRejectWithdraw(p){ return adminFetch('/admin/withdraw/reject',{method:'POST',body:{id:p.id, reason:p.reason}}); },
   // ADMIN -> POST /api/admin/kyc/approve {uid,admin_override?,reason?} (extra)
