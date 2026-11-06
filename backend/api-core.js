@@ -471,6 +471,27 @@ function secCounterRecordFailure(counters, key, maxFailures, lockMs, now) {
 }
 function secCounterReset(counters, key) { if (counters && counters[key]) delete counters[key]; }
 
+// Normalize database settlement business errors without hiding idempotency conflicts.
+function secondsSettlementError(result, rpcStatus) {
+  const code = result && typeof result.code === 'string' ? result.code : 'FINANCIAL_RPC_FAILED';
+  const known = {
+    INVALID_ARGUMENT: { status: 400, msg: 'Settlement request is invalid.' },
+    POSITION_NOT_FOUND: { status: 404, msg: 'This position was not found.' },
+    SYMBOL_MISMATCH: { status: 409, msg: 'The position symbol does not match.' },
+    IDEMPOTENCY_CONFLICT: { status: 409, msg: 'This settlement request ID was already used with different parameters.' },
+    POSITION_ALREADY_SETTLED: { status: 409, msg: 'This position has already been settled by a different request. Refresh your positions.' },
+    SETTLEMENT_PRICE_BEFORE_MATURITY: { status: 409, msg: 'The settlement price timestamp is before position maturity.' },
+    FROZEN_BALANCE_INVARIANT: { status: 503, msg: 'Settlement could not be completed because the reserved balance is inconsistent.' }
+  };
+  const mapped = known[code];
+  if (mapped) return { code: code, status: mapped.status, msg: mapped.msg };
+  return {
+    code: code,
+    status: rpcStatus === 400 ? 400 : 503,
+    msg: 'The database did not confirm settlement. Please try again later.'
+  };
+}
+
 // ===== 提现白名单+冷却校验（纯函数）=====
 // ①提现地址必须在用户已绑定地址列表内（未绑定→拒绝）；②新绑定地址冷却期内禁止提现。
 // bound_at 取地址记录的 created_at（格式 'YYYY-MM-DD HH:MM:SS'）。
@@ -1508,7 +1529,10 @@ async function handleRequest(event, context) {
     try {
       const rpc = await fetch(base + '/rest/v1/rpc/settle_seconds_position_v1', { method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_position_id: positionId, p_user_id: String(user.uid), p_request_id: requestId, p_request_hash: requestHash, p_symbol: symbol, p_settle_price: String(settleRef.price), p_settle_price_source: settleRef.source, p_settle_price_ts: new Date().toISOString() }) });
       const result = await rpc.json().catch(() => null);
-      if (!rpc.ok || !result || result.ok !== true) return json({ ok: false, code: 'FINANCIAL_RPC_FAILED', msg: result && result.msg ? result.msg : 'The database did not confirm settlement. Please try again later.', duplicate: !!(result && result.duplicate), settled: !!(result && result.settled) }, rpc.status === 400 ? 400 : 503);
+      if (!rpc.ok || !result || result.ok !== true) {
+        const failure = secondsSettlementError(result, rpc.status);
+        return json({ ok: false, code: failure.code, msg: failure.msg, duplicate: false, settled: false }, failure.status);
+      }
       return json({ ok: true, duplicate: !!result.duplicate, position_id: positionId, settled: result.settled !== false, win: result.win, tie: result.tie, pnl: result.pnl, settle_price: result.settle_price, msg: result.duplicate ? 'This settlement request has already been processed.' : (result.settled === false ? 'This position has not reached maturity and cannot be settled yet.' : 'Settlement completed.') });
     } catch (e) { return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'The financial database is unavailable. Settlement remains unconfirmed.' }, 503); }
   }
@@ -2232,6 +2256,7 @@ exports._test = {
   parseMoneyInput: parseMoneyInput,
   withdrawalAddressCheck: withdrawalAddressCheck,
   withdrawalRequiresAdminReview: withdrawalRequiresAdminReview,
+  secondsSettlementError: secondsSettlementError,
   estimateUsdtValue: estimateUsdtValue,
   secCounterIsLocked: secCounterIsLocked,
   secCounterRecordFailure: secCounterRecordFailure,
