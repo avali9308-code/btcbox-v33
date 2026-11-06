@@ -1005,6 +1005,24 @@ async function handleRequest(event, context) {
     return json({ ok: true, msg: 'Two-factor authentication disabled.' });
   }
 
+  // ---------- GET /api/withdrawals — authoritative withdrawal status/history ----------
+  if (path === 'withdrawals' && method === 'GET') {
+    if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true }, 401);
+    if (!financialPostgresReadsEnabled()) return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
+    try {
+      const response = await fetch(process.env.SUPABASE_URL.replace(/\\/+$/, '') + '/rest/v1/rpc/read_withdrawal_history_v1', {
+        method: 'POST', headers: supabaseHeaders(), body: JSON.stringify({ p_user_id: String(user.uid) })
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result || result.ok !== true || !Array.isArray(result.withdrawals)) {
+        return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
+      }
+      return json({ ok: true, withdrawals: result.withdrawals });
+    } catch (e) {
+      return json({ ok: false, code: 'FINANCIAL_READ_UNAVAILABLE', msg: 'Withdrawal history is temporarily unavailable.' }, 503);
+    }
+  }
+
   // ---------- GET /api/account ----------
   if (path === 'account' && method === 'GET') {
     if (!user) return json({ ok: false, msg: 'Not signed in.', need_login: true });
@@ -2081,6 +2099,33 @@ async function handleRequest(event, context) {
       return json({ ok: true, msg: 'Configuration updated.', deposit_addresses: safeDepositAddresses(db.deposit_addresses), announcement: db.announcement });
     }
 
+
+    // POST /api/admin/withdraw/mark-paid — staff has already sent the funds manually.
+    if (sub === 'withdraw/mark-paid' && method === 'POST') {
+      if (!financialWritesEnabled()) return json({ ok: false, code: 'FINANCIAL_CUTOVER_INCOMPLETE', msg: 'Financial ledger cutover is incomplete. Payout status was not changed.' }, 503);
+      const wdId = String(body.id || '').trim();
+      const reference = String(body.reference || '').trim();
+      const note = String(body.note || '').trim();
+      if (!wdId || wdId.length > 100) return json({ ok: false, msg: 'Withdrawal record ID is invalid.' }, 400);
+      if (reference.length > 160 || note.length > 300) return json({ ok: false, msg: 'Payout reference or note is too long.' }, 400);
+      const adminId = String(process.env.ADMIN_USER || '').trim();
+      if (!adminId) return json({ ok: false, code: 'ADMIN_ACTOR_NOT_CONFIGURED', msg: 'Administrator audit identity not configured. Payout status was not changed.' }, 503);
+      try {
+        const rpc = await fetch(process.env.SUPABASE_URL.replace(/\\/+$/, '') + '/rest/v1/rpc/mark_withdrawal_paid_atomic', {
+          method: 'POST', headers: supabaseHeaders(),
+          body: JSON.stringify({ p_withdrawal_id: wdId, p_admin_id: adminId, p_reference: reference, p_note: note })
+        });
+        const result = await rpc.json().catch(() => null);
+        if (!rpc.ok || !result || result.ok !== true || result.status !== 'completed') {
+          return json({ ok: false, code: 'FINANCIAL_RPC_FAILED', msg: 'Manual payout completion was not confirmed. Check the withdrawal record before retrying.' }, rpc.status === 400 ? 400 : 503);
+        }
+        return json({ ok: true, duplicate: !!result.duplicate, withdrawal_id: result.withdrawal_id, status: result.status,
+          payout_reference: result.payout_reference || '', paid_at: result.paid_at || null,
+          msg: result.duplicate ? 'This withdrawal was already marked as paid.' : 'Manual payout completion recorded.' });
+      } catch (e) {
+        return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'Financial database temporarily unavailable. Payout status is unconfirmed; check the withdrawal record before retrying.' }, 503);
+      }
+    }
 
     // GET /api/admin/withdrawals 待审核提现列表
     if (sub === 'withdrawals' && method === 'GET') {
