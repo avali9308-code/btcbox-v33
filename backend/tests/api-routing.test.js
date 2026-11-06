@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const { Readable } = require('node:stream');
 const adapter = require('../api-adapter.js');
 const catchAll = require('../api/[...path].js');
-const routes = ['login/2fa','addresses/select','order/cancel','seconds/order','seconds/settle','seconds/positions','settings/password','settings/fundpwd','2fa/enable','2fa/confirm','2fa/disable','support/chat','support/messages','chat/unread','admin/stats','admin/users','admin/user','admin/addresses','admin/withdrawals','admin/orders','admin/support/messages','admin/config','admin/audit-logs'];
+const routes = ['login/2fa','addresses/select','order/cancel','seconds/order','seconds/settle','seconds/positions','settings/password','settings/fundpwd','2fa/enable','2fa/confirm','2fa/disable','support/chat','support/messages','chat/unread','withdrawals','admin/stats','admin/users','admin/user','admin/addresses','admin/withdrawals','admin/withdraw/mark-paid','admin/orders','admin/support/messages','admin/config','admin/audit-logs'];
 function listJavaScriptFiles(dir, prefix='') {
   return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>{
     const relative=path.posix.join(prefix,entry.name);
@@ -19,8 +19,8 @@ test('all nested API paths are served by one catch-all function within Vercel Ho
   assert.deepEqual(apiFiles,['[...path].js','healthz.js']);
   assert.ok(apiFiles.length<=12,'Vercel Hobby allows at most 12 serverless functions per deployment');
 });
-test('all 23 nested API routes preserve their canonical request path through the catch-all', () => {
-  assert.equal(routes.length,23);
+test('all 25 nested API routes preserve their canonical request path through the catch-all', () => {
+  assert.equal(routes.length,25);
   for(const route of routes){
     const event=adapter.createApiEvent({url:'/api/'+route+'?probe=1',method:'GET',headers:{cookie:'session_token=session-value'}},'');
     assert.equal(event.path,'/api/'+route,route+' path must be preserved');
