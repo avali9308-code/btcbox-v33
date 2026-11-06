@@ -1085,3 +1085,14 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - AI 3 scope: preserve the business contract, create/track issue and prevent UI/API asset-list drift. Active Admin Console view implementation and API file changes must be assigned to their implementation owners; independent QA verifies the exact resulting SHA.
 - Financial cutover flags remain unchanged. The manual credit API remains unavailable until the existing complete financial cutover gate is legitimately verified; do not bypass it or use a legacy balance fallback.
 - No source app files, SQL, database, environment flags, merge, or deployment were changed in this coordination batch. Runtime/build/browser verification not run.
+
+
+## AI 3 batch — manual deposit configuration implementation — 2026-11-06
+
+- IMPLEMENTED IN SOURCE on `fix/manual-withdrawal-rpc-compat-20261106`: added the Admin Console `充值地址` tab using the existing authenticated `GET/POST /api/admin/config` adapter. It loads saved addresses, edits all eight supported coin/network keys, saves, reports loading/error/success, and allows a blank value to explicitly deactivate a network address.
+- IMPLEMENTED IN SOURCE: aligned safe address projection, admin account-balance asset validation, and manual-credit API whitelist with the six supported assets USDT/BTC/ETH/SOL/BNB/USDC. User admin account panel now renders all six asset rows; UID and asset remain auto-bound and amount is the only required manual-credit field.
+- PRESERVED: user deposit page selects exact coin/network and reads configured address; unset addresses remain unavailable; manual credit remains gated by `financialWritesEnabled()`, uses `admin_manual_deposit_atomic`, idempotency and audit. No pending deposit orders, chain watcher, automatic credit, extra approval tier, or withdrawal/Seconds/V211 changes were added in this batch.
+- Regression file added: `backend/tests/manual-deposit-config.test.js` (5 tests). A source-level integration audit performed after the final commit passed 10/10 targeted assertions across API/UI/network keys/asset sets/adapter/financial gate.
+- Latest source HEAD: `c82c07acad6df6e3bdc83de9f8be2b29bbade790`. Feature branch is 41 commits ahead / 0 behind main baseline `18a354a9e8e1d0365e240c7c44eda4a18d62ce07`.
+- NOT RUN: Node test suite, build, browser verification, isolated PostgreSQL behavior. GitHub Actions lookup for this exact SHA returned zero workflow runs and combined commit status had no contexts. Static assertions are not a substitute for these tests.
+- NO production DB writes, migrations, financial flag changes, merge, or deployment were performed. Issue #2 remains open pending actual test/QA evidence.
