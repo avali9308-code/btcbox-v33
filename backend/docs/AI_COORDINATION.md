@@ -1096,3 +1096,9 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - Latest source HEAD: `c82c07acad6df6e3bdc83de9f8be2b29bbade790`. Feature branch is 41 commits ahead / 0 behind main baseline `18a354a9e8e1d0365e240c7c44eda4a18d62ce07`.
 - NOT RUN: Node test suite, build, browser verification, isolated PostgreSQL behavior. GitHub Actions lookup for this exact SHA returned zero workflow runs and combined commit status had no contexts. Static assertions are not a substitute for these tests.
 - NO production DB writes, migrations, financial flag changes, merge, or deployment were performed. Issue #2 remains open pending actual test/QA evidence.
+
+
+## AI 3 follow-up — withdrawal migration 0022 schema mismatch — 2026-11-06
+
+- SOURCE OBSERVED: `backend/scripts/run_migrations.sh` executes numbered SQL files in order. 0002 creates `public.withdrawal_requests`; 0003 withdrawal lifecycle RPCs use the same table; 0022 instead references `public.withdrawals` and a different column contract; 0023 again uses `public.withdrawal_requests`.
+- Issue #3 opened: https://github.com/avali9308-code/btcbox-v33/issues/3. This is a source-level contract finding only; PostgreSQL runtime failure is NOT REPRODUCED. Do not skip/renumber migration files or apply to production. Require an isolated PostgreSQL migration-chain run before any cutover.
