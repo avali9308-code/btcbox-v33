@@ -484,7 +484,7 @@ VIEWS.admin = function(){
     '<div id="admin-err" style="display:none" class="va-banner va-banner-err"></div>'+
     '<div class="card" style="padding:0;margin-bottom:16px">'+
       '<div style="display:flex;border-bottom:1px solid var(--border);overflow-x:auto" class="no-scrollbar">'+
-        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="deposits">充值审核</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div>'+
+        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="deposits">人工上分</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div>'+
       '</div>'+
       '<div id="admin-body" style="overflow-x:auto" class="scroll">'+skeleton(5,4)+'</div>'+
     '</div>'+
@@ -576,19 +576,41 @@ VIEWS.admin.afterRender = function(){
         await runAdminAction(b,()=>apiAdapter.adminFreeze({uid:b.dataset.uid,frozen:freeze,reason:'Admin action'}),'状态已更新');
       };});
     } else if(tab==='deposits'){
-      var list=(state.admin.deposits||[]).filter(function(d){return d.status==='pending';});
-      if(!list.length){$('#admin-body').innerHTML=emptyState('暂无待审核充值','所有充值均已处理。');return;}
-      $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">ID</th><th class="th">用户</th><th class="th">币种</th><th class="th" style="text-align:right">数量</th><th class="th">网络</th><th class="th">参考号</th><th class="th">操作</th></tr></thead><tbody>'+
-        list.map(function(d){
-          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(d.id)+'</td><td class="td">'+escapeHtml(d.uid)+'</td><td class="td">'+escapeHtml(d.coin)+'</td><td class="td num" style="text-align:right">'+fmt(d.amount,d.coin==='USDT'?2:6)+'</td><td class="td" style="color:var(--text-secondary)">'+escapeHtml(d.network)+'</td><td class="td num" style="font-size:11px">'+escapeHtml(d.reference)+'</td><td class="td"><button class="ad-confirm" data-id="'+escapeHtml(d.id)+'" style="color:var(--up);font-weight:600;font-size:12px;margin-right:10px;background:none;border:none;cursor:pointer">确认到账</button><button style="color:var(--down);font-weight:600;font-size:12px;background:none;border:none;cursor:pointer" disabled>驳回</button></td></tr>';
-        }).join('')+'</tbody></table>';
-      $$('.ad-confirm').forEach(function(b){b.onclick=async function(){
-        var d=state.admin.deposits.find(function(x){return String(x.id)===String(b.dataset.id);});
-        if(!d){toast('无法找到对应充值记录，请刷新列表。','err');return;}
-        var ok=await confirmAdminAction('确认充值到账（人工入账）','<b>充值 ID：</b>'+escapeHtml(d.id)+'<br><b>用户 UID：</b>'+escapeHtml(d.uid)+'<br><b>币种/数量：</b>'+escapeHtml(d.coin)+' '+escapeHtml(d.amount)+'<br><b>参考号：</b>'+escapeHtml(d.reference||'—'));
-        if(!ok)return;
-        await runAdminAction(b,()=>apiAdapter.adminConfirmDeposit({id:d.id,uid:d.uid,coin:d.coin,amount:d.amount,reference:d.reference,note:'manual',idempotency_key:uid()}),'充值已确认');
-      };});
+      $('#admin-body').innerHTML='<div class="va-card" style="margin:16px"><div class="va-card-head"><div class="va-card-title">人工充值上分</div></div><div class="va-card-body">'+
+        '<div class="va-info" style="margin-bottom:16px">用户转账后，工作人员先核对实际到账，再填写用户 UID、币种和到账金额。系统会通过财务账本入账并记录管理员审计；这里不依赖用户提交充值申请。</div>'+
+        '<form id="admin-deposit-form" autocomplete="off">'+
+          '<div class="va-form-grid">'+
+            '<div class="va-field"><label class="auth-label" for="admin-deposit-uid">用户 UID</label><input id="admin-deposit-uid" class="auth-input num" required maxlength="100" placeholder="从用户管理复制 UID"></div>'+
+            '<div class="va-field"><label class="auth-label" for="admin-deposit-coin">币种</label><select id="admin-deposit-coin" class="auth-input"><option>USDT</option><option>BTC</option><option>ETH</option><option>SOL</option></select></div>'+
+          '</div>'+
+          '<div class="va-field"><label class="auth-label" for="admin-deposit-amount">实际到账金额</label><input id="admin-deposit-amount" class="auth-input num" type="number" min="0" step="any" required placeholder="0.00"></div>'+
+          '<div class="va-field"><label class="auth-label" for="admin-deposit-reference">交易哈希 / 参考号（可选）</label><input id="admin-deposit-reference" class="auth-input num" maxlength="120" placeholder="TxID / transfer reference"></div>'+
+          '<div class="va-field"><label class="auth-label" for="admin-deposit-note">备注（可选）</label><input id="admin-deposit-note" class="auth-input" maxlength="300" placeholder="人工核对说明"></div>'+
+          '<button type="submit" class="btn btn-primary" style="padding:12px 18px">确认人工上分</button>'+
+        '</form></div></div>';
+      var depositForm=$('#admin-deposit-form');
+      if(depositForm) depositForm.onsubmit=async function(event){
+        event.preventDefault();
+        var targetUid=$('#admin-deposit-uid').value.trim();
+        var coin=$('#admin-deposit-coin').value;
+        var amountText=$('#admin-deposit-amount').value.trim();
+        var reference=$('#admin-deposit-reference').value.trim();
+        var note=$('#admin-deposit-note').value.trim();
+        if(!targetUid||!amountText||!Number.isFinite(Number(amountText))||Number(amountText)<=0){
+          toast('请填写有效的用户 UID 和实际到账金额。','err');return;
+        }
+        var requestKey=depositForm.dataset.requestId||(depositForm.dataset.requestId=uid());
+        var confirmed=await confirmAdminAction('确认人工充值上分','<b>用户 UID：</b>'+escapeHtml(targetUid)+'<br><b>币种：</b>'+escapeHtml(coin)+'<br><b>到账金额：</b>'+escapeHtml(amountText)+'<br><b>交易参考：</b>'+escapeHtml(reference||'—')+'<br><b>备注：</b>'+escapeHtml(note||'—')+'<br><br>请确认已在对应网络核实实际到账。');
+        if(!confirmed)return;
+        var button=depositForm.querySelector('button[type="submit"]');
+        await runAdminAction(button,()=>apiAdapter.adminConfirmDeposit({uid:targetUid,coin:coin,amount:amountText,reference:reference,note:note,idempotency_key:requestKey}),'已人工上分');
+        if(button.textContent==='已人工上分'){
+          depositForm.reset();
+          depositForm.dataset.requestId=uid();
+          button.disabled=false;
+          button.textContent='确认人工上分';
+        }
+      };
     } else if(tab==='withdrawals'){
       var wlist=(state.admin.withdrawals||[]).filter(function(w){return w.status==='pending'||w.status==='approved';});
       if(!wlist.length){$('#admin-body').innerHTML=emptyState('暂无待处理提现','新提现申请会显示在这里；已批准的申请需要人工转账后标记完成。');return;}
