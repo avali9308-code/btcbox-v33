@@ -1011,3 +1011,14 @@ The earlier open item saying 1号 must confirm a Home route is superseded by sou
 - Added `backend/tests/withdrawal-migration-contract.test.js` with five regression tests. Migration order guide updated. Post-change source audit passed 12/12 assertions.
 - NOT RUN: Node tests/build, PostgreSQL runtime or full numbered migration chain. Runtime remains unverified; no hosted DB writes, migration application, financial flag changes, merge or deployment. Issue #3 remains open pending runtime proof.
 - Latest code/doc branch head at this record: `9f0da9443eb443bc7e25c28d4aed7b0e45dfbdc6`.
+
+
+## AI 3 batch — reconcile migration 0021 audit log schema and privileges — 2026-11-06
+
+- Issue #4: https://github.com/avali9308-code/btcbox-v33/issues/4
+- SOURCE OBSERVED: 0002 creates the canonical `financial_audit_log` schema (`actor_id, subject_user_id, action, object_type, object_id, reason, metadata, created_at`); old 0021 attempted to reuse the table with an incompatible `uid/by/detail/meta` shape and created an index on missing `uid`.
+- SOURCE OBSERVED: old 0021's `SECURITY DEFINER` append RPC revoked EXECUTE from anon/authenticated but not PUBLIC, so its service-role-only comment was inaccurate.
+- IMPLEMENTED IN SOURCE: 0021 now verifies and extends the 0002 canonical table, maps the existing Node `auditAdmin()` arguments into canonical columns, uses `SECURITY INVOKER` with empty search_path, explicitly revokes PUBLIC/anon/authenticated and grants EXECUTE only to service_role.
+- IMPLEMENTED IN SOURCE: audit table is RLS-enabled, service_role is limited to SELECT/INSERT, and UPDATE/DELETE/TRUNCATE are revoked and blocked by append-only triggers.
+- Added `backend/tests/audit-log-migration-contract.test.js` with six source-contract regression tests. Test suite/build/PostgreSQL execution NOT RUN; isolated full migration chain still required.
+- No production DB writes, migration application, financial flag changes, merge or deployment. Issues #2, #3 and #4 remain open pending actual runtime/QA evidence.
