@@ -1112,3 +1112,14 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - Added `backend/tests/withdrawal-migration-contract.test.js` with five regression tests. Migration order guide updated. Post-change source audit passed 12/12 assertions.
 - NOT RUN: Node tests/build, PostgreSQL runtime or full numbered migration chain. Runtime remains unverified; no hosted DB writes, migration application, financial flag changes, merge or deployment. Issue #3 remains open pending runtime proof.
 - Latest code/doc branch head at this record: `9f0da9443eb443bc7e25c28d4aed7b0e45dfbdc6`.
+
+
+## AI 3 batch — migration 0021 audit-log schema and privilege reconciliation — 2026-11-06
+
+- Current source branch: `fix/manual-withdrawal-rpc-compat-20261106`.
+- Issue #4 records a source-observed mismatch: 0002 creates `financial_audit_log` using canonical actor/subject/object/reason/metadata columns; old 0021 assumed a separate uid/by/detail/meta shape and indexed the nonexistent uid column.
+- Old 0021 also defined the append RPC as SECURITY DEFINER without revoking EXECUTE from PUBLIC. This was inconsistent with the service-role-only contract.
+- Source correction: 0021 now verifies the 0002 table, retains the canonical schema, maps the current Node auditAdmin RPC arguments to canonical columns, uses SECURITY INVOKER with empty search_path, revokes PUBLIC/anon/authenticated and grants service_role only. Append-only triggers cover UPDATE/DELETE/TRUNCATE and service_role retains SELECT/INSERT only.
+- Regression source-contract test added: `backend/tests/audit-log-migration-contract.test.js` (six tests authored; not yet executed).
+- Classification: SOURCE OBSERVED and IMPLEMENTED IN SOURCE only. Node suite/build/full PostgreSQL chain and live DB behavior NOT VERIFIED. No hosted DB writes, migration apply, financial flags, merge or deployment.
+- Issue #4: https://github.com/avali9308-code/btcbox-v33/issues/4
