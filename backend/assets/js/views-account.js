@@ -719,10 +719,10 @@ VIEWS.admin.afterRender = function(){
         var reference=await new Promise(function(resolve){
           if(!(window.BTCBox&&BTCBox.modal)){resolve(null);return;}
           BTCBox.modal({title:'记录人工转账完成',width:'md',closable:true,
-            content:'<div style="font-size:13px;line-height:1.7;margin-bottom:12px">请先确认工作人员已向用户提供的地址实际转账。此操作只记录已完成，不会再次扣款。</div><div class="va-field"><label class="auth-label">TxID / 转账参考号（可选）</label><input id="admin-payout-reference" class="auth-input num" maxlength="160" placeholder="输入交易哈希或转账参考号"></div>',
+            content:'<div style="font-size:13px;line-height:1.7;margin-bottom:12px">请先确认工作人员已向用户提供的地址实际转账。此操作只记录已完成，不会再次扣款。</div><div class="va-field"><label class="auth-label">TxID / 转账参考号（必填）</label><input id="admin-payout-reference" class="auth-input num" maxlength="160" required aria-required="true" placeholder="输入交易哈希或转账参考号"></div>',
             buttons:[
               {text:'取消',variant:'ghost',onClick:function(close){close();resolve(null);}},
-              {text:'确认已转账',variant:'primary',onClick:function(close){var input=document.getElementById('admin-payout-reference');var value=input?input.value.trim():'';close();resolve(value);}}
+              {text:'确认已转账',variant:'primary',onClick:function(close){var input=document.getElementById('admin-payout-reference');var value=input?input.value.trim():'';if(!value){toast('请填写实际转账的 TxID / 参考号。','err');if(input)input.focus();return;}close();resolve(value);}}
             ]});
         });
         if(reference===null)return;
