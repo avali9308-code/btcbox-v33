@@ -165,6 +165,16 @@ test('all six admin sensitive actions require confirmAdminAction before executio
 });
 
 /* ---------- withdrawal / deposit UI hints ---------- */
+
+test('admin deposits tab provides direct audited manual-credit form without a user claim queue', () => {
+  const admin = read('assets/js/views-account.js');
+  assert.ok(admin.includes('id="admin-deposit-form"'), 'manual credit form missing');
+  assert.ok(admin.includes('id="admin-deposit-uid"') && admin.includes('id="admin-deposit-amount"'), 'manual credit UID/amount fields missing');
+  assert.ok(admin.includes('apiAdapter.adminConfirmDeposit({uid:targetUid'), 'manual credit does not call the admin ledger API');
+  assert.ok(admin.includes('idempotency_key:requestKey'), 'manual credit request ID is not retained for the operation');
+  assert.ok(admin.includes('请确认已在对应网络核实实际到账'), 'manual credit lacks an actual-receipt confirmation');
+});
+
 test('withdrawal view shows binding/24h/manual-review rule hint; deposit warns system-generated address', () => {
   const s = read('assets/js/views-assets.js');
   assert.ok(s.includes('提币地址需先绑定并通过审核'), 'withdrawal binding rule hint missing');
