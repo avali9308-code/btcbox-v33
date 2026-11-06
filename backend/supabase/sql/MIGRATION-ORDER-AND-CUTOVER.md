@@ -1,6 +1,8 @@
 # Financial SQL migration order and cutover gates
 
 > **编号约定（phase2）**: 本目录下编号 SQL 由 `scripts/run_migrations.sh` 按升序执行。`0001` 为基础，`0002–0021` 建立账本、业务 RPC 与审计结构；`0022` 是提现生命周期兼容检查点，不再创建第二套表或 RPC；`0023` 增加人工转账完成记录；`0024–0025` 是秒合约后续迁移。此顺序必须先在隔离 PostgreSQL 环境完整验证，不能据此重放到已存在的托管数据库。
+>
+> **迁移入口说明**：`backend/supabase-migration-runner.sql` 是已废弃的历史聚合文件，禁止执行；当前唯一编号 SQL 来源为本目录，隔离测试入口为 `backend/scripts/run_migrations.sh`。Supabase CLI timestamped migrations 属于独立历史/部署通道，不能与编号 runner 混用或假定两者执行历史等价。
 
 
 Apply these migrations to a dedicated staging project in dependency order. These files are migrations, not read-only reports; audit scripts and staging drill outputs are not migrations. Complete the checks before production cutover.
