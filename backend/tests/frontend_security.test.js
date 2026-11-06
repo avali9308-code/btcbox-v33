@@ -56,17 +56,17 @@ test('admin users table wraps uid/email/kyc in escapeHtml', () => {
   const s = read('assets/js/views-account.js');
   assert.ok(s.includes("escapeHtml(u.uid)"), 'u.uid not escaped in users table');
   assert.ok(s.includes("escapeHtml(u.email)"), 'u.email not escaped (critical sink)');
-  assert.ok(s.includes("escapeHtml(u.kyc)"), 'u.kyc not escaped');
+  assert.ok(s.includes("escapeHtml(kyc)"), 'normalized KYC status not escaped');
   assert.ok(s.includes('data-uid="\'+escapeHtml(u.uid)+\'"'), 'data-uid attribute not escaped');
 });
 
-test('admin deposits table wraps reference/uid/coin/network/id in escapeHtml', () => {
+test('admin manual-credit confirmation escapes all operator-entered fields', () => {
   const s = read('assets/js/views-account.js');
-  assert.ok(s.includes("escapeHtml(d.reference)"), 'd.reference not escaped (critical sink)');
-  assert.ok(s.includes("escapeHtml(d.uid)"), 'd.uid not escaped');
-  assert.ok(s.includes("escapeHtml(d.coin)"), 'd.coin not escaped');
-  assert.ok(s.includes("escapeHtml(d.network)"), 'd.network not escaped');
-  assert.ok(s.includes("escapeHtml(d.id)"), 'd.id not escaped');
+  assert.ok(s.includes('escapeHtml(targetUid)'), 'manual credit UID not escaped');
+  assert.ok(s.includes('escapeHtml(coin)'), 'manual credit coin not escaped');
+  assert.ok(s.includes('escapeHtml(amountText)'), 'manual credit amount not escaped');
+  assert.ok(s.includes("escapeHtml(reference||'—')"), 'manual credit reference not escaped');
+  assert.ok(s.includes("escapeHtml(note||'—')"), 'manual credit note not escaped');
 });
 
 test('admin withdrawals table wraps address/uid/coin/id in escapeHtml', () => {
