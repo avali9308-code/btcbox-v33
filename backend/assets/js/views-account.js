@@ -484,7 +484,7 @@ VIEWS.admin = function(){
     '<div id="admin-err" style="display:none" class="va-banner va-banner-err"></div>'+
     '<div class="card" style="padding:0;margin-bottom:16px">'+
       '<div style="display:flex;border-bottom:1px solid var(--border);overflow-x:auto" class="no-scrollbar">'+
-        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="deposits">人工上分</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div>'+
+        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div>'+
       '</div>'+
       '<div id="admin-body" style="overflow-x:auto" class="scroll">'+skeleton(5,4)+'</div>'+
     '</div>'+
