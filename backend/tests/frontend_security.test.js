@@ -173,13 +173,17 @@ test('admin users tab loads the API list and renders its normalized response fie
   assert.ok(admin.includes('fmt(u.total_usdt,2)'), 'admin balance display does not match the API response');
 });
 
-test('admin deposits tab provides direct audited manual-credit form without a user claim queue', () => {
+test('admin manual credit is launched from the selected user asset panel with UID and coin auto-bound', () => {
   const admin = read('assets/js/views-account.js');
-  assert.ok(admin.includes('id="admin-deposit-form"'), 'manual credit form missing');
-  assert.ok(admin.includes('id="admin-deposit-uid"') && admin.includes('id="admin-deposit-amount"'), 'manual credit UID/amount fields missing');
-  assert.ok(admin.includes('apiAdapter.adminConfirmDeposit({uid:targetUid'), 'manual credit does not call the admin ledger API');
+  const core = read('assets/js/app-core.js');
+  assert.ok(admin.includes('class="au-account"'), 'user row has no account/asset entry');
+  assert.ok(admin.includes('apiAdapter.adminUser(b.dataset.uid)'), 'account panel does not load the selected user detail');
+  assert.ok(admin.includes('class="au-credit-open btn btn-primary" data-coin="'+coin+'"'), 'credit action is not attached to a selected asset');
+  assert.ok(admin.includes('apiAdapter.adminConfirmDeposit({uid:accountUid,coin:coin'), 'manual credit does not auto-bind selected UID and asset');
   assert.ok(admin.includes('idempotency_key:requestKey'), 'manual credit request ID is not retained for the operation');
-  assert.ok(admin.includes('请确认已在对应网络核实实际到账'), 'manual credit lacks an actual-receipt confirmation');
+  assert.ok(admin.includes('请确认已核实该币种、该网络的实际到账'), 'manual credit lacks an actual-receipt confirmation');
+  assert.ok(!admin.includes('id="admin-deposit-uid"') && !admin.includes('id="admin-deposit-form"'), 'standalone manual UID form must be removed');
+  assert.ok(core.includes("async adminUser(id){ return adminFetch('/admin/user?uid='"), 'admin user detail API adapter missing');
 });
 
 test('withdrawal view shows binding/24h/manual-review rule hint; deposit warns system-generated address', () => {
