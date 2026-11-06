@@ -2,9 +2,9 @@
 --
 -- Compatibility checkpoint retained at its historical sequence position.
 --
--- The original imported copy attempted to create a second, incompatible
--- create_withdrawal_atomic overload against public.withdrawals and introduced
--- pending_admin_review. That contract does not belong to this application:
+-- The original imported copy attempted to create an incompatible parallel
+-- withdrawal table/RPC contract and a second review state. That contract does
+-- not belong to this application:
 -- 0002/0003 define public.withdrawal_requests, and every withdrawal already
 -- enters the single admin-review queue with status='pending'. The API calls
 -- the canonical nine-argument create_withdrawal_atomic from 0003.
