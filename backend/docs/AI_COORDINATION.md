@@ -1123,3 +1123,13 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - Regression source-contract test added: `backend/tests/audit-log-migration-contract.test.js` (six tests authored; not yet executed).
 - Classification: SOURCE OBSERVED and IMPLEMENTED IN SOURCE only. Node suite/build/full PostgreSQL chain and live DB behavior NOT VERIFIED. No hosted DB writes, migration apply, financial flags, merge or deployment.
 - Issue #4: https://github.com/avali9308-code/btcbox-v33/issues/4
+
+
+## AI 3 follow-up — simplify audit migration source — 2026-11-06
+
+- SOURCE OBSERVED: `backend/supabase/sql/0002_financial_ledger_v1.sql` is the single canonical creator of `public.financial_audit_log`; `0003`, `0004`, `0005`, `0006`, `0007`, and `0016` write using that canonical column contract.
+- SOURCE OBSERVED: `0021_admin_audit_log_append_only_v1.sql` now validates the canonical table and applies RLS, service-role append-only grants, mutation-blocking triggers, and the existing `append_admin_audit_log` RPC contract. No second audit table is needed.
+- FIXED IN SOURCE: marked `backend/supabase-migration-runner.sql` as deprecated/historical and explicitly prohibited execution. Its old instructions contradicted the current fail-closed financial flags and its aggregate SQL predates current numbered migration fixes.
+- Canonical SQL source remains `backend/supabase/sql/NNNN_*.sql`; the numbered local/test runner is `backend/scripts/run_migrations.sh` and must only use an isolated local/test `DATABASE_URL`.
+- NOT VERIFIED: PostgreSQL syntax/runtime, trigger behavior, role grants, complete numbered migration chain, Node tests/build. No hosted DB operation was performed.
+- NO production table drop/recreate, production write, financial flag change, merge, or deployment. Preserve production schema and records.
