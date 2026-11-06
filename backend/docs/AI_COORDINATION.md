@@ -1144,3 +1144,12 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - Supabase CLI v3 changed database commands to local-by-default and requires explicit remote targeting/confirmation for hosted changes; scripts must be reviewed before use.
 - NOT VERIFIED: complete isolated PostgreSQL bootstrap, hosted schema equivalence, whether the two recorded hosted migrations have side effects beyond their names, and any safe repair sequence.
 - No hosted database writes, migration apply/repair, reset, financial flag changes, merge, or deployment were performed.
+
+
+## Operational migration runner boundary — 2026-11-06
+
+- SOURCE OBSERVED: `0017_financial_migration_staging_v5.sql` creates a legacy quarantine table explicitly intended only for a dedicated staging project. `0018`–`0020` are read-only staging/ledger reconciliation diagnostics, not operational schema migrations.
+- FIXED IN SOURCE: `backend/scripts/run_migrations.sh` now explicitly skips files 0017–0020 and applies only operational numbered migrations. The SQL files remain in the repository for the separate staging workflow; none were deleted.
+- Updated the migration-order guide, Vercel deployment instructions, and pre-release checklist so the staging-only scripts are not represented as routine operational migrations.
+- Added `backend/tests/migration-runner-boundaries.test.js` to guard the skip boundary and ensure the diagnostic scripts remain read-only.
+- NOT VERIFIED: shell execution against PostgreSQL, full operational migration chain, staging import/reconciliation, Node tests/build. No production DB write, migration repair/apply, financial flag change, merge, or deployment.
