@@ -1102,3 +1102,13 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 
 - SOURCE OBSERVED: `backend/scripts/run_migrations.sh` executes numbered SQL files in order. 0002 creates `public.withdrawal_requests`; 0003 withdrawal lifecycle RPCs use the same table; 0022 instead references `public.withdrawals` and a different column contract; 0023 again uses `public.withdrawal_requests`.
 - Issue #3 opened: https://github.com/avali9308-code/btcbox-v33/issues/3. This is a source-level contract finding only; PostgreSQL runtime failure is NOT REPRODUCED. Do not skip/renumber migration files or apply to production. Require an isolated PostgreSQL migration-chain run before any cutover.
+
+
+## AI 3 batch — reconcile withdrawal migration 0022 — 2026-11-06
+
+- Provenance: Git path history shows 0022 first appeared in archive-extraction commit `05da31097802d012aa79b2976386ddce5f92757c`; it did not exist in parent `64a2fcd8861ce56a8439e23f13888ab12a21898e`. No earlier migration provenance exists in this repository.
+- Canonical contract: 0002 creates `public.withdrawal_requests`; 0003 creates the nine-argument `create_withdrawal_atomic` and the `pending -> approved/rejected` review flow; API invokes that nine-argument RPC and all withdrawals are manually reviewed; 0023 adds post-approval manual payout completion to the same table.
+- IMPLEMENTED IN SOURCE: 0022 is now an explicit compatibility checkpoint that verifies the canonical table/status column exist. It no longer creates a parallel table reference, function overload, or extra review state. The numbered sequence still includes 0022 then 0023; no file skipped or renumbered.
+- Added `backend/tests/withdrawal-migration-contract.test.js` with five regression tests. Migration order guide updated. Post-change source audit passed 12/12 assertions.
+- NOT RUN: Node tests/build, PostgreSQL runtime or full numbered migration chain. Runtime remains unverified; no hosted DB writes, migration application, financial flag changes, merge or deployment. Issue #3 remains open pending runtime proof.
+- Latest code/doc branch head at this record: `9f0da9443eb443bc7e25c28d4aed7b0e45dfbdc6`.
