@@ -1157,7 +1157,7 @@ async function handleRequest(event, context) {
       return json({ ok: true, address: addr, msg: 'Deposit address.' });
     }
     // Fail closed: user-supplied requests must never credit balances without verified chain data.
-    return json({ ok: false, msg: 'Operation failed: deposits are credited only after on-chain confirmation.' }, 403);
+    return json({ ok: false, msg: 'Deposits are credited after staff manually verifies receipt and confirms the credit.' }, 403);
   }
 
   // ---------- POST /api/withdraw ----------
@@ -1196,10 +1196,7 @@ async function handleRequest(event, context) {
     const fee = supportedFees[coin];
     const totalDebit = amount + fee;
     if (!Number.isFinite(totalDebit) || totalDebit <= 0) return json({ ok: false, msg: 'Invalid amount.' }, 400);
-    // 首次提现 / 大额提现（USDT 等值超阈值，价格不可用时保守视为大额）→ 强制人工审核 pending_admin_review。
-    const thresholdUsdt = Number(process.env.WITHDRAWAL_LARGE_THRESHOLD_USDT) || 1000;
-    const usdtValue = estimateUsdtValue(coin, amount, livePriceCache.prices);
-    const requireAdminReview = withdrawalRequiresAdminReview(user, coin, amount, usdtValue === null ? Infinity : usdtValue, thresholdUsdt);
+    // BTCBOX uses a simple semi-manual workflow: every withdrawal waits for admin review.
     // 资金密码校验（≥8 位含字母+数字）+ 持久化错误计数锁定（5 次错误锁 15 分钟，计数存 btcbox_state）。
     const fundPassword = String(body.fund_password || '');
     const fpValid = validateFundPassword(fundPassword);
@@ -1232,14 +1229,14 @@ async function handleRequest(event, context) {
           method: 'POST', headers: supabaseHeaders(),
           body: JSON.stringify({ p_withdrawal_id: withdrawalId, p_user_id: String(user.uid), p_asset: coin,
             p_network: network, p_amount: String(amount), p_fee: String(fee), p_destination: addr,
-            p_request_id: requestId, p_request_hash: requestHash, p_require_admin_review: requireAdminReview })
+            p_request_id: requestId, p_request_hash: requestHash })
         });
         const result = await rpc.json().catch(() => null);
         if (!rpc.ok || !result || result.ok !== true || !result.withdrawal_id) {
           const insufficient = rpc.status === 400 && /insufficient funds/i.test(JSON.stringify(result));
           return json({ ok: false, code: insufficient ? 'INSUFFICIENT_FUNDS' : 'FINANCIAL_RPC_FAILED', msg: insufficient ? 'Insufficient available balance (including fees).' : 'Withdrawal request was not confirmed by the database. Please check your operation history before retrying.' }, insufficient ? 400 : 503);
         }
-        return json({ ok: true, duplicate: !!result.duplicate, withdrawal_id: result.withdrawal_id, status: result.status, require_admin_review: requireAdminReview, msg: result.duplicate ? 'This withdrawal request has already been received. Do not submit it again.' : (requireAdminReview ? 'Withdrawal request submitted and flagged for admin review.' : 'Withdrawal request submitted. Funds will be sent after review.') });
+        return json({ ok: true, duplicate: !!result.duplicate, withdrawal_id: result.withdrawal_id, status: result.status, require_admin_review: true, msg: result.duplicate ? 'This withdrawal request has already been received. Do not submit it again.' : 'Withdrawal request submitted for manual review. Staff will transfer funds manually after approval.' });
       } catch (e) {
         return json({ ok: false, code: 'FINANCIAL_RPC_UNAVAILABLE', msg: 'Financial database temporarily unavailable. Withdrawal is unconfirmed. Please check your operation history before retrying.' }, 503);
       }
