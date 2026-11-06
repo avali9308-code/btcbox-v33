@@ -1069,3 +1069,19 @@ This checkpoint is evidence and interface guidance only, not implementation acce
 - AI 3 may take over integration follow-through. Keep #28 draft until the Earn product-contract mismatch is resolved and a clean exact-SHA run is available; do not weaken assertions or restore unverified offers.
 - Independent QA must remain independent. AI3-authored fixes need 1号 or another reviewer to verify the exact new SHA.
 - This inventory is a handoff checkpoint, not PR acceptance or release approval.
+
+
+## AI 3 — simple manual-deposit configuration and credit handoff (2026-11-06)
+
+- Created issue #2: https://github.com/avali9308-code/btcbox-v33/issues/2
+- User-confirmed flow: admin configures the receiving address/network; user transfers; staff verifies receipt manually; staff selects the user and the matching asset row, enters the actual received amount, and credits via the existing audited atomic manual-credit RPC.
+- Explicitly out of scope: user-created pending deposit orders, chain watcher/automation, automatic on-chain credit, extra approval tiers, manual UID/coin re-entry.
+- SOURCE OBSERVED on `fix/manual-withdrawal-rpc-compat-20261106`:
+  - Deposit page already tells users that staff manually verifies and credits the account.
+  - Admin user-account panel already binds UID and asset automatically; staff enters the actual amount. This is the desired simple direct-credit workflow.
+  - Backend `GET/POST /api/admin/config` already supports validated deposit-address configuration, but the active Admin Console currently has no address-configuration tab/form.
+  - Deposit UI supports USDT, BTC, ETH, SOL, BNB, USDC. The manual-credit account panel and API whitelist only USDT, BTC, ETH, SOL. `safeDepositAddresses()` also omits BNB-BEP20 and USDC-ERC20 although config validation/defaults include them.
+  - SQL `admin_manual_deposit_atomic` accepts generic asset symbols; no extra deposit-order SQL is needed for this chosen manual model.
+- AI 3 scope: preserve the business contract, create/track issue and prevent UI/API asset-list drift. Active Admin Console view implementation and API file changes must be assigned to their implementation owners; independent QA verifies the exact resulting SHA.
+- Financial cutover flags remain unchanged. The manual credit API remains unavailable until the existing complete financial cutover gate is legitimately verified; do not bypass it or use a legacy balance fallback.
+- No source app files, SQL, database, environment flags, merge, or deployment were changed in this coordination batch. Runtime/build/browser verification not run.
