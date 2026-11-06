@@ -15,10 +15,7 @@ fi
 echo "[info] 将按编号顺序应用 operational migrations 到 $DATABASE_URL"
 for f in $(ls "$SQL_DIR"/[0-9][0-9][0-9][0-9]_*.sql | sort); do
   case "$(basename "$f")" in
-    0017_financial_migration_staging_v5.sql|\\
-    0018_financial_migration_staging_reconciliation_v6.sql|\\
-    0019_financial_migration_reconciliation_v4.sql|\\
-    0020_financial_ledger_reconciliation_v1.sql)
+    0017_financial_migration_staging_v5.sql|0018_financial_migration_staging_reconciliation_v6.sql|0019_financial_migration_reconciliation_v4.sql|0020_financial_ledger_reconciliation_v1.sql)
       echo "[skip] staging/reconciliation only: $(basename "$f")"
       continue
       ;;
