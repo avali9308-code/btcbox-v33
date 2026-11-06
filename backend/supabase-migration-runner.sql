@@ -1,38 +1,16 @@
--- ============================================================================
--- BTCBOX Supabase 迁移一键执行文件 (supabase-migration-runner.sql)
--- 生成时间: 2026-11-01
--- 适用项目: https://zlozsutefnmgwwzrlipt.supabase.co
+-- DEPRECATED — DO NOT EXECUTE THIS AGGREGATE FILE.
+-- Historical snapshot only. It is not the canonical migration source and is stale:
+-- it predates the numbered migration fixes, contains superseded SQL, and its old
+-- instructions incorrectly imply that financial writes become enabled after execution.
 --
--- 【傻瓜操作步骤】
--- 1. 打开 Supabase Dashboard → 选中 zlozsutefnmgwwzrlipt 项目 → SQL Editor
--- 2. 点击 "New query"，把本文件全部内容 (从本行往下所有内容) 复制粘贴进去
--- 3. 点击右下角 "Run" (或按 Ctrl+Enter)，等待执行完成
--- 4. 看到 "Success. No rows returned" 即表示全部迁移成功
--- 5. 若报错，把错误信息截图，通常是某张表已存在(可忽略)或某RPC签名冲突(需先DROP)
+-- Canonical source: backend/supabase/sql/NNNN_*.sql
+-- Local isolated test runner: backend/scripts/run_migrations.sh
+-- The numbered runner requires an explicitly local/test DATABASE_URL and must NEVER
+-- be pointed at production. Do not paste this file into Supabase SQL Editor.
 --
--- 【包含的迁移(按依赖顺序)】
---   0. btcbox_state_cas.sql                    (基础状态表)
---   1. financial_ledger_v1.sql                 (交易账本)
---   2. financial_lifecycle_v2.sql              (资金生命周期RPC)
---   3. financial_admin_adjustment_v1.sql       (管理员调账+充值txid去重)
---   4. financial_earn_redemption_idempotency_v4.sql (理财赎回幂等)
---   5. financial_earn_policy_v5.sql            (理财产品策略)
---   6. financial_admin_manual_deposit_v1.sql   (管理员手动充值入账RPC)
---   7. financial_spot_trade_v3.sql             (现货交易原子RPC)
---   8. financial_matching_engine_v1.sql        (限价单撮合引擎)
---   9. financial_read_api_v1.sql               (账户快照读RPC)
---  10. financial_read_api_earn_v1.sql          (含理财持仓的读RPC)
---  11. financial_admin_read_api_v1.sql         (管理员提现读RPC)
---  12. financial_admin_account_read_api_v1.sql (管理员账户读RPC)
---  13. financial_seconds_contracts_v1.sql      (秒合约生命周期)
---  14. financial_deposit_chain_verification_v3.sql (链上自动核验,可选,已包含)
+-- This file is retained temporarily for historical reference. It does not apply
+-- migrations, enable financial writes, or represent the current database contract.
 --
--- 【注意】所有资金RPC均为 service_role  ONLY，浏览器端无法直接调用。
---         执行完本SQL后，资金写入开关已在代码默认开启，若表未建好会返回明确错误(503)，
---         不会静默丢钱；执行完本SQL即具备真实资金写入能力。
--- ============================================================================
-
-
 -- ============================================================================
 -- >>> 迁移文件: btcbox_state_cas.sql
 -- ============================================================================
