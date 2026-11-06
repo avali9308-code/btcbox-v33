@@ -1022,3 +1022,13 @@ The earlier open item saying 1号 must confirm a Home route is superseded by sou
 - IMPLEMENTED IN SOURCE: audit table is RLS-enabled, service_role is limited to SELECT/INSERT, and UPDATE/DELETE/TRUNCATE are revoked and blocked by append-only triggers.
 - Added `backend/tests/audit-log-migration-contract.test.js` with six source-contract regression tests. Test suite/build/PostgreSQL execution NOT RUN; isolated full migration chain still required.
 - No production DB writes, migration application, financial flag changes, merge or deployment. Issues #2, #3 and #4 remain open pending actual runtime/QA evidence.
+
+
+## DB-AUDIT-001 — single audit schema and migration entry point
+
+- SOURCE OBSERVED: `backend/supabase/sql/0002_financial_ledger_v1.sql` is the single canonical creator of `public.financial_audit_log`; `0003`, `0004`, `0005`, `0006`, `0007`, and `0016` write using that canonical column contract.
+- SOURCE OBSERVED: `0021_admin_audit_log_append_only_v1.sql` now validates the canonical table and applies RLS, service-role append-only grants, mutation-blocking triggers, and the existing `append_admin_audit_log` RPC contract. No second audit table is needed.
+- FIXED IN SOURCE: marked `backend/supabase-migration-runner.sql` as deprecated/historical and explicitly prohibited execution. Its old instructions contradicted the current fail-closed financial flags and its aggregate SQL predates current numbered migration fixes.
+- Canonical SQL source remains `backend/supabase/sql/NNNN_*.sql`; the numbered local/test runner is `backend/scripts/run_migrations.sh` and must only use an isolated local/test `DATABASE_URL`.
+- NOT VERIFIED: PostgreSQL syntax/runtime, trigger behavior, role grants, complete numbered migration chain, Node tests/build. No hosted DB operation was performed.
+- NO production table drop/recreate, production write, financial flag change, merge, or deployment. Preserve production schema and records.
