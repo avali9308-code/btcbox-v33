@@ -563,11 +563,27 @@ VIEWS.admin.afterRender = function(){
       });
       return;
     }
+    if(tab==='users' && !loaded){
+      $('#admin-body').innerHTML=skeleton(5,4);
+      apiAdapter.adminUsers().then(function(r){
+        if(!r||!r.ok||!Array.isArray(r.users)){
+          $('#admin-body').innerHTML=emptyState('用户列表暂时不可用','请检查管理员权限和服务器连接，稍后刷新重试。');
+          return;
+        }
+        if(!state.admin) state.admin={};
+        state.admin.users=r.users;
+        render('users',true);
+      }).catch(function(){
+        $('#admin-body').innerHTML=emptyState('用户列表暂时不可用','网络错误。请刷新后再试。');
+      });
+      return;
+    }
     if(tab==='users'){
       if(!state.admin.users||!state.admin.users.length){$('#admin-body').innerHTML=emptyState('暂无用户数据','用户列表为空。');return;}
       $('#admin-body').innerHTML='<table style="width:100%;border-collapse:collapse;min-width:640px"><thead><tr><th class="th">UID</th><th class="th">邮箱</th><th class="th">KYC</th><th class="th">状态</th><th class="th" style="text-align:right">余额 (USDT)</th><th class="th">操作</th></tr></thead><tbody>'+
         state.admin.users.map(function(u){
-          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(u.uid)+'</td><td class="td">'+escapeHtml(u.email)+'</td><td class="td" style="text-transform:capitalize;color:'+(u.kyc==='verified'?'var(--up)':u.kyc==='pending'?'var(--warning)':'var(--text-muted)')+'">'+escapeHtml(u.kyc)+'</td><td class="td">'+(u.frozen?'<span style="color:var(--down);font-weight:600">已冻结</span>':'<span style="color:var(--up)">正常</span>')+'</td><td class="td num" style="text-align:right">'+fmt(u.balances.USDT,2)+'</td><td class="td"><button class="au-freeze" data-uid="'+escapeHtml(u.uid)+'" data-f="'+(u.frozen?0:1)+'" style="color:'+(u.frozen?'var(--up)':'var(--down)')+';font-size:12px;font-weight:600;margin-right:10px;background:none;border:none;cursor:pointer">'+(u.frozen?'解冻':'冻结')+'</button></td></tr>';
+          var kyc=String(u.kyc_status||'unverified');
+          return '<tr class="trow"><td class="td num" style="font-size:12px">'+escapeHtml(u.uid)+'</td><td class="td">'+escapeHtml(u.email)+'</td><td class="td" style="text-transform:capitalize;color:'+(kyc==='verified'?'var(--up)':kyc==='pending'?'var(--warning)':'var(--text-muted)')+'">'+escapeHtml(kyc)+'</td><td class="td">'+(u.frozen?'<span style="color:var(--down);font-weight:600">已冻结</span>':'<span style="color:var(--up)">正常</span>')+'</td><td class="td num" style="text-align:right">'+fmt(u.total_usdt,2)+'</td><td class="td"><button class="au-freeze" data-uid="'+escapeHtml(u.uid)+'" data-f="'+(u.frozen?0:1)+'" style="color:'+(u.frozen?'var(--up)':'var(--down)')+';font-size:12px;font-weight:600;margin-right:10px;background:none;border:none;cursor:pointer">'+(u.frozen?'解冻':'冻结')+'</button></td></tr>';
         }).join('')+'</tbody></table>';
       $$('.au-freeze').forEach(function(b){b.onclick=async function(){
         var freeze=b.dataset.f==='1';
