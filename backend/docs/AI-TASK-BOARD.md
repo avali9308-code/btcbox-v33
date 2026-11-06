@@ -1032,3 +1032,14 @@ The earlier open item saying 1号 must confirm a Home route is superseded by sou
 - Canonical SQL source remains `backend/supabase/sql/NNNN_*.sql`; the numbered local/test runner is `backend/scripts/run_migrations.sh` and must only use an isolated local/test `DATABASE_URL`.
 - NOT VERIFIED: PostgreSQL syntax/runtime, trigger behavior, role grants, complete numbered migration chain, Node tests/build. No hosted DB operation was performed.
 - NO production table drop/recreate, production write, financial flag change, merge, or deployment. Preserve production schema and records.
+
+
+## Migration channel audit — 2026-11-06
+
+- SOURCE OBSERVED: the complete operational schema is in `backend/supabase/sql/NNNN_*.sql`; the local/test runner is `backend/scripts/run_migrations.sh`.
+- SOURCE OBSERVED: `backend/supabase/migrations/` currently contains only timestamped 0024 and 0025 mirrors. Both files are byte-for-byte identical to numbered 0024 and 0025; they do not contain the base ledger, account, deposit, withdrawal, or audit schema and are NOT a complete empty-database bootstrap.
+- SOURCE OBSERVED (read-only hosted migration-history query): the connected Supabase project reports versions `20261102133555` (`revoke_public_execute_rls_auto_enable`) and `20261103062716` (`create_private_btcbox_test_cleanup_backup`). Their matching timestamped migration files are absent from the current feature branch. This is migration-history drift; it is not permission to repair or replay history.
+- DECISION: do not mix the numbered runner and Supabase CLI timestamped path. Do not run `db push`, `migration repair`, `db reset`, or apply SQL to the hosted project. Resolve one canonical bootstrap strategy and map the two hosted history entries before any hosted change.
+- Supabase CLI v3 changed database commands to local-by-default and requires explicit remote targeting/confirmation for hosted changes; scripts must be reviewed before use.
+- NOT VERIFIED: complete isolated PostgreSQL bootstrap, hosted schema equivalence, whether the two recorded hosted migrations have side effects beyond their names, and any safe repair sequence.
+- No hosted database writes, migration apply/repair, reset, financial flag changes, merge, or deployment were performed.
