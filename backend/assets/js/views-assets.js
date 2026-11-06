@@ -164,14 +164,14 @@ VIEWS.deposit = function(){
         '<div style="margin-top:12px;text-align:left"><label class="auth-label">Deposit Address</label>'+
         '<div class="va-addr-row"><input id="dep-addr" class="auth-input num" readonly style="flex:1;font-size:12px"><button type="button" id="dep-copy" class="btn btn-ghost">Copy</button></div></div>'+
       '</div>'+
-      '<div class="va-info">Minimum deposit: <b style="color:var(--text-primary)">10 USDT equivalent</b>. Deposits below the minimum will not be credited. Requires on-chain confirmation + manual review (usually 5–30 min).</div>'+
+      '<div class="va-info">Send funds only to the exact address configured by BTCBOX for this coin and network. After staff manually verifies receipt, staff will credit your account balance.</div>'+
       '<div class="va-warn">'+
         '<div class="va-warn-title">Important</div>'+
-        '<ul><li>充值地址由系统实时生成，仅用于接收所选币种与网络，<b>请勿充值其他币种</b>，否则可能永久丢失。</li><li>Send only <b id="dep-coin-warn">USDT</b> on the selected network. Sending other coins may result in permanent loss.</li><li>Do NOT deposit from a smart contract address.</li><li>Deposits are credited after <b>manual review</b> and on-chain confirmation.</li></ul>'+
+        '<ul><li>充值地址由后台配置，请核对币种和网络，<b>请勿向错误地址或网络转账</b>。</li><li>Send only <b id="dep-coin-warn">USDT</b> on the selected network. Sending other coins or using another network may result in permanent loss.</li><li>After staff verifies the transfer manually, your balance is credited manually. Displaying an address does not mean a deposit has been credited.</li></ul>'+
       '</div>'+
     '</div></div>'+
     '<div class="va-card"><div class="va-card-head"><div class="va-card-title">Deposit Records</div></div>'+
-      '<div class="va-empty">Deposit history is not available via the current API yet. After you send an on-chain transaction it will be credited after confirmation + review.</div>'+
+      '<div class="va-empty">This page displays the receiving address configured by BTCBOX. After you transfer funds, staff will verify receipt and manually credit your balance.</div>'+
     '</div>'+
   '</div>';
 };
@@ -425,7 +425,7 @@ VIEWS.withdraw.afterRender = function(){
       '<div class="va-result-sub">'+safeSub+'</div>'+
       (wid?'<div class="va-result-id">ID: '+safeWid+'</div>':'')+
       (r&&r.ok?'<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Amount: <b class="num">'+fmt(amt,2)+' '+safeCoin+'</b></div>':'')+
-      '<div class="va-result-note">Submit success ≠ on-chain arrival. Funds are sent only after manual review and on-chain confirmation. Do not submit the same withdrawal twice.</div>'+
+      '<div class="va-result-note">Your request is awaiting manual review. Approval is not the same as payment: staff will send the funds manually and update the status. Do not submit the same withdrawal twice.</div>'+
       '<div class="va-nav-row" style="margin-top:16px">'+(st.key==='unknown'?'':'<button type="button" class="btn btn-ghost" id="wd-new">New Withdrawal</button>')+'<a href="#/assets" class="btn btn-primary" style="flex:2">Back to Assets</a></div>'+
     '</div>';
     $('#wd-result-box').innerHTML=html;
