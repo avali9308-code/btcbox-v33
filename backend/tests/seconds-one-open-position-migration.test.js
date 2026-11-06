@@ -50,3 +50,15 @@ test('timestamped Supabase migration and legacy numbered runner mirror are ident
     read('supabase/sql/0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql')
   );
 });
+
+
+test('migration guide documents the canonical numbered path and correct final migration order', () => {
+  const order = read('supabase/sql/MIGRATION-ORDER-AND-CUTOVER.md');
+  assert.match(order, /backend\/supabase\/migrations\/ is[^\\n]*not a complete CLI bootstrap path/i);
+  assert.match(order, /do not mix the numbered runner and Supabase CLI timestamped path/i);
+  const payout = order.indexOf('15. `0023_withdrawal_manual_payout_completion_v1.sql`');
+  const seconds = order.indexOf('16. `0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1.sql`');
+  const policy = order.indexOf('17. `0025_seconds_policy_snapshot_and_admin_queue_v1.sql`');
+  assert.ok(payout >= 0 && seconds > payout && policy > seconds, 'final migrations must be listed in dependency order');
+  assert.equal((order.match(/0024_seconds_unlimited_open_positions_and_settlement_idempotency_v1\.sql/g) || []).length, 1);
+});
