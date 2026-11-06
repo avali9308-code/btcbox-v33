@@ -484,7 +484,7 @@ VIEWS.admin = function(){
     '<div id="admin-err" style="display:none" class="va-banner va-banner-err"></div>'+
     '<div class="card" style="padding:0;margin-bottom:16px">'+
       '<div style="display:flex;border-bottom:1px solid var(--border);overflow-x:auto" class="no-scrollbar">'+
-        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div><div class="tab" data-atab="seconds">秒合约</div>'+
+        '<div class="tab active" data-atab="users">用户管理</div><div class="tab" data-atab="deposits">充值地址</div><div class="tab" data-atab="withdrawals">提币审批</div><div class="tab" data-atab="kyc">KYC 审核</div><div class="tab" data-atab="seconds">秒合约</div>'+
       '</div>'+
       '<div id="admin-body" style="overflow-x:auto" class="scroll">'+skeleton(5,4)+'</div>'+
     '</div>'+
@@ -548,6 +548,21 @@ VIEWS.admin.afterRender = function(){
     });
   }
   function render(tab, loaded){
+    if(tab==='deposits' && !loaded){
+      $('#admin-body').innerHTML=skeleton(8,2);
+      apiAdapter.adminConfig().then(function(r){
+        if(!r||!r.ok||!r.deposit_addresses){
+          $('#admin-body').innerHTML=emptyState('充值地址配置暂不可用',(r&&(r.msg||r.error))||'请检查管理员权限与配置接口。');
+          return;
+        }
+        if(!state.admin)state.admin={};
+        state.admin.depositAddresses=r.deposit_addresses;
+        render('deposits',true);
+      }).catch(function(){
+        $('#admin-body').innerHTML=emptyState('充值地址配置暂不可用','网络错误。请刷新后重试。');
+      });
+      return;
+    }
     if(tab==='withdrawals' && !loaded){
       $('#admin-body').innerHTML=skeleton(6,3);
       apiAdapter.adminWithdrawals().then(function(r){
@@ -622,6 +637,46 @@ VIEWS.admin.afterRender = function(){
       });
       return;
     }
+    if(tab==='deposits'){
+      var addressFields=[
+        ['USDT-TRC20','USDT · TRC20'],['USDT-ERC20','USDT · ERC20'],['USDT-BEP20','USDT · BEP20'],
+        ['BTC-BTC','BTC · Bitcoin'],['ETH-ERC20','ETH · ERC20'],['SOL-SOL','SOL · Solana'],
+        ['BNB-BEP20','BNB · BEP20'],['USDC-ERC20','USDC · ERC20']
+      ];
+      var addresses=state.admin&&state.admin.depositAddresses||{};
+      $('#admin-body').innerHTML='<div style="padding:16px"><div style="margin-bottom:14px;color:var(--text-secondary);font-size:13px;line-height:1.7">设置用户充值页实际展示的收款地址。用户按所选币种和网络转账，工作人员核实到账后再从用户账户资产页人工上分。留空并保存可停用该网络地址。</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">'+addressFields.map(function(field){
+          return '<label class="va-field"><span class="auth-label">'+field[1]+'</span><input class="auth-input num" data-deposit-key="'+field[0]+'" maxlength="180" autocomplete="off" value="'+escapeHtml(addresses[field[0]]||'')+'" placeholder="未配置时用户端显示不可用"></label>';
+        }).join('')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px"><button type="button" id="admin-deposit-save" class="btn btn-primary">保存充值地址</button><span id="admin-deposit-status" style="font-size:12px;color:var(--text-muted)">保存后用户充值页会读取最新配置。</span></div></div>';
+      var saveButton=$('#admin-deposit-save');
+      if(saveButton)saveButton.onclick=async function(){
+        if(saveButton.disabled)return;
+        var updates={};
+        $('[data-deposit-key]').forEach(function(input){updates[input.dataset.depositKey]=input.value.trim();});
+        saveButton.disabled=true;saveButton.textContent='保存中…';
+        var status=$('#admin-deposit-status');
+        if(status)status.textContent='正在保存配置…';
+        try{
+          var result=await apiAdapter.adminConfig({deposit_addresses:updates});
+          if(!result||!result.ok||!result.deposit_addresses){
+            if(status)status.textContent=(result&&(result.msg||result.error))||'保存失败，请检查地址格式后重试。';
+            saveButton.disabled=false;saveButton.textContent='重新保存';
+            toast('充值地址保存失败。','err');
+            return;
+          }
+          if(!state.admin)state.admin={};
+          state.admin.depositAddresses=result.deposit_addresses;
+          toast('充值地址配置已保存。','ok');
+          render('deposits',true);
+        }catch(error){
+          if(status)status.textContent='网络错误，保存结果未确认；请重新读取配置后再操作。';
+          saveButton.disabled=false;saveButton.textContent='重新保存';
+          toast('保存结果暂时无法确认，请先重新读取配置。','warn');
+        }
+      };
+      return;
+    }
     if(tab==='users' && !loaded){
       $('#admin-body').innerHTML=skeleton(5,4);
       apiAdapter.adminUsers().then(function(r){
@@ -654,7 +709,7 @@ VIEWS.admin.afterRender = function(){
         var panel=$('#admin-user-account-panel');
         if(!panel)return;
         var balances=account.balances&&typeof account.balances==='object'?account.balances:{};
-        var assets=['USDT','BTC','ETH','SOL'];
+        var assets=['USDT','BTC','ETH','SOL','BNB','USDC'];
         panel.innerHTML='<div class="va-card"><div class="va-card-head"><div><div class="va-card-title">用户账户资产</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+escapeHtml(account.email||'')+' · UID '+escapeHtml(accountUid)+'</div></div><button type="button" class="au-account-close" style="background:none;border:0;color:var(--text-secondary);cursor:pointer">收起</button></div><div class="va-card-body"><div class="va-info" style="margin-bottom:14px">先核实链上实际到账，再从对应币种资产行进行人工上分。用户 UID 和币种会自动绑定，无需手动填写。</div>'+
           assets.map(function(coin){
             var b=balances[coin]||{free:0,frozen:0};
