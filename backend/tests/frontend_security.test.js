@@ -195,3 +195,18 @@ test('withdrawal view shows binding/24h/manual-review rule hint; deposit warns s
   assert.ok(s.includes('充值地址由后台配置'), 'admin-configured deposit address hint missing');
   assert.ok(s.includes('请勿向错误地址或网络转账'), 'deposit wrong-address/network warning missing');
 });
+
+
+/* ---------- seconds-contract authoritative maturity timestamp ---------- */
+test('seconds order API forwards the exact settle_at returned by the database RPC', () => {
+  const core = read('api-core.js');
+  const sql = read('supabase/sql/0014_financial_seconds_contracts_v1.sql');
+  const orderStart = core.indexOf("if (path === 'seconds/order' && method === 'POST')");
+  const settleStart = core.indexOf("// ---------- POST /api/seconds/settle ----------", orderStart);
+  assert.ok(orderStart >= 0 && settleStart > orderStart, 'seconds order handler not found');
+  const handler = core.slice(orderStart, settleStart);
+  assert.ok(handler.includes('settle_at: result.settle_at'), 'API must forward the database maturity timestamp');
+  assert.ok(!handler.includes('Date.now() / 1000 + durationSec'), 'API must not recalculate maturity from its own clock');
+  assert.match(sql, /'duplicate',true,'position_id',v_existing\.position_id,[\s\S]*?'settle_at',extract\(epoch from v_existing\.settle_at\)::bigint/);
+  assert.match(sql, /'duplicate',false,'position_id',p_position_id,[\s\S]*?'settle_at',extract\(epoch from \(v_now\+make_interval\(secs=>p_duration_sec\)\)\)::bigint/);
+});
